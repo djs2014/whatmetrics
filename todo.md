@@ -80,3 +80,7 @@ icon:
  
  colors -> perc > 100 -> background black / font white
   -> on event thingy
+
+altitude - total asc/desc
+grade -> avg grade?
+black background with darker color scheme

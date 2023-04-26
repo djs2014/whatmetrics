@@ -250,7 +250,7 @@ function checkFeatures() as Void {
 }
 
 function setColorByPerc(dc as Dc, perc as Numeric, alpha as Number) as Void {
-  var color = percentageToColor(perc, alpha, $.PERC_COLORS_SCHEME);
+  var color = percentageToColor(perc, alpha, $.PERC_COLORS_SCHEME, 0);
   if ($.gUseSetFillStroke) {
     dc.setColor(Graphics.COLOR_TRANSPARENT, Graphics.COLOR_TRANSPARENT);
     dc.setFill(color);
@@ -303,7 +303,8 @@ const PERC_COLORS_SCHEME =
 function percentageToColor(
   percentage as Numeric?,
   alpha as Number,
-  colorScheme as Array<Array<Number> >
+  colorScheme as Array<Array<Number> >,
+  darker as Number
 ) as ColorType {
   var pcolor = 0;
   var pColors = colorScheme;
@@ -336,6 +337,12 @@ function percentageToColor(
   var red = Math.floor(lower[1] * pctLower + upper[1] * pctUpper);
   var green = Math.floor(lower[2] * pctLower + upper[2] * pctUpper);
   var blue = Math.floor(lower[3] * pctLower + upper[3] * pctUpper);
+
+  if (darker > 0 && darker < 100) {
+    red = red - (red / 100) * darker;
+    green = green - (green / 100) * darker;
+    blue = blue - (blue / 100) * darker;
+  }
   return Graphics.createColor(
     alpha,
     red.toNumber(),

@@ -15,8 +15,14 @@ class whatmetricsView extends WatchUi.DataField {
   hidden var mFontColor as Graphics.ColorType = Graphics.COLOR_BLACK;
   hidden var mReverseColor as Boolean = false;
   hidden var mDecimalsColor as Graphics.ColorType = Graphics.COLOR_BLACK;
+  hidden var mDecimalsColorDay as Graphics.ColorType = Graphics.COLOR_BLACK;
+  hidden var mDecimalsColorNight as Graphics.ColorType = Graphics.COLOR_WHITE;
   hidden var mUnitsColor as Graphics.ColorType = Graphics.COLOR_BLACK;
+  hidden var mUnitsColorDay as Graphics.ColorType = Graphics.COLOR_BLACK;
+  hidden var mUnitsColorNight as Graphics.ColorType = Graphics.COLOR_WHITE;
   hidden var mIconColor as Graphics.ColorType = Graphics.COLOR_BLACK;
+  hidden var mIconColorDay as Graphics.ColorType = Graphics.COLOR_BLACK;
+  hidden var mIconColorNight as Graphics.ColorType = Graphics.COLOR_WHITE;
   hidden var mFontsNumbers as Array = [
     Graphics.FONT_XTINY,
     Graphics.FONT_TINY,
@@ -38,9 +44,14 @@ class whatmetricsView extends WatchUi.DataField {
     mFieldSize = "?x?";
 
     checkFeatures();
-    mDecimalsColor = Graphics.createColor(180, 50, 50, 50);
-    mUnitsColor = Graphics.createColor(180, 100, 100, 100);
-    mIconColor = Graphics.createColor(255, 220, 220, 220);
+    mDecimalsColorDay = Graphics.createColor(180, 50, 50, 50);
+    mDecimalsColorNight = Graphics.createColor(180, 150, 150, 150);
+
+    mUnitsColorDay = Graphics.createColor(180, 100, 100, 100);
+    mUnitsColorNight = Graphics.createColor(180, 220, 220, 220);
+
+    mIconColorDay = Graphics.createColor(255, 220, 220, 220);
+    mIconColorNight = Graphics.createColor(255, 100, 100, 100);
   }
 
   function onLayout(dc as Dc) as Void {
@@ -91,8 +102,14 @@ class whatmetricsView extends WatchUi.DataField {
     dc.clear();
 
     mFontColor = Graphics.COLOR_BLACK;
+    mDecimalsColor = mDecimalsColorDay;
+    mUnitsColor = mUnitsColorDay;
+    mIconColor = mIconColorDay;
     if (getBackgroundColor() == Graphics.COLOR_BLACK) {
       mFontColor = Graphics.COLOR_WHITE;
+      mDecimalsColor = mDecimalsColorNight;
+      mUnitsColor = mUnitsColorNight;
+      mIconColor = mIconColorNight;
     }
     dc.setColor(mFontColor, Graphics.COLOR_TRANSPARENT);
 
@@ -358,7 +375,7 @@ class whatmetricsView extends WatchUi.DataField {
         if (xUnits + dims_units[0] > width) {
           // Units on center bottom when small field
           xUnits = x + width / 2 - dims_units[0] / 2;
-          yUnits = yBase + dims_number_or_text[1] - Graphics.getFontDescent(font) - Graphics.getFontDescent(fontUnits);
+          yUnits = yBase + dims_number_or_text[1] - Graphics.getFontDescent(font); // not needed on device - Graphics.getFontDescent(fontUnits)
         }
         dc.drawText(xUnits, yUnits, fontUnits, units, Graphics.TEXT_JUSTIFY_LEFT);
       }
@@ -376,7 +393,11 @@ class whatmetricsView extends WatchUi.DataField {
     if (gShowColors) {
       var perc = percentageOf(value, maxValue);
       mReverseColor = perc >= 165;
-      return percentageToColor(perc, 255, $.PERC_COLORS_SCHEME);
+      var darker = 0;
+      if (getBackgroundColor() == Graphics.COLOR_BLACK) {
+        darker = 30;
+      }
+      return percentageToColor(perc, 255, $.PERC_COLORS_SCHEME, darker);
     } else {
       return mIconColor;
     }
