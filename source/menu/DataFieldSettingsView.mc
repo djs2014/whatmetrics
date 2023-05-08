@@ -7,13 +7,13 @@ import Toybox.Application;
 //! Initial view for the settings
 class DataFieldSettingsView extends WatchUi.View {
   //! Constructor
-   function initialize() {
+  function initialize() {
     View.initialize();
   }
 
   //! Update the view
   //! @param dc Device context
-   function onUpdate(dc as Dc) as Void {
+  function onUpdate(dc as Dc) as Void {
     dc.clearClip();
     dc.setColor(Graphics.COLOR_BLACK, Graphics.COLOR_BLACK);
     dc.clear();
@@ -36,52 +36,59 @@ class DataFieldSettingsView extends WatchUi.View {
 //! Handle opening the settings menu
 class DataFieldSettingsDelegate extends WatchUi.BehaviorDelegate {
   //! Constructor
-   function initialize() {
+  function initialize() {
     BehaviorDelegate.initialize();
   }
 
   //! Handle the menu event
   //! @return true if handled, false otherwise
-   function onMenu() as Boolean {
+  function onMenu() as Boolean {
     var menu = new $.DataFieldSettingsMenu();
     var mi = new WatchUi.MenuItem("Hiit", "High-Intensity Interval", "hiit", null);
     menu.addItem(mi);
     mi = new WatchUi.MenuItem("Targets", null, "targets", null);
     menu.addItem(mi);
 
-    var boolean = Storage.getValue("debug") ? true : false;
-    menu.addItem(
-      new WatchUi.ToggleMenuItem(
-        "Debug",
-        null,
-        "debug",
-        boolean,
-        null
-      )
-    );
-    
+    var boolean = false;
+
     boolean = Storage.getValue("show_colors") ? true : false;
-    menu.addItem(
-      new WatchUi.ToggleMenuItem(
-        "Show colors",
-        null,
-        "show_colors",
-        boolean,
-        null
-      )
-    );
+    menu.addItem(new WatchUi.ToggleMenuItem("Colors", null, "show_colors", boolean, null));
+
+    boolean = Storage.getValue("show_grid") ? true : false;
+    menu.addItem(new WatchUi.ToggleMenuItem("Grid lines", null, "show_grid", boolean, null));
+
+    boolean = Storage.getValue("show_timer") ? true : false;
+    mi = new WatchUi.ToggleMenuItem("Timer", null, "show_timer", boolean, null);
+    mi.setSubLabel($.subMenuToggleMenuItem(mi.getId() as String));
+    menu.addItem(mi);
+
+    boolean = Storage.getValue("show_powerbalance") ? true : false;
+    menu.addItem(new WatchUi.ToggleMenuItem("Power balance", null, "show_powerbalance", boolean, null));
+
+    boolean = Storage.getValue("show_powerperweight") ? true : false;
+    menu.addItem(new WatchUi.ToggleMenuItem("Power per weight", null, "show_powerperweight", boolean, null));
+
+    boolean = Storage.getValue("debug") ? true : false;
+    menu.addItem(new WatchUi.ToggleMenuItem("Debug", null, "debug", boolean, null));
 
     var view = new $.DataFieldSettingsView();
-    WatchUi.pushView(
-      menu,
-      new $.DataFieldSettingsMenuDelegate(view),
-      WatchUi.SLIDE_IMMEDIATE
-    );
+    WatchUi.pushView(menu, new $.DataFieldSettingsMenuDelegate(view), WatchUi.SLIDE_IMMEDIATE);
     return true;
   }
 
-   function onBack() as Boolean {
+  function onBack() as Boolean {
     getApp().onSettingsChanged();
     return false;
   }
+}
+
+function subMenuToggleMenuItem(key as String) as String {
+  if (key.equals("show_timer")) {
+    if (Storage.getValue(key) ? true : false) {
+      return "timer time";
+    } else {
+      return "elapsed time";
+    }
+  }
+  return "";
 }

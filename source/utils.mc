@@ -13,11 +13,7 @@ const FEET = 3.281;
 var gCreateColors as Boolean = false;
 var gUseSetFillStroke as Boolean = false;
 
-function getActivityValue(
-  info as Activity.Info?,
-  symbol as Symbol,
-  dflt as Lang.Object
-) as Lang.Object {
+function getActivityValue(info as Activity.Info?, symbol as Symbol, dflt as Lang.Object) as Lang.Object {
   if (info == null) {
     return dflt;
   }
@@ -343,19 +339,11 @@ function percentageToColor(
     green = green - (green / 100) * darker;
     blue = blue - (blue / 100) * darker;
   }
-  return Graphics.createColor(
-    alpha,
-    red.toNumber(),
-    green.toNumber(),
-    blue.toNumber()
-  );
+  return Graphics.createColor(alpha, red.toNumber(), green.toNumber(), blue.toNumber());
 }
 
 // template: "{h}:{m}:{s}:{ms}"
-function millisecondsToShortTimeString(
-  totalMilliSeconds as Number,
-  template as String
-) as String {
+function millisecondsToShortTimeString(totalMilliSeconds as Number, template as String) as String {
   if (totalMilliSeconds != null && totalMilliSeconds instanceof Lang.Number) {
     var hours = (totalMilliSeconds / (1000.0 * 60 * 60)).toNumber() % 24;
     var minutes = (totalMilliSeconds / (1000.0 * 60.0)).toNumber() % 60;
@@ -374,12 +362,21 @@ function millisecondsToShortTimeString(
   }
   return "";
 }
+// 1:40 or 150:40
+function secondsToCompactTimeString(totalSeconds as Number, template as String) as String {
+  if (totalSeconds != null && totalSeconds instanceof Lang.Number) {
+    var minutes = (totalSeconds / 60.0).toNumber();
+    var seconds = totalSeconds.toNumber() % 60;
 
-function stringReplace(
-  str as String,
-  oldString as String,
-  newString as String
-) as String {
+    var time = stringReplace(template, "{m}", minutes.format("%01d"));
+    time = stringReplace(time, "{s}", seconds.format("%02d"));
+
+    return time;
+  }
+  return "";
+}
+
+function stringReplace(str as String, oldString as String, newString as String) as String {
   var result = str;
   if (str.length() == 0 || oldString.length() == 0 || newString.length() == 0) {
     return str;
@@ -389,10 +386,7 @@ function stringReplace(
   var count = 0;
   while (index != null && count < 30) {
     var indexEnd = index + oldString.length();
-    result =
-      result.substring(0, index) +
-      newString +
-      result.substring(indexEnd, result.length());
+    result = result.substring(0, index) + newString + result.substring(indexEnd, result.length());
     index = result.find(oldString);
     count = count + 1;
   }
@@ -412,11 +406,7 @@ function stringLeft(str as String, marker as String, dflt as String) as String {
   return str.substring(0, index) as String;
 }
 
-function stringRight(
-  str as String,
-  marker as String,
-  dflt as String
-) as String {
+function stringRight(str as String, marker as String, dflt as String) as String {
   if (str.length() == 0 || marker.length() == 0) {
     return dflt;
   }
@@ -428,21 +418,11 @@ function stringRight(
   return str.substring(index + 1, null) as String;
 }
 
-function pointOnCircle_x(
-  x as Number,
-  y as Number,
-  radius as Number,
-  angleInDegrees as Number
-) as Number {
+function pointOnCircle_x(x as Number, y as Number, radius as Number, angleInDegrees as Number) as Number {
   // Convert from degrees to radians
   return (radius * Math.cos(deg2rad(angleInDegrees)) + x).toNumber();
 }
-function pointOnCircle_y(
-  x as Number,
-  y as Number,
-  radius as Number,
-  angleInDegrees as Number
-) as Number {
+function pointOnCircle_y(x as Number, y as Number, radius as Number, angleInDegrees as Number) as Number {
   // Convert from degrees to radians
   return (radius * Math.sin(deg2rad(angleInDegrees)) + y).toNumber();
 }

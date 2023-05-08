@@ -9,6 +9,7 @@ class whatmetricsView extends WatchUi.DataField {
   hidden var mFieldSize as String;
   hidden var mDebug as Boolean = true;
   hidden var mPaused as Boolean = true;
+  hidden var mActivityStartCountdown as Number = 0;
 
   // [[w,h],[w,h],[w,h]]
   hidden var mGrid as Array<Array<Array<Number> > > = [] as Array<Array<Array<Number> > >;
@@ -91,7 +92,11 @@ class whatmetricsView extends WatchUi.DataField {
     gMetrics.compute(info);
     // @@
     mPaused = gHiitt.isActivityPaused();
-
+    if (mPaused) {
+      mActivityStartCountdown = 5;
+    } else if (mActivityStartCountdown >= 0) {
+      mActivityStartCountdown--;
+    }
     var power = gMetrics.getPower();
     var perc = percentageOf(power, gTargetFtp);
     gHiitt.compute(info, perc);
@@ -171,8 +176,10 @@ class whatmetricsView extends WatchUi.DataField {
         //  [w,h]
         var cell = row[c] as Array<Number>;
 
-        dc.setColor(Graphics.COLOR_LT_GRAY, Graphics.COLOR_TRANSPARENT);
-        dc.drawRectangle(x, y, cell[0], cell[1]);
+        if (gShowGrid) {
+          dc.setColor(Graphics.COLOR_LT_GRAY, Graphics.COLOR_TRANSPARENT);
+          dc.drawRectangle(x, y, cell[0], cell[1]);
+        }
 
         drawField(dc, f, x, y, cell[0], cell[1]);
 
@@ -199,7 +206,8 @@ class whatmetricsView extends WatchUi.DataField {
     var number = "";
     var decimals = "";
     var units = "";
-    var perc = 0;
+    var text_botright = "";
+    var text_botleft = "";
 
     if (fieldIdx == 0) {
       title = "grade";
@@ -225,21 +233,41 @@ class whatmetricsView extends WatchUi.DataField {
         decimals = today.sec.format("%02d");
         units = Lang.format("$1$ $2$", [today.day, today.month]);
       } else {
-        title = "hr";
+        title = "heartrate";
         units = "bpm";
         number = heartRate.format("%0d");
         var iconColor = getIconColor(dc, heartRate, gTargetHeartRate);
         checkReverseColor(dc, x, y, width, height);
         drawHeartIcon(dc, x, y, width, height, iconColor);
+        text_botleft = "zone " + gMetrics.getHeartRateZone().format("%0d");
       }
     } else if (fieldIdx == 3) {
-      // power 0 or paused -> avg / fallback @@
-      title = "power";
-      units = "w";
-      number = gMetrics.getPower().format("%0d");
+      if (gShowPowerPerWeight) {
+        title = "power (" + gMetrics.getPowerPerSec().format("%0d") + " sec) / kg";
+        units = "w/kg";
+        value = gMetrics.getPowerPerWeight().format("%0.1f");
+        number = stringLeft(value, ".", value);
+        decimals = stringRight(value, ".", "");
+        text_botleft = gMetrics.getPower().format("%0d") + " w";
+      } else {
+        title = "power (" + gMetrics.getPowerPerSec().format("%0d") + " sec)";
+        units = "w";
+        number = gMetrics.getPower().format("%0d");
+        text_botleft = gMetrics.getPowerPerWeight().format("%0.1f") + "/kg";
+      }
       var iconColor = getIconColor(dc, gMetrics.getPower(), gTargetFtp);
       checkReverseColor(dc, x, y, width, height);
       drawPowerIcon(dc, x, y, width, height, iconColor);
+      if (gShowPowerBalance) {
+        var powerLeft = gMetrics.getPowerBalanceLeft();
+        if (mPaused) {
+          powerLeft = gMetrics.getAveragePowerBalanceLeft();
+        }
+        if (powerLeft > 0 and powerLeft < 100) {
+          var pwrRight = 100 - (powerLeft as Number);
+          text_botright = Lang.format("$1$|$2$", [(powerLeft as Number).format("%02d"), pwrRight.format("%02d")]);
+        }
+      }
     } else if (fieldIdx == 4) {
       title = "speed";
       units = "km/h";
@@ -250,37 +278,98 @@ class whatmetricsView extends WatchUi.DataField {
       var iconColor = getIconColor(dc, speed, gTargetSpeed);
       checkReverseColor(dc, x, y, width, height);
       drawSpeedIcon(dc, x, y, width, height, iconColor);
+      text_botleft = "avg " + mpsToKmPerHour(gMetrics.getAverageSpeed()).format("%0.1f");
     } else if (fieldIdx == 5) {
       title = "altitude";
       units = "m";
+      var altitude = gMetrics.getAltitude();
       if (mpsToKmPerHour(gMetrics.getSpeed()) < 15) {
-        value = gMetrics.getAltitude().format("%0.2f");
+        value = altitude.format("%0.2f");
       } else {
-        value = gMetrics.getAltitude().format("%0d");
+        value = altitude.format("%0d");
       }
+
       number = stringLeft(value, ".", value);
       decimals = stringRight(value, ".", "");
-      var iconColor = getIconColor(dc, gMetrics.getAltitude(), gTargetAltitude);
+
+      if (altitude < 0) {
+        altitude = altitude * -1;
+      }
+      var iconColor = getIconColor(dc, altitude, gTargetAltitude);
       checkReverseColor(dc, x, y, width, height);
       drawAltitudeIcon(dc, x, y, width, height, iconColor);
+
+      var totalAsc = gMetrics.getTotalAscent();
+      if (totalAsc > 0) {
+        text_botleft = "A " + totalAsc.format("%0.0f");
+      }
+      var totalDesc = gMetrics.getTotalDescent();
+      if (totalDesc > 0) {
+        text_botright = "D " + totalDesc.format("%0.0f");
+      }
     } else if (fieldIdx == 6) {
       title = "cadence";
       units = "rpm";
       number = gMetrics.getCadence().format("%0d");
       drawCadenceIcon(dc, x, y, width, height, getIconColor(dc, gMetrics.getCadence(), gTargetCadence));
     } else if (fieldIdx == 7) {
+      var showTimerElapsed = true;
       if (gHiitt.isEnabled()) {
         title = "hiit";
-        var HiitElapsed = gHiitt.getElapsedSeconds();
-        var vo2max = gHiitt.getVo2Max();
-        text = Lang.format("#$1$ $2$ $3$", [
-          gHiitt.getNumberOfHits().format("%0.0d"),
-          HiitElapsed.format("%0.0d"),
-          vo2max.format("%0.1f"),
-        ]);
-      } else {
-        title = "elapsed";
-        var elapsed = millisecondsToShortTimeString(gMetrics.getElapsedTime(), "{h}.{m}:{s}");
+        var recovery = gHiitt.getRecoveryElapsedSeconds();
+        if (recovery > 0) {
+          showTimerElapsed = false;
+          text = secondsToCompactTimeString(recovery, "({m}:{s})");
+          if (gHiitt.wasValidHiit()) {
+            drawHiitIcon(dc, x, y, width, height, Graphics.COLOR_GREEN);
+          }
+        } else {
+          var counter = gHiitt.getCounter();
+          if (counter > 0) {
+            text = counter.format("%01d");
+          } else {
+            var hiitElapsed = gHiitt.getElapsedSeconds();
+            if (hiitElapsed > 0) {
+              showTimerElapsed = false;
+              text = secondsToCompactTimeString(hiitElapsed, "({m}:{s})");
+              if (gHiitt.wasValidHiit()) {
+                drawHiitIcon(dc, x, y, width, height, Graphics.COLOR_GREEN);
+              }
+              var vo2max = gHiitt.getVo2Max();
+              if (vo2max > 30) {
+                decimals = vo2max.format("%0.1f");
+              }
+            }
+          }
+        }
+        var nrHiit = gHiitt.getNumberOfHits();
+        if (nrHiit > 0) {
+          text_botleft = "H " + nrHiit.format("%0.0d");
+        }
+
+        var scores = gHiitt.getHitScores();
+        if (scores.size() > 0) {
+          var sCounter = 0;
+
+          for (var sIdx = scores.size() - 1; sIdx >= 0 and sCounter < 4; sIdx--) {
+            var score = scores[sIdx] as Float;
+
+            text_botright = text_botright + " " + score.format("%0.0f");
+            sCounter++;
+          }
+        }
+      }
+
+      if (showTimerElapsed) {
+        var valueElapsed = 0;
+        if (gShowTimer) {
+          title = "timer";
+          valueElapsed = gMetrics.getTimerTime();
+        } else {
+          title = "elapsed";
+          valueElapsed = gMetrics.getElapsedTime();
+        }
+        var elapsed = millisecondsToShortTimeString(valueElapsed, "{h}.{m}:{s}");
         prefix = stringLeft(elapsed, ".", "");
         if (prefix.equals("0")) {
           prefix = "";
@@ -291,13 +380,19 @@ class whatmetricsView extends WatchUi.DataField {
     }
 
     // small fields, no decimals and units
+    var font_text_bot = Graphics.FONT_SMALL;
+    var fontUnits = Graphics.FONT_SYSTEM_XTINY;
+    if (height < 60) {
+      font_text_bot = Graphics.FONT_XTINY;
+    }
     if (height < 30) {
       decimals = "";
       units = "";
-    } else {
-      if (decimals.equals("0")) {
-        decimals = "";
-      }
+      text_botright = "";
+      text_botleft = "";
+    }
+    if (decimals.equals("0")) {
+      decimals = "";
     }
 
     var dims_prefix = [0, 0] as Array<Number>;
@@ -309,23 +404,23 @@ class whatmetricsView extends WatchUi.DataField {
     if (prefix.length() > 0) {
       dims_prefix = dc.getTextDimensions(prefix, fontPrefix);
     }
-    var fontUnits = Graphics.FONT_SYSTEM_XTINY;
+
     if (units.length() > 0) {
       dims_units = dc.getTextDimensions(units, fontUnits);
     }
 
     // @@ when alpha working + show in paused and until 1 minute
-    // if (title.length()>0) {
-    //   dc.setColor(Graphics.COLOR_LT_GRAY, Graphics.COLOR_TRANSPARENT);
-    //   dc.drawText(x + 1, y, Graphics.FONT_SYSTEM_XTINY, title,
-    //   Graphics.TEXT_JUSTIFY_LEFT);
-    // }
+    if (mPaused or (mActivityStartCountdown > 0 and title.length() > 0)) {
+      dc.setColor(Graphics.COLOR_LT_GRAY, Graphics.COLOR_TRANSPARENT);
+      dc.drawText(x + 1, y, Graphics.FONT_SYSTEM_XTINY, title, Graphics.TEXT_JUSTIFY_LEFT);
+    }
 
     if (mReverseColor) {
       dc.setColor(Graphics.COLOR_WHITE, Graphics.COLOR_TRANSPARENT);
     } else {
       dc.setColor(mFontColor, Graphics.COLOR_TRANSPARENT);
     }
+
     if (text.length() > 0 or number.length() > 0) {
       var font = Graphics.FONT_NUMBER_HOT;
       var number_or_text = "";
@@ -339,8 +434,13 @@ class whatmetricsView extends WatchUi.DataField {
         dims_number_or_text = dc.getTextDimensions(number, font);
       }
 
-      var fontDecimals = Graphics.FONT_TINY;
+      var fontDecimals = Graphics.FONT_SYSTEM_MEDIUM;
       if (decimals.length() > 0) {
+        if (height < 100) {
+          fontDecimals = Graphics.FONT_SYSTEM_SMALL;
+        } else if (height < 45) {
+          fontDecimals = Graphics.FONT_SYSTEM_TINY;
+        }
         if (font == fontDecimals) {
           fontDecimals = Graphics.FONT_XTINY;
         }
@@ -358,7 +458,12 @@ class whatmetricsView extends WatchUi.DataField {
           dims_decimals[1] -
           Graphics.getFontDescent(font) +
           Graphics.getFontDescent(fontDecimals);
-        dc.setColor(mDecimalsColor, Graphics.COLOR_TRANSPARENT);
+
+        if (mReverseColor) {
+          dc.setColor(Graphics.COLOR_WHITE, Graphics.COLOR_TRANSPARENT);
+        } else {
+          dc.setColor(mDecimalsColor, Graphics.COLOR_TRANSPARENT);
+        }
         dc.drawText(xSplit, yDec, fontDecimals, decimals, Graphics.TEXT_JUSTIFY_LEFT);
       }
 
@@ -369,8 +474,12 @@ class whatmetricsView extends WatchUi.DataField {
           dims_units[1] -
           Graphics.getFontDescent(font) +
           Graphics.getFontDescent(fontUnits);
-        dc.setColor(mUnitsColor, Graphics.COLOR_TRANSPARENT);
 
+        if (mReverseColor) {
+          dc.setColor(Graphics.COLOR_WHITE, Graphics.COLOR_TRANSPARENT);
+        } else {
+          dc.setColor(mUnitsColor, Graphics.COLOR_TRANSPARENT);
+        }
         var xUnits = xSplit + dims_decimals[0] + 1;
         if (xUnits + dims_units[0] > width) {
           // Units on center bottom when small field
@@ -379,10 +488,32 @@ class whatmetricsView extends WatchUi.DataField {
         }
         dc.drawText(xUnits, yUnits, fontUnits, units, Graphics.TEXT_JUSTIFY_LEFT);
       }
+
+      if (text_botright.length() > 0) {
+        dc.setColor(mDecimalsColor, Graphics.COLOR_TRANSPARENT);
+        dc.drawText(
+          x + width - 1,
+          y + height - dc.getFontHeight(font_text_bot),
+          font_text_bot,
+          text_botright,
+          Graphics.TEXT_JUSTIFY_RIGHT
+        );
+      }
+      if (text_botleft.length() > 0) {
+        dc.setColor(mDecimalsColor, Graphics.COLOR_TRANSPARENT);
+        dc.drawText(
+          x + 1,
+          y + height - dc.getFontHeight(font_text_bot),
+          font_text_bot,
+          text_botleft,
+          Graphics.TEXT_JUSTIFY_LEFT
+        );
+      }
+
       if (prefix.length() > 0) {
         var xPrefix = xSplit - dims_number_or_text[0] - dims_prefix[0];
         var yPrefix = y + height / 2 - dims_number_or_text[1] / 2; // - dims_prefix[1] / 2;
-
+        dc.setColor(mUnitsColor, Graphics.COLOR_TRANSPARENT);
         dc.drawText(xPrefix, yPrefix, fontPrefix, prefix, Graphics.TEXT_JUSTIFY_LEFT);
       }
     }
@@ -392,10 +523,11 @@ class whatmetricsView extends WatchUi.DataField {
     mReverseColor = false;
     if (gShowColors) {
       var perc = percentageOf(value, maxValue);
-      mReverseColor = perc >= 165;
       var darker = 0;
       if (getBackgroundColor() == Graphics.COLOR_BLACK) {
         darker = 30;
+      } else {
+        mReverseColor = perc >= 165;
       }
       return percentageToColor(perc, 255, $.PERC_COLORS_SCHEME, darker);
     } else {
@@ -509,7 +641,7 @@ class whatmetricsView extends WatchUi.DataField {
     var x1 = x + width / 2 + mx;
     var y1 = y + my;
 
-    var x2 = x + width / 2 - 1.2 * mx;
+    var x2 = x + width / 2 - 1.3 * mx;
     var y2 = y + height / 2 + 2;
 
     var x3 = x2 + mx;
@@ -518,7 +650,7 @@ class whatmetricsView extends WatchUi.DataField {
     var x4 = x + width / 2 - mx;
     var y4 = y + height - my;
 
-    var x5 = x + width / 2 + 1.2 * mx;
+    var x5 = x + width / 2 + 1.3 * mx;
     var y5 = y + height / 2 - 2;
 
     var x6 = x + width / 2;
@@ -537,12 +669,18 @@ class whatmetricsView extends WatchUi.DataField {
     );
   }
 
-  /*
-@@ draw dark colors -> font whit + background gray
-  dc.setColor(Graphics.COLOR_DK_GRAY, Graphics.COLOR_TRANSPARENT);
-      dc.fillRectangle(x, y, width, height);
-      dc.setColor(Graphics.COLOR_WHITE, Graphics.COLOR_TRANSPARENT);
-  */
+  hidden function drawHiitIcon(
+    dc as Dc,
+    x as Number,
+    y as Number,
+    width as Number,
+    height as Number,
+    color as ColorType
+  ) as Void {
+    dc.setColor(color, Graphics.COLOR_TRANSPARENT);
+    dc.fillRectangle(x, y, width, height);
+  }
+
   hidden function drawCadenceIcon(
     dc as Dc,
     x as Number,
@@ -616,9 +754,9 @@ class whatmetricsView extends WatchUi.DataField {
     var x2 = x1 + 1.5 * d;
     var y2 = y + m;
     var x3 = x2 + 0.5 * d;
-    var y3 = y + 3 * m; // + height / 4;
+    var y3 = y + 3 * m;
     var x4 = x3 + d;
-    var y4 = y + 2 * m; // + height / 2;
+    var y4 = y + 2 * m;
     var x5 = x4 + d;
     var y5 = y1;
 
@@ -639,29 +777,6 @@ class whatmetricsView extends WatchUi.DataField {
     var x = 1;
     var y = 1;
     var l = dc.getFontHeight(font);
-    // dc.setColor(Graphics.COLOR_BLACK, Graphics.COLOR_TRANSPARENT);
-    // var x = dc.getWidth() / 2;
-    // var y = dc.getHeight() / 2;
-    // dc.drawText(
-    //   x,
-    //   y,
-    //   Graphics.FONT_LARGE,
-    //   mFieldSize,
-    //   Graphics.TEXT_JUSTIFY_CENTER | Graphics.TEXT_JUSTIFY_VCENTER
-    // );
-    // var cadence = gMetrics.getCadence();
-    // var maxCadence = gMetrics.getMaxCadence();
-    // var perc = percentageOf(cadence, maxCadence);
-
-    // // drawPercentageCircleTarget(dc, x, y + 50, 50, perc, 50);
-
-    // dc.drawText(
-    //   x,
-    //   y,
-    //   font,
-    //   Lang.format("RPM: $1$/$2$", [cadence, maxCadence]),
-    //   Graphics.TEXT_JUSTIFY_LEFT
-    // );
 
     y = y + l;
     dc.drawText(x, y, font, Lang.format("Alt: $1$", [gMetrics.getAltitude()]), Graphics.TEXT_JUSTIFY_LEFT);

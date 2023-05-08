@@ -39,15 +39,16 @@ class WhatHiitt {
   hidden var hitPerformed as Number = 0;
   hidden var hitStatus as HiitStatus = InActive;
   hidden var hitStartOnPerc as Number = 150;
-  hidden var hitStartCountDownSeconds as Number = 5; 
+  hidden var hitStartCountDownSeconds as Number = 5;
   hidden var hitStopOnPerc as Number = 100;
-  hidden var hitStopCountDownSeconds as Number = 10; 
+  hidden var hitStopCountDownSeconds as Number = 10;
   hidden var hitCounter as Number = 0;
   hidden var hitElapsedTime as Time.Moment?;
   hidden var hitElapsedRecoveryTime as Time.Moment?;
 
-  hidden var minimalElapsedSeconds as Number = 30; // @@ settings
-  hidden var minimalRecoverySeconds as Number = 300; // @@ settings
+  hidden var minimalElapsedSeconds as Number = 30; 
+  hidden var minimalRecoverySeconds as Number = 300; 
+  hidden var mValidHiitPerformed as Boolean = false;
 
   hidden var activityPaused as Boolean = false;
   hidden var userPaused as Boolean = false;
@@ -55,7 +56,6 @@ class WhatHiitt {
   hidden var stoppingCountDownSeconds as Number = 5;
   hidden var stoppingTime as Time.Moment?;
 
-  // hidden var wVo2Max as WhatVo2Max?;
   hidden var calcVo2Max as Boolean = false;
   hidden var playTone as Boolean = true;
 
@@ -92,13 +92,18 @@ class WhatHiitt {
   function setStopOnPerc(hitStartOnPerc as Number) as Void {
     self.hitStopOnPerc = hitStopOnPerc;
   }
-  function setStartCountDownSeconds(
-    hitStartCountDownSeconds as Number
-  ) as Void {
+  function setStartCountDownSeconds(hitStartCountDownSeconds as Number) as Void {
     self.hitStartCountDownSeconds = hitStartCountDownSeconds;
   }
   function setStopCountDownSeconds(hitStopCountDownSeconds as Number) as Void {
     self.hitStopCountDownSeconds = hitStopCountDownSeconds;
+  }
+
+  function setMinimalElapsedSeconds(minimalElapsedSeconds as Number) as Void {
+    self.minimalElapsedSeconds = minimalElapsedSeconds;
+  }
+  function setMinimalRecoverySeconds(minimalRecoverySeconds as Number) as Void {
+    self.minimalRecoverySeconds = minimalRecoverySeconds;
   }
 
   function isEnabled() as Boolean {
@@ -116,9 +121,7 @@ class WhatHiitt {
       return false;
     }
 
-    var started =
-      currentTimerState == Activity.TIMER_STATE_OFF &&
-      timerState == Activity.TIMER_STATE_ON;
+    var started = currentTimerState == Activity.TIMER_STATE_OFF && timerState == Activity.TIMER_STATE_ON;
     currentTimerState = timerState;
     return started;
   }
@@ -128,6 +131,10 @@ class WhatHiitt {
   }
   function getHitDurations() as Array<Number> {
     return hitDurations;
+  }
+
+  function wasValidHiit() as Boolean {
+    return mValidHiitPerformed;
   }
 
   function compute(info as Activity.Info, percOfTarget as Numeric) as Void {
@@ -164,6 +171,7 @@ class WhatHiitt {
         System.println("Warming up");
         hitCounter = hitCounter - 1;
         hitAttentionWarmingUp(playTone);
+        mValidHiitPerformed = false;
 
         if (percOfTarget < hitStartOnPerc) {
           // Stop warming up
@@ -195,20 +203,21 @@ class WhatHiitt {
           if (hitCounter == 0) {
             hitStatus = InActive;
 
+            // currentDuration = actual hiit seconds just before cooling down
             if (currentDuration >= minimalElapsedSeconds) {
               hitAttentionStop();
               // Proper Hiit :-)
               hitPerformed = hitPerformed + 1;
               hitElapsedRecoveryTime = Time.now();
               hitScores.add(currentScore);
-              hitDurations.add(currentDuration);
+              hitDurations.add(currentDuration);             
             } else {
               // No proper Hiit (no sound)
               hitStatus = InActive;
               hitCounter = 0;
               hitElapsedRecoveryTime = null;
               currentScore = 0.0f;
-              currentDuration = 0;
+              currentDuration = 0;              
             }
             hitElapsedTime = null;
           }
@@ -216,14 +225,15 @@ class WhatHiitt {
         break;
       case Active:
         System.println("Active");
+
+        mValidHiitPerformed = getElapsedSeconds() >= minimalElapsedSeconds;
         if (percOfTarget < hitStopOnPerc) {
           hitStatus = CoolingDown;
           hitCounter = hitStopCountDownSeconds;
           hitAttentionWarn();
-          // only sound when proper Hiit
-          playTone =
-            soundEnabled && getElapsedSeconds() >= minimalElapsedSeconds;
           currentDuration = getElapsedSeconds();
+          // only sound when proper Hiit
+          playTone = soundEnabled && mValidHiitPerformed;
           currentScore = getVo2Max();
         } else {
           addAveragePower(info);
@@ -240,15 +250,8 @@ class WhatHiitt {
     var power = getActivityValue(info, :currentPower, 0) as Number;
     // [ avg' * (n-1) + x ] / n
     powerTicks = powerTicks + 1;
-    avgPowerPerSec =
-      (avgPowerPerSec * (powerTicks - 1) + power) / powerTicks.toDouble();
-    System.println(
-      Lang.format("p $1$ ticks $2$ avg $3$", [
-        power,
-        powerTicks,
-        avgPowerPerSec,
-      ])
-    );
+    avgPowerPerSec = (avgPowerPerSec * (powerTicks - 1) + power) / powerTicks.toDouble();
+    System.println(Lang.format("p $1$ ticks $2$ avg $3$", [power, powerTicks, avgPowerPerSec]));
   }
 
   hidden function updateRecoveryTime() as Void {
@@ -271,9 +274,7 @@ class WhatHiitt {
   hidden function updateMetrics(info as Activity.Info) as Void {
     var currentSpeed = getActivityValue(info, :currentSpeed, 0.0f) as Float;
     var currentCadence = getActivityValue(info, :currentCadence, 0.0f) as Float;
-    userPaused =
-      currentSpeed == 0.0f ||
-      (info has :currentCadence and currentCadence == 0);
+    userPaused = currentSpeed == 0.0f || (info has :currentCadence and currentCadence == 0);
 
     if (info has :timerState) {
       if (ActivityStarted(info.timerState)) {
@@ -304,9 +305,7 @@ class WhatHiitt {
   hidden function hitAttentionWarmingUp(playTone as Boolean) as Void {
     if (Attention has :playTone && soundEnabled && playTone) {
       if (Attention has :ToneProfile) {
-        var toneProfileBeeps =
-          [new Attention.ToneProfile(1500, 50)] as
-          Lang.Array<Attention.ToneProfile>;
+        var toneProfileBeeps = [new Attention.ToneProfile(1500, 50)] as Lang.Array<Attention.ToneProfile>;
         Attention.playTone({ :toneProfile => toneProfileBeeps });
       } else {
         Attention.playTone(Attention.TONE_LOUD_BEEP);
@@ -315,16 +314,9 @@ class WhatHiitt {
   }
 
   hidden function hitAttentionCoolingdown(playTone as Boolean) as Void {
-    if (
-      Attention has :playTone &&
-      soundEnabled &&
-      playTone &&
-      hitSound != StartOnlySound
-    ) {
+    if (Attention has :playTone && soundEnabled && playTone && hitSound != StartOnlySound) {
       if (Attention has :ToneProfile && hitSound == LowNoise) {
-        var toneProfileBeeps =
-          [new Attention.ToneProfile(1000, 50)] as
-          Lang.Array<Attention.ToneProfile>;
+        var toneProfileBeeps = [new Attention.ToneProfile(1000, 50)] as Lang.Array<Attention.ToneProfile>;
         Attention.playTone({ :toneProfile => toneProfileBeeps });
       } else {
         Attention.playTone(Attention.TONE_LOUD_BEEP);
@@ -336,10 +328,8 @@ class WhatHiitt {
     if (Attention has :playTone && soundEnabled) {
       if (Attention has :ToneProfile) {
         var toneProfileBeeps =
-          [
-            new Attention.ToneProfile(1000, 40),
-            new Attention.ToneProfile(1500, 100),
-          ] as Lang.Array<Attention.ToneProfile>;
+          [new Attention.ToneProfile(1000, 40), new Attention.ToneProfile(1500, 100)] as
+          Lang.Array<Attention.ToneProfile>;
         Attention.playTone({ :toneProfile => toneProfileBeeps });
       }
     }
@@ -348,9 +338,7 @@ class WhatHiitt {
   hidden function hitAttentionStart() as Void {
     if (Attention has :playTone && soundEnabled) {
       if (Attention has :ToneProfile && hitSound == LowNoise) {
-        var toneProfileBeeps =
-          [new Attention.ToneProfile(1100, 150)] as
-          Lang.Array<Attention.ToneProfile>;
+        var toneProfileBeeps = [new Attention.ToneProfile(1100, 150)] as Lang.Array<Attention.ToneProfile>;
         Attention.playTone({ :toneProfile => toneProfileBeeps });
       } else {
         Attention.playTone(Attention.TONE_ALERT_HI);
@@ -388,8 +376,7 @@ class WhatHiitt {
     if (hitElapsedRecoveryTime == null) {
       return 0;
     }
-    var seconds =
-      Time.now().value() - (hitElapsedRecoveryTime as Time.Moment).value();
+    var seconds = Time.now().value() - (hitElapsedRecoveryTime as Time.Moment).value();
     var leftOver = minimalRecoverySeconds - seconds;
     if (leftOver < 0) {
       hitElapsedRecoveryTime = null;

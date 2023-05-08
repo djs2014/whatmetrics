@@ -3,6 +3,7 @@ import Toybox.Lang;
 import Toybox.System;
 import Toybox.Math;
 import Toybox.Time;
+import Toybox.AntPlus;
 
 class WhatMetrics {
   hidden var a_info as Activity.Info?;
@@ -22,8 +23,32 @@ class WhatMetrics {
   hidden var mCurrentPowerPerX as Number = 0;
   hidden var mPowerPerSec as Number = 3;
   hidden var mPowerDataPerSec as Array<Number> = [] as Array<Number>;
-  
+  hidden var mPowerBalance as PowerBalance? = null;
+  hidden var userWeightKg as Float = 0.0f;
+
+  // heartrate
+  hidden var mHrZones as Lang.Array<Lang.Number> = [] as Lang.Array<Lang.Number>;
   function initialize() {}
+
+  function initPowerBalance() as Void {
+    if (mPowerBalance == null) {
+      mPowerBalance = new PowerBalance();
+    }
+  }
+
+  function initWeight() as Void {
+    var profile = UserProfile.getProfile();
+    userWeightKg = 0.0f;
+    if (profile.weight == null) {
+      return;
+    }
+    var weight = profile.weight as Number;
+    userWeightKg = weight / 1000.0;
+  }
+
+  function initHrZones(zones as Lang.Array<Lang.Number>) as Void {
+    mHrZones = zones;
+  }
 
   function setPowerPerSec(seconds as Number) as Void {
     mPowerPerSec = seconds;
@@ -72,6 +97,21 @@ class WhatMetrics {
   function getMaxHeartRate() as Number {
     return getActivityValue(a_info, :maxHeartRate, 0) as Number;
   }
+  function getHeartRateZone() as Number {
+    if (mHrZones.size() == 0) {
+      return 0;
+    }
+    var heartRate = getHeartRate();
+    if (heartRate < mHrZones[0]) {
+      return 0;
+    }
+    for (var idx = 1; idx < mHrZones.size(); idx++) {
+      if (heartRate <= mHrZones[idx]) {
+        return idx;
+      }
+    }
+    return mHrZones.size();
+  }
 
   // distance, meters
   hidden function getElapsedDistance() as Float {
@@ -110,6 +150,10 @@ class WhatMetrics {
   function getMaxSpeed() as Float {
     return getActivityValue(a_info, :maxSpeed, 0.0f) as Float;
   }
+  // power interval sec
+  function getPowerPerSec() as Number {
+    return mPowerPerSec;
+  }
   // power watts / x seconds
   function getPower() as Number {
     return mCurrentPowerPerX;
@@ -119,6 +163,25 @@ class WhatMetrics {
   }
   function getMaxPower() as Number {
     return getActivityValue(a_info, :maxPower, 0) as Number;
+  }
+  function getPowerPerWeight() as Float {
+    if (userWeightKg == 0) {
+      return 0.0f;
+    }
+    return getPower() / userWeightKg.toFloat();
+  }
+
+  function getPowerBalanceLeft() as Number {
+    if (mPowerBalance != null) {
+      return (mPowerBalance as PowerBalance).getLeft();
+    }
+    return 0;
+  }
+  function getAveragePowerBalanceLeft() as Double {
+    if (mPowerBalance != null) {
+      return (mPowerBalance as PowerBalance).getAverageLeft();
+    }
+    return 0.0d;
   }
 
   // time of day, timer, elapsed time, date dd-month
@@ -143,6 +206,10 @@ class WhatMetrics {
     a_info = info;
 
     calculateMetrics();
+
+    if (mPowerBalance != null) {
+      (mPowerBalance as PowerBalance).compute(getPower());
+    }
   }
 
   hidden function calculateMetrics() as Void {
@@ -192,5 +259,40 @@ class WhatMetrics {
       return 0.0d;
     }
     return Math.mean(arrGrade as Array<Float>);
+  }
+}
+
+class PowerBalance {
+  hidden var bikePower as AntPlus.BikePower;
+  hidden var listener as ABikePowerListener;
+  hidden var mPowerBalanceLeft as Number = 0;
+  hidden var ticks as Number = 0;
+  hidden var avgPowerBalanceLeft as Double = 0.0d;
+  function initialize() {
+    listener = new ABikePowerListener(self.weak(), :onPedalPowerBalanceUpdate);
+    bikePower = new AntPlus.BikePower(listener);
+  }
+
+  function getLeft() as Number {
+    return mPowerBalanceLeft;
+  }
+  function getAverageLeft() as Double {
+    return avgPowerBalanceLeft;
+  }
+
+  function compute(power as Number) as Void {
+    if (power > 0 && mPowerBalanceLeft != null && mPowerBalanceLeft > 0) {
+      ticks = ticks + 1;
+      var a = 1 / ticks.toDouble();
+      var b = 1 - a;
+      avgPowerBalanceLeft = a * mPowerBalanceLeft + b * avgPowerBalanceLeft;
+    }
+  }
+  function onPedalPowerBalanceUpdate(pedalPowerPercent as Lang.Number, rightPedalIndicator as Lang.Boolean) as Void {
+    if (rightPedalIndicator) {
+      mPowerBalanceLeft = 100 - pedalPowerPercent;
+    } else {
+      mPowerBalanceLeft = pedalPowerPercent;
+    }
   }
 }

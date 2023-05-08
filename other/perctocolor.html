@@ -1,0 +1,66 @@
+<html>
+  <head></head>
+  <body>
+    <ul id="perc"></ul>
+    <script>
+      var percentColorsTest = [
+        { pct: 0.0, color: { r: 0xff, g: 0x00, b: 0 } },
+        { pct: 0.5, color: { r: 0xff, g: 0xff, b: 0 } },
+        { pct: 1.0, color: { r: 0x00, g: 0xff, b: 0 } },
+      ];
+
+      var percentColors = [
+        { pct: 0.0, color: { r: 244, g: 244, b: 244 } },
+        { pct: 0.55, color: { r: 233, g: 233, b: 247 } },
+        { pct: 0.65, color: { r: 174, g: 214, b: 241 } },
+        { pct: 0.7, color: { r: 169, g: 204, b: 227 } },
+        { pct: 0.75, color: { r: 163, g: 228, b: 215 } },
+        { pct: 0.8, color: { r: 169, g: 223, b: 191 } },
+        { pct: 0.85, color: { r: 249, g: 231, b: 159 } },
+        { pct: 0.95, color: { r: 250, g: 215, b: 160 } },
+        { pct: 1.0, color: { r: 250, g: 229, b: 211 } },
+        { pct: 1.05, color: { r: 245, g: 203, b: 167 } },
+        { pct: 1.15, color: { r: 237, g: 187, b: 153 } },
+        { pct: 1.25, color: { r: 245, g: 183, b: 177 } },
+        { pct: 1.35, color: { r: 230, g: 176, b: 170 } },
+        { pct: 1.45, color: { r: 215, g: 189, b: 226 } },
+        { pct: 1.55, color: { r: 210, g: 180, b: 222 } },
+        { pct: 1.65, color: { r: 187, g: 143, b: 206 } },
+        { pct: 9.0, color: { r: 0, g: 0, b: 0 } },
+      ];
+
+      var getColorForPercentage = function (pct) {
+        for (var i = 1; i < percentColors.length - 1; i++) {
+          if (pct < percentColors[i].pct) {
+            break;
+          }
+        }
+        var lower = percentColors[i - 1];
+        var upper = percentColors[i];
+        var range = upper.pct - lower.pct;
+        var rangePct = (pct - lower.pct) / range;
+        var pctLower = 1 - rangePct;
+        var pctUpper = rangePct;
+        var color = {
+          r: Math.floor(lower.color.r * pctLower + upper.color.r * pctUpper),
+          g: Math.floor(lower.color.g * pctLower + upper.color.g * pctUpper),
+          b: Math.floor(lower.color.b * pctLower + upper.color.b * pctUpper),
+        };
+        return "rgb(" + [color.r, color.g, color.b].join(",") + ")";
+        // or output as hex if preferred
+      };
+
+      let start = document.getElementById("perc");
+      for (var i = 0; i <= 400; i++) {
+        
+        let text = i + "%";
+        let li = document.createElement("li");
+            li.innerText= text;
+            li.style.backgroundColor = getColorForPercentage(i / 100);
+
+
+          start.appendChild(li);        
+      }
+    </script>
+  </body>
+</html>
