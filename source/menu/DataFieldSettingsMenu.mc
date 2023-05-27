@@ -94,7 +94,14 @@ class DataFieldSettingsMenuDelegate extends WatchUi.Menu2InputDelegate {
       mi.setSubLabel($.getStorageNumberAsString(mi.getId() as String));
       targetMenu.addItem(mi);
 
-      mi = new WatchUi.MenuItem("Grade window size", null, "metric_gradews", null);
+      // @@ separate menu
+      mi = new WatchUi.MenuItem("Gradient window size", null, "metric_gradews", null);
+      mi.setSubLabel($.getStorageNumberAsString(mi.getId() as String));
+      targetMenu.addItem(mi);
+      mi = new WatchUi.MenuItem("Gradient minimal rise", null, "metric_grademinrise", null);
+      mi.setSubLabel($.getStorageNumberAsString(mi.getId() as String));
+      targetMenu.addItem(mi);
+      mi = new WatchUi.MenuItem("Gradient minimal run", null, "metric_grademinrun", null);
       mi.setSubLabel($.getStorageNumberAsString(mi.getId() as String));
       targetMenu.addItem(mi);
 

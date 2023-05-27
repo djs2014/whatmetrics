@@ -216,12 +216,13 @@ class whatmetricsView extends WatchUi.DataField {
       value = grade.format("%0.1f");
       number = stringLeft(value, ".", value);
       decimals = stringRight(value, ".", "");
+      var g = grade;
       if (grade < 0) {
-        grade = grade * -1;
+        grade = grade * -1;        
       }
       var iconColor = getIconColor(dc, grade, gTargetGrade);
       checkReverseColor(dc, x, y, width, height);
-      drawGradeIcon(dc, x, y, width, height, iconColor);
+      drawGradeIcon(dc, x, y, width, height, iconColor, g);
     } else if (fieldIdx == 1) {
       text = getCompassDirection(gMetrics.getBearing());
     } else if (fieldIdx == 2) {
@@ -231,7 +232,7 @@ class whatmetricsView extends WatchUi.DataField {
         var today = Gregorian.info(Time.now(), Time.FORMAT_MEDIUM);
         text = Lang.format("$1$:$2$", [today.hour, today.min.format("%02d")]);
         decimals = today.sec.format("%02d");
-        units = Lang.format("$1$ $2$", [today.day, today.month]);
+        units = Lang.format("$1$ $2$ $3$", [today.day_of_week, today.day, today.month]);        
       } else {
         title = "heartrate";
         units = "bpm";
@@ -482,9 +483,9 @@ class whatmetricsView extends WatchUi.DataField {
         }
         var xUnits = xSplit + dims_decimals[0] + 1;
         if (xUnits + dims_units[0] > width) {
-          // Units on center bottom when small field
+          // Units on center bottom when small field (@@ +1 fix for edge 1040 display not same as on simulator)
           xUnits = x + width / 2 - dims_units[0] / 2;
-          yUnits = yBase + dims_number_or_text[1] - Graphics.getFontDescent(font); // not needed on device - Graphics.getFontDescent(fontUnits)
+          yUnits = yBase + dims_number_or_text[1] - Graphics.getFontDescent(font) + 1; // not needed on device - Graphics.getFontDescent(fontUnits)
         }
         dc.drawText(xUnits, yUnits, fontUnits, units, Graphics.TEXT_JUSTIFY_LEFT);
       }
@@ -580,7 +581,8 @@ class whatmetricsView extends WatchUi.DataField {
     y as Number,
     width as Number,
     height as Number,
-    color as ColorType
+    color as ColorType,
+    grade as Double
   ) as Void {
     var m = height / 6;
     var x1 = x + m;
@@ -588,6 +590,7 @@ class whatmetricsView extends WatchUi.DataField {
     var x2 = x + width - m;
     var y2 = y1;
     var x3 = x2;
+    if (grade<0.0) { x3 = x1; }
     var y3 = y + m;
 
     setColorFillStroke(dc, color);

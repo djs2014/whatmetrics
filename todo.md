@@ -1,36 +1,30 @@
+grade < 0 => flip image
+
+@@ nog niet ondersteund
+opacity bottom line font
+- solid when paused.. 
 x heartrate target zone
 
-settings uit what tired
-  - save issue -> save during activity allow
-    - - maar dan geen load
-power per kg + show p or p/weight
+fall backs (after x seconds)
+  pwr 0 -> distance?
+  rpm 0 -> calories? / gear ratio? / pressure
+  grade between -1 / 1 -> 
+  altitude between x and y ->
+
+
+when trans pos
+-> hiit mode 
+  countdown large + show timer + show score at end
+  countdown large + show timer / score + show score at end
+  show score at end
+
 opacity text bottom 0-10 
 odo for total asc./desc
 
-differnt metrics
 km/miles etc..
 - altitude
   + total asc/desc info
-avg/max bar show right -> max - after x sec goes to avg...
-icon:
- hit 2 lines layout
 
-  HIIT when active
-
-  recovery
-  VO2
-  (xx:xx)
-  
-  (xx:xx) vo2
-  #x [scores]
-  
-  // recovery
-  (xx:xx)
-
-
-
- no power - > @@
- no rpm -> @@
  altitude < 100 -> calories
   - energy expenditure
 

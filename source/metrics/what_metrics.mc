@@ -16,7 +16,11 @@ class WhatMetrics {
   hidden var arrGrade as Array<Float> = [] as Array<Float>;
   hidden var previousAltitude as Float = 0.0f;
   hidden var previousDistance as Float = 0.0f;
-  hidden var previousRise as Float = 0.0f;
+  hidden var previousRise as Float = 0.0f;  
+  hidden var minimalRiseUp as Float = 0.50f; // meters
+  hidden var minimalRiseDown as Float = -0.50f; // meters
+  hidden var minimalRun as Float = 0.50f; // meters
+
   // bearing
   hidden var previousTrack as Float = 0.0f;
   // power
@@ -55,6 +59,13 @@ class WhatMetrics {
   }
   function setGradeWindowSize(size as Number) as Void {
     gradeWindowSize = size;
+  }
+  function setGradeMinimalRise(rise as Number) as Void {
+    minimalRiseUp = rise / 100.0f;
+    minimalRiseDown = -1.0f * minimalRiseUp;
+  }
+  function setGradeMinimalRun(run as Number) as Void {
+    minimalRun = run / 100.0f;
   }
   // cadence, rpm,
   function getCadence() as Number {
@@ -200,20 +211,22 @@ class WhatMetrics {
 
   // called per second
   function compute(info as Activity.Info) as Void {
-    previousAltitude = getAltitude();
-    previousDistance = getElapsedDistance();
+    var intermediateAltitude = getAltitude();
+    if (previousAltitude == 0.0f) { previousAltitude = intermediateAltitude; }
+    var intermediateDistance = getElapsedDistance();
+    if (previousDistance == 0.0f) { previousDistance = intermediateDistance; }
 
     a_info = info;
 
-    calculateMetrics();
+    calculateMetrics(intermediateAltitude, intermediateDistance);
 
     if (mPowerBalance != null) {
       (mPowerBalance as PowerBalance).compute(getPower());
     }
   }
 
-  hidden function calculateMetrics() as Void {
-    mCurrentGrade = calculateGrade();
+  hidden function calculateMetrics(intermediateAltitude as Float, intermediateDistance as Float) as Void {
+    mCurrentGrade = calculateGrade(intermediateAltitude, intermediateDistance);
     mCurrentPowerPerX = calculatePower();
   }
 
@@ -231,14 +244,29 @@ class WhatMetrics {
     return Math.mean(mPowerDataPerSec as Array<Number>).toNumber();
   }
 
-  hidden function calculateGrade() as Double {
+  hidden function calculateGrade(intermediateAltitude as Float, intermediateDistance as Float) as Double {
     var altitude = getAltitude();
     var distance = getElapsedDistance();
-    var rise = previousAltitude - altitude;
-    var run = previousDistance - distance;
 
-    if (run != 0.0 and (rise < -0.01 or rise > 0.01)) {
-      var grade = 0.0f;
+    var tmpRise = intermediateAltitude - previousAltitude;
+    var tmpRun = intermediateDistance - previousDistance;
+    if (tmpRun <= 0.20) { // no speed.. (tmpRise >= -0.20 and tmpRise <= 0.20 and
+      previousAltitude = intermediateAltitude;
+      previousDistance = intermediateDistance;
+      previousRise = tmpRise;
+      arrGrade = [] as Array<Float>;
+      return 0.0d;
+    } else if ((tmpRise < minimalRiseDown or tmpRise > minimalRiseUp) and tmpRun >= minimalRun) {
+      // valid rise and valid run
+      previousAltitude = intermediateAltitude;
+      previousDistance = intermediateDistance;
+    }
+
+    var rise = altitude - previousAltitude;
+    var run = distance - previousDistance;
+    
+    if (run != 0.0f and (rise < minimalRiseDown or rise > minimalRiseUp) and run >= minimalRun) {      
+      var grade = 0.0f; // %
       grade = (rise.toFloat() / run.toFloat()) * 100.0;
 
       if (previousRise < 0 and rise > 0 or (previousRise > 0 and rise < 0)) {
@@ -249,7 +277,7 @@ class WhatMetrics {
         arrGrade = arrGrade.slice(1, null);
       }
       previousRise = rise;
-    } else if (rise >= -0.01 and rise <= 0.01) {
+    } else if (rise >= -0.02 and rise <= 0.02 and run <= 0.02) {
       previousRise = rise;
       arrGrade = [] as Array<Float>;
       return 0.0d;

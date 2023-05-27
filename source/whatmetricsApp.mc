@@ -47,6 +47,8 @@ class whatmetricsApp extends Application.AppBase {
 
       Storage.setValue("metric_ppersec", 3);
       Storage.setValue("metric_gradews", 4);
+      Storage.setValue("metric_grademinrise", 50);
+      Storage.setValue("metric_grademinrun", 50);
 
       Storage.setValue("debug", gDebug);
       Storage.setValue("show_colors", gShowColors);
@@ -67,6 +69,8 @@ class whatmetricsApp extends Application.AppBase {
 
     gMetrics.setPowerPerSec(getStorageValue("metric_ppersec", 0) as Number);
     gMetrics.setGradeWindowSize(getStorageValue("metric_gradews", 0) as Number);
+    gMetrics.setGradeMinimalRise(getStorageValue("metric_grademinrise", 0) as Number);
+    gMetrics.setGradeMinimalRun(getStorageValue("metric_grademinrun", 0) as Number);
 
     gTargetFtp = getStorageValue("target_ftp", 0) as Number;
     gTargetSpeed = getStorageValue("target_speed", 0) as Number;
