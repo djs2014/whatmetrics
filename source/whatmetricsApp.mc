@@ -59,7 +59,7 @@ class whatmetricsApp extends Application.AppBase {
     }
 
     gHiitt.setMode(getStorageValue("hiit_mode", WhatHiitt.HiitDisabled) as WhatHiitt.HiitMode);
-    gHiitt.setSound(getStorageValue("hiit_sound", WhatHiitt.NoSound) as WhatHiitt.HiitSound);
+    gHiitt.setSound(getStorageValue("hiit_sound", WhatHiitt.StartOnlySound) as WhatHiitt.HiitSound);
     gHiitt.setStartOnPerc(getStorageValue("hiit_startperc", 0) as Number);
     gHiitt.setStopOnPerc(getStorageValue("hiit_stopperc", 0) as Number);
     gHiitt.setStartCountDownSeconds(getStorageValue("hiit_countdown", 3) as Number);

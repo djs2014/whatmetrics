@@ -40,6 +40,7 @@ class whatmetricsView extends WatchUi.DataField {
     Graphics.FONT_SYSTEM_LARGE,
   ];
 
+  // hidden var mGrade as Double = 0.0d;
   function initialize() {
     DataField.initialize();
     mFieldSize = "?x?";
@@ -213,6 +214,11 @@ class whatmetricsView extends WatchUi.DataField {
       title = "grade";
       units = "%";
       var grade = gMetrics.getGrade();
+
+      // mGrade = mGrade + 0.5d;
+      // if (mGrade > 25) {      mGrade = -25.0d;    }
+      // grade = mGrade;
+
       value = grade.format("%0.1f");
       number = stringLeft(value, ".", value);
       decimals = stringRight(value, ".", "");
@@ -584,23 +590,75 @@ class whatmetricsView extends WatchUi.DataField {
     color as ColorType,
     grade as Double
   ) as Void {
-    var m = height / 6;
-    var x1 = x + m;
-    var y1 = y + height - m;
-    var x2 = x + width - m;
-    var y2 = y1;
-    var x3 = x2;
-    if (grade<0.0) { x3 = x1; }
-    var y3 = y + m;
+    var m = height / 8;
+    x = x + m;
+    y = y + m;
+    width = width - 2 * m;
+    height = height - 2 * m;
 
-    setColorFillStroke(dc, color);
-    dc.fillPolygon(
-      [
-        [x1, y1],
-        [x2, y2],
-        [x3, y3],
-      ] as Array<Array<Number> >
-    );
+    setColorFillStroke(dc, color);    
+    var f = grade / 10.0;
+    if (f < 0) { f = f * -1.0; }
+    
+    var h = height / 2;
+    var w = width / 2;    
+    var xc = x + w;
+    var yc = y + h;
+
+    var xp = w;
+    var yp = 0;
+    if (f != 0.0) {
+      yp = f * w;
+      if (yp > h) {
+        xp = h / f ;
+        yp = h;
+      }         
+    }
+    if (grade > 0)    {
+      if (yp == h) {
+        dc.fillPolygon(
+          [
+            [xc + xp, yc - yp],
+            [x + width, y],
+            [x + width, y + height],
+            [xc - xp, y + height],
+          ] as Array<Array<Number> >
+        );
+      } else {
+        dc.fillPolygon(
+          [
+            [xc + xp, yc - yp],
+            [x + width, y + height],
+            [x, y + height],
+            [x, yc + yp],
+          ] as Array<Array<Number> >
+        );
+      }
+      // dc.setColor(Graphics.COLOR_BLACK, Graphics.COLOR_TRANSPARENT);
+      // dc.drawLine(xc, yc, xc + xp, yc - yp);
+    } else {
+      if (yp == h) {
+       dc.fillPolygon(
+          [
+            [xc + xp, yc + yp],
+            [x, y + height],
+            [x, y],
+            [xc - xp, y],
+          ] as Array<Array<Number> >
+        );
+      } else {
+         dc.fillPolygon(
+          [
+            [xc + xp, yc + yp],
+            [x + width, y + height],
+            [x, y + height],
+            [x, yc - yp],
+          ] as Array<Array<Number> >
+        );
+      }
+      // dc.setColor(Graphics.COLOR_BLACK, Graphics.COLOR_TRANSPARENT);
+      // dc.drawLine(xc, yc, xc + xp, yc + yp);
+    }
   }
 
   hidden function drawSpeedIcon(
