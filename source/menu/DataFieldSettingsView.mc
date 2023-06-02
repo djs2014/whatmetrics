@@ -48,6 +48,10 @@ class DataFieldSettingsDelegate extends WatchUi.BehaviorDelegate {
     menu.addItem(mi);
     mi = new WatchUi.MenuItem("Targets", null, "targets", null);
     menu.addItem(mi);
+    mi = new WatchUi.MenuItem("Power", null, "power", null);
+    menu.addItem(mi);
+    mi = new WatchUi.MenuItem("Gradient", null, "gradient", null);
+    menu.addItem(mi);
 
     var boolean = false;
 
@@ -61,13 +65,7 @@ class DataFieldSettingsDelegate extends WatchUi.BehaviorDelegate {
     mi = new WatchUi.ToggleMenuItem("Timer", null, "show_timer", boolean, null);
     mi.setSubLabel($.subMenuToggleMenuItem(mi.getId() as String));
     menu.addItem(mi);
-
-    boolean = Storage.getValue("show_powerbalance") ? true : false;
-    menu.addItem(new WatchUi.ToggleMenuItem("Power balance", null, "show_powerbalance", boolean, null));
-
-    boolean = Storage.getValue("show_powerperweight") ? true : false;
-    menu.addItem(new WatchUi.ToggleMenuItem("Power per weight", null, "show_powerperweight", boolean, null));
-
+  
     boolean = Storage.getValue("debug") ? true : false;
     menu.addItem(new WatchUi.ToggleMenuItem("Debug", null, "debug", boolean, null));
 

@@ -493,13 +493,14 @@ class NumericInputView extends WatchUi.View {
         }
       }
       // QND
-      dc.setColor(Graphics.COLOR_LT_GRAY, Graphics.COLOR_TRANSPARENT);
+      dc.setColor(Graphics.COLOR_YELLOW, Graphics.COLOR_TRANSPARENT);
+      dc.drawRectangle(x, y, width, width);
       if (controls[idxCtrl].equals("INS")) {
         if (_insert) {
-          dc.setColor(Graphics.COLOR_WHITE, Graphics.COLOR_TRANSPARENT);
+          dc.fillRectangle(x, y, width, width);
+          dc.setColor(Graphics.COLOR_BLACK, Graphics.COLOR_TRANSPARENT);
         }
       }
-      dc.drawRectangle(x, y, width, width);
       dc.drawText(
         x + halfWidth,
         y + halfWidth,

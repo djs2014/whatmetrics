@@ -1,8 +1,5 @@
-grade < 0 => flip image
-grade calc slop in icon
-def minrun-0.2 minrise=0
-power show batt level?
-Toybox.AntPlus.DeviceListener
+
+
 
 @@ nog niet ondersteund
 opacity bottom line font

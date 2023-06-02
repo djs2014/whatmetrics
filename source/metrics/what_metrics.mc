@@ -17,9 +17,9 @@ class WhatMetrics {
   hidden var previousAltitude as Float = 0.0f;
   hidden var previousDistance as Float = 0.0f;
   hidden var previousRise as Float = 0.0f;  
-  hidden var minimalRiseUp as Float = 0.50f; // meters
-  hidden var minimalRiseDown as Float = -0.50f; // meters
-  hidden var minimalRun as Float = 0.50f; // meters
+  hidden var minimalRiseUp as Float = 0.0f; // meters
+  hidden var minimalRiseDown as Float = -0.0f; // meters
+  hidden var minimalRun as Float = 0.20f; // meters
 
   // bearing
   hidden var previousTrack as Float = 0.0f;
@@ -194,6 +194,12 @@ class WhatMetrics {
     }
     return 0.0d;
   }
+  function getPowerBatteryLevel() as Number {
+    if (mPowerBalance != null) {
+      return (mPowerBalance as PowerBalance).getBatteryLevel();
+    }
+    return -1;
+  }
 
   // time of day, timer, elapsed time, date dd-month
   // elapsed time in millisec
@@ -296,8 +302,9 @@ class PowerBalance {
   hidden var mPowerBalanceLeft as Number = 0;
   hidden var ticks as Number = 0;
   hidden var avgPowerBalanceLeft as Double = 0.0d;
+  hidden var batteryLevel as Number = -1;
   function initialize() {
-    listener = new ABikePowerListener(self.weak(), :onPedalPowerBalanceUpdate);
+    listener = new ABikePowerListener(self.weak(), :onPedalPowerBalanceUpdate, :onBatteryStatusUpdate);
     bikePower = new AntPlus.BikePower(listener);
   }
 
@@ -306,6 +313,10 @@ class PowerBalance {
   }
   function getAverageLeft() as Double {
     return avgPowerBalanceLeft;
+  }
+
+  function getBatteryLevel() as Number {
+    return batteryLevel;
   }
 
   function compute(power as Number) as Void {
@@ -323,4 +334,21 @@ class PowerBalance {
       mPowerBalanceLeft = pedalPowerPercent;
     }
   }
+
+  function onBatteryStatusUpdate(batteryStatus as AntPlus.BatteryStatusValue) as Void {
+        batteryLevel = -1;
+        if (batteryStatus == AntPlus.BATT_STATUS_NEW) {
+            batteryLevel = 5;
+        } else if (batteryStatus == AntPlus.BATT_STATUS_GOOD) {
+            batteryLevel = 4;
+        } else if (batteryStatus == AntPlus.BATT_STATUS_OK) {
+            batteryLevel = 3;
+        } else if (batteryStatus == AntPlus.BATT_STATUS_LOW) {
+            batteryLevel = 2;
+        } else if (batteryStatus == AntPlus.BATT_STATUS_CRITICAL) {
+            batteryLevel = 1;
+        } else if (batteryStatus == AntPlus.BATT_STATUS_INVALID) {
+            batteryLevel = 0;
+        }         
+    }
 }

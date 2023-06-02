@@ -29,7 +29,7 @@ class whatmetricsApp extends Application.AppBase {
     gHiitt.updateProfile();
     if (Storage.getValue("hiit_mode") == null) {
       Storage.setValue("hiit_mode", WhatHiitt.HiitDisabled);
-      Storage.setValue("hiit_sound", WhatHiitt.NoSound);
+      Storage.setValue("hiit_sound", WhatHiitt.StartOnlySound);
       Storage.setValue("hiit_startperc", 150);
       Storage.setValue("hiit_stopperc", 100);
       Storage.setValue("hiit_countdown", 3);
@@ -47,14 +47,15 @@ class whatmetricsApp extends Application.AppBase {
 
       Storage.setValue("metric_ppersec", 3);
       Storage.setValue("metric_gradews", 4);
-      Storage.setValue("metric_grademinrise", 50);
-      Storage.setValue("metric_grademinrun", 50);
+      Storage.setValue("metric_grademinrise", 0);
+      Storage.setValue("metric_grademinrun", 20);
 
       Storage.setValue("debug", gDebug);
       Storage.setValue("show_colors", gShowColors);
       Storage.setValue("show_grid", gShowGrid);
       Storage.setValue("show_timer", gShowTimer);
       Storage.setValue("show_powerbalance", gShowPowerBalance);
+      Storage.setValue("show_powerbattery", gShowPowerBattery);
       Storage.setValue("show_powerperweight", gShowPowerPerWeight);
     }
 
@@ -70,7 +71,7 @@ class whatmetricsApp extends Application.AppBase {
     gMetrics.setPowerPerSec(getStorageValue("metric_ppersec", 0) as Number);
     gMetrics.setGradeWindowSize(getStorageValue("metric_gradews", 0) as Number);
     gMetrics.setGradeMinimalRise(getStorageValue("metric_grademinrise", 0) as Number);
-    gMetrics.setGradeMinimalRun(getStorageValue("metric_grademinrun", 0) as Number);
+    gMetrics.setGradeMinimalRun(getStorageValue("metric_grademinrun", 20) as Number);
 
     gTargetFtp = getStorageValue("target_ftp", 0) as Number;
     gTargetSpeed = getStorageValue("target_speed", 0) as Number;
@@ -82,8 +83,8 @@ class whatmetricsApp extends Application.AppBase {
 
     var heartRateZones = UserProfile.getHeartRateZones(UserProfile.HR_ZONE_SPORT_BIKING);
     if (heartRateZones.size() > 0) {
-      if (targetHrZone < heartRateZones.size()) {
-        gTargetHeartRate = heartRateZones[targetHrZone];
+      if (targetHrZone > 0 and targetHrZone < heartRateZones.size()) {
+        gTargetHeartRate = (heartRateZones[targetHrZone - 1] + heartRateZones[targetHrZone]) / 2;
       } else {
         gTargetHeartRate = heartRateZones[heartRateZones.size() - 1];
       }
@@ -95,9 +96,10 @@ class whatmetricsApp extends Application.AppBase {
     gShowGrid = getStorageValue("show_grid", gShowGrid) as Boolean;
     gShowTimer = getStorageValue("show_timer", gShowTimer) as Boolean;
     gShowPowerBalance = getStorageValue("show_powerbalance", gShowPowerBalance) as Boolean;
+    gShowPowerBattery = getStorageValue("show_powerbattery", gShowPowerBattery) as Boolean;
     gShowPowerPerWeight = getStorageValue("show_powerperweight", gShowPowerPerWeight) as Boolean;
     
-    if (gShowPowerBalance) {
+    if (gShowPowerBalance or gShowPowerBattery) {
       gMetrics.initPowerBalance();
     }
     gMetrics.initWeight();
@@ -122,4 +124,5 @@ var gShowColors as Boolean = false;
 var gShowGrid as Boolean = true;
 var gShowTimer as Boolean = false;
 var gShowPowerBalance as Boolean = true;
+var gShowPowerBattery as Boolean = true;
 var gShowPowerPerWeight as Boolean = false;

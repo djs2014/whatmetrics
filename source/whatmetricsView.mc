@@ -128,42 +128,7 @@ class whatmetricsView extends WatchUi.DataField {
     // centerleft, middle, right
     // bottom left, middle, right
     showGrid(dc);
-    return;
-
-    // grid,
-    // circles
-
-    // units - small font rotate?
-
-    // var m = 0;
-    // var x = m;
-    // var y = m;
-    // var width = dc.getWidth();
-    // var height = dc.getHeight();
-    // var penWidth = 5;
-    // dc.setPenWidth(penWidth);
-    // dc.setColor(Graphics.COLOR_LT_GRAY, Graphics.COLOR_TRANSPARENT);
-    // dc.drawRoundedRectangle(x, y, width - 2 * m, height - 2 * m, penWidth);
-    // dc.setPenWidth(1);
-
-    // var text = gMetrics.getHeartRate().format("%0d");
-    // var font = Graphics.FONT_NUMBER_THAI_HOT;
-    // var l = dc.getFontHeight(font);
-    // // var w = dc.getTextWidthInPixels(text, font);
-    // var w = dc.getWidth() / 3;
-    // // .... ... .... small
-    // // .....  ..... big font
-    // // .... ... .... small
-
-    // var corner = l / 4;
-    // var percHr = percentageOf(gMetrics.getHeartRate(), gTargetHeartRate);
-    // setColorByPerc(dc, percHr);
-    // dc.fillRoundedRectangle(x,y, w, l, corner);
-    // dc.setColor(Graphics.COLOR_LT_GRAY, Graphics.COLOR_TRANSPARENT);
-    // dc.setPenWidth(penWidth);
-    // dc.drawRoundedRectangle(x,y, w, l, corner);
-    // dc.setColor(fontColor, Graphics.COLOR_TRANSPARENT);
-    // dc.drawText(x + w /2 , y, font, text, Graphics.TEXT_JUSTIFY_CENTER);
+    return;   
   }
 
   hidden function showGrid(dc as Dc) as Void {
@@ -265,6 +230,9 @@ class whatmetricsView extends WatchUi.DataField {
       var iconColor = getIconColor(dc, gMetrics.getPower(), gTargetFtp);
       checkReverseColor(dc, x, y, width, height);
       drawPowerIcon(dc, x, y, width, height, iconColor);
+      if (gShowPowerBattery) {
+        drawPowerBatteryLevel(dc, x, y, width, height, gMetrics.getPowerBatteryLevel());
+      }
       if (gShowPowerBalance) {
         var powerLeft = gMetrics.getPowerBalanceLeft();
         if (mPaused) {
@@ -397,7 +365,7 @@ class whatmetricsView extends WatchUi.DataField {
       units = "";
       text_botright = "";
       text_botleft = "";
-    }
+    } 
     if (decimals.equals("0")) {
       decimals = "";
     }
@@ -557,7 +525,7 @@ class whatmetricsView extends WatchUi.DataField {
     height as Number,
     color as ColorType
   ) as Void {
-    var r = (height / 4).toNumber();
+    var r = (height / 3.85).toNumber();
     var x0 = (x + width / 2).toNumber();
     var y1 = (y + 1.5 * r).toNumber();
     var x1 = (x0 - 0.9 * r).toNumber();
@@ -730,6 +698,37 @@ class whatmetricsView extends WatchUi.DataField {
     );
   }
 
+ hidden function drawPowerBatteryLevel(
+    dc as Dc,
+    x as Number,
+    y as Number,
+    width as Number,
+    height as Number,
+    batteryLevel as Number
+  ) as Void {
+    // batteryLevel = 1;
+    if (batteryLevel < 0) { return; }
+
+    var m = 2;
+    var w = 17;
+    var h = 7;
+    var x1 = x + width - w - m;
+    var y1 = y + m;
+
+    if (batteryLevel >= 4) {
+      dc.setColor(Graphics.COLOR_LT_GRAY, Graphics.COLOR_TRANSPARENT);
+    } else if (batteryLevel >= 3) {
+      dc.setColor(Graphics.COLOR_DK_GRAY, Graphics.COLOR_TRANSPARENT);
+    } else {
+      dc.setColor(Graphics.COLOR_RED, Graphics.COLOR_TRANSPARENT);
+    } 
+    dc.drawRoundedRectangle(x1, y1, w, h, 2);
+    dc.fillRectangle(x1-1, y1 + (h/2) - 2, 2, 4);
+    for (var i = 0; i < batteryLevel; i++) {
+      dc.fillRectangle(x1 + w - 1 - ((i + 1) * 3), y1 + 1, 2, 5);
+    }
+    
+  }
   hidden function drawHiitIcon(
     dc as Dc,
     x as Number,
