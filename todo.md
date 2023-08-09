@@ -1,6 +1,35 @@
+display - , remove - when negative when started
+but put it in front as text
+or multiply value ...
 
 
+write ugly code -> less deep nested functions -> else stack overflow errors! max 255 items in stack?
+option: altitude or pressure display if alt between x and ym
 
+x config for battery life max minutes / operating time
+
+bars under field / show zones hr and pwer zone
+get power zones -> api?
+
+x show title when stopped and paused
+asc/desc = arrows
+menu setting offset small field 1 px down. var gSmallFieldYOffset as Number = 1; of calc grid/field size check total height + correctie
+toggle show average power / speed
+
+wide field under map:
+option heading -> distance or distance to next (when not null).
+option timer -> - distance to destination (ipv timer)
+
+------------------
+winter:
+- config field per cel 1.1, 1.2, etc..
+- define grid per: large / medium / wide / small field
+- fallback for hr related fields (easy to left at home)
+- fallback for powermeter -> @@ 
+- 
+
+
+-------------------
 @@ nog niet ondersteund
 opacity bottom line font
 - solid when paused.. 
