@@ -52,7 +52,9 @@ class DataFieldSettingsDelegate extends WatchUi.BehaviorDelegate {
     menu.addItem(mi);
     mi = new WatchUi.MenuItem("Gradient", null, "gradient", null);
     menu.addItem(mi);
-
+    mi = new WatchUi.MenuItem("Show pressure", null, "pressure", null);
+    menu.addItem(mi);
+    
     var boolean = false;
 
     boolean = Storage.getValue("show_colors") ? true : false;
@@ -66,6 +68,13 @@ class DataFieldSettingsDelegate extends WatchUi.BehaviorDelegate {
     mi.setSubLabel($.subMenuToggleMenuItem(mi.getId() as String));
     menu.addItem(mi);
   
+    // @@QND
+    // boolean = Storage.getValue("wf_toggle_heading") ? true : false;
+    // mi = new WatchUi.ToggleMenuItem("Field 2 (small)", null, "wf_toggle_heading", boolean, null);
+    // mi.setSubLabel($.subMenuToggleMenuItem(mi.getId() as String));
+    // menu.addItem(mi);
+   //  gWideFieldShowDistance = getStorageValue("wf_toggle_heading", gWideFieldShowDistance) as Boolean;
+
     boolean = Storage.getValue("debug") ? true : false;
     menu.addItem(new WatchUi.ToggleMenuItem("Debug", null, "debug", boolean, null));
 
@@ -87,6 +96,13 @@ function subMenuToggleMenuItem(key as String) as String {
     } else {
       return "elapsed time";
     }
-  }
+  } 
+  // else if (key.equals("wf_toggle_heading")) {
+  //   if (Storage.getValue(key) ? true : false) {
+  //     return "distance (next)";
+  //   } else {
+  //     return "heading";
+  //   }
+  // }
   return "";
 }

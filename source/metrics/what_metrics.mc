@@ -16,7 +16,7 @@ class WhatMetrics {
   hidden var arrGrade as Array<Float> = [] as Array<Float>;
   hidden var previousAltitude as Float = 0.0f;
   hidden var previousDistance as Float = 0.0f;
-  hidden var previousRise as Float = 0.0f;  
+  hidden var previousRise as Float = 0.0f;
   hidden var minimalRiseUp as Float = 0.0f; // meters
   hidden var minimalRiseDown as Float = -0.0f; // meters
   hidden var minimalRun as Float = 0.20f; // meters
@@ -98,6 +98,14 @@ class WhatMetrics {
     return getActivityValue(a_info, :totalDescent, 0.0f) as Float;
   }
 
+  // pressure
+  function getAmbientPressure() as Float {
+    return getActivityValue(a_info, :ambientPressure, 0.0f) as Float;
+  }
+  function getMeanSeaLevelPressure() as Float {
+    return getActivityValue(a_info, :meanSeaLevelPressure, 0.0f) as Float;
+  }
+
   // heartrate, bpm
   function getHeartRate() as Number {
     return getActivityValue(a_info, :currentHeartRate, 0) as Number;
@@ -125,8 +133,19 @@ class WhatMetrics {
   }
 
   // distance, meters
-  hidden function getElapsedDistance() as Float {
+  function getElapsedDistance() as Float {
     return getActivityValue(a_info, :elapsedDistance, 0.0f) as Float;
+  }
+  function getDistanceToNextPoint() as Float {
+    return getActivityValue(a_info, :distanceToNextPoint, 0.0f) as Float;
+  }
+  function getDistanceToDestination() as Float {
+    return getActivityValue(a_info, :distanceToDestination, 0.0f) as Float;
+  }
+
+  // gear /Index, Max and Size -> calc ratio Index values range from from 1 to the rearDerailleurMax.
+  function getFrontDerailleurIndex() as Number {
+    return getActivityValue(a_info, :frontDerailleurIndex, 0.0f) as Number;
   }
 
   function getGrade() as Double {
@@ -200,6 +219,12 @@ class WhatMetrics {
     }
     return -1;
   }
+  function getPowerOperatingTimeInSeconds() as Number {
+    if (mPowerBalance != null) {
+      return (mPowerBalance as PowerBalance).getOperatingTimeInSeconds();
+    }
+    return -1;
+  }
 
   // time of day, timer, elapsed time, date dd-month
   // elapsed time in millisec
@@ -218,9 +243,13 @@ class WhatMetrics {
   // called per second
   function compute(info as Activity.Info) as Void {
     var intermediateAltitude = getAltitude();
-    if (previousAltitude == 0.0f) { previousAltitude = intermediateAltitude; }
+    if (previousAltitude == 0.0f) {
+      previousAltitude = intermediateAltitude;
+    }
     var intermediateDistance = getElapsedDistance();
-    if (previousDistance == 0.0f) { previousDistance = intermediateDistance; }
+    if (previousDistance == 0.0f) {
+      previousDistance = intermediateDistance;
+    }
 
     a_info = info;
 
@@ -256,13 +285,14 @@ class WhatMetrics {
 
     var tmpRise = intermediateAltitude - previousAltitude;
     var tmpRun = intermediateDistance - previousDistance;
-    if (tmpRun <= 0.20) { // no speed.. (tmpRise >= -0.20 and tmpRise <= 0.20 and
+    if (tmpRun <= 0.2) {
+      // no speed.. (tmpRise >= -0.20 and tmpRise <= 0.20 and
       previousAltitude = intermediateAltitude;
       previousDistance = intermediateDistance;
       previousRise = tmpRise;
       arrGrade = [] as Array<Float>;
       return 0.0d;
-    } else if ((tmpRise < minimalRiseDown or tmpRise > minimalRiseUp) and tmpRun >= minimalRun) {
+    } else if (tmpRise < minimalRiseDown or tmpRise > minimalRiseUp and tmpRun >= minimalRun) {
       // valid rise and valid run
       previousAltitude = intermediateAltitude;
       previousDistance = intermediateDistance;
@@ -270,8 +300,8 @@ class WhatMetrics {
 
     var rise = altitude - previousAltitude;
     var run = distance - previousDistance;
-    
-    if (run != 0.0f and (rise < minimalRiseDown or rise > minimalRiseUp) and run >= minimalRun) {      
+
+    if (run != 0.0f and (rise < minimalRiseDown or rise > minimalRiseUp) and run >= minimalRun) {
       var grade = 0.0f; // %
       grade = (rise.toFloat() / run.toFloat()) * 100.0;
 
@@ -303,6 +333,9 @@ class PowerBalance {
   hidden var ticks as Number = 0;
   hidden var avgPowerBalanceLeft as Double = 0.0d;
   hidden var batteryLevel as Number = -1;
+
+  hidden var operatingTimeInSeconds as Number?;
+  
   function initialize() {
     listener = new ABikePowerListener(self.weak(), :onPedalPowerBalanceUpdate, :onBatteryStatusUpdate);
     bikePower = new AntPlus.BikePower(listener);
@@ -318,6 +351,14 @@ class PowerBalance {
   function getBatteryLevel() as Number {
     return batteryLevel;
   }
+  
+  function getOperatingTimeInSeconds() as Number {
+    if (operatingTimeInSeconds == null) {
+      return -1;
+    }
+    return operatingTimeInSeconds as Number;
+  }
+
 
   function compute(power as Number) as Void {
     if (power > 0 && mPowerBalanceLeft != null && mPowerBalanceLeft > 0) {
@@ -335,20 +376,22 @@ class PowerBalance {
     }
   }
 
-  function onBatteryStatusUpdate(batteryStatus as AntPlus.BatteryStatusValue) as Void {
-        batteryLevel = -1;
-        if (batteryStatus == AntPlus.BATT_STATUS_NEW) {
-            batteryLevel = 5;
-        } else if (batteryStatus == AntPlus.BATT_STATUS_GOOD) {
-            batteryLevel = 4;
-        } else if (batteryStatus == AntPlus.BATT_STATUS_OK) {
-            batteryLevel = 3;
-        } else if (batteryStatus == AntPlus.BATT_STATUS_LOW) {
-            batteryLevel = 2;
-        } else if (batteryStatus == AntPlus.BATT_STATUS_CRITICAL) {
-            batteryLevel = 1;
-        } else if (batteryStatus == AntPlus.BATT_STATUS_INVALID) {
-            batteryLevel = 0;
-        }         
+  function onBatteryStatusUpdate(batteryStatus as AntPlus.BatteryStatusValue, operatingTime as Number) as Void {
+    batteryLevel = -1;
+    if (batteryStatus == AntPlus.BATT_STATUS_NEW) {
+      batteryLevel = 5;
+    } else if (batteryStatus == AntPlus.BATT_STATUS_GOOD) {
+      batteryLevel = 4;
+    } else if (batteryStatus == AntPlus.BATT_STATUS_OK) {
+      batteryLevel = 3;
+    } else if (batteryStatus == AntPlus.BATT_STATUS_LOW) {
+      batteryLevel = 2;
+    } else if (batteryStatus == AntPlus.BATT_STATUS_CRITICAL) {
+      batteryLevel = 1;
+    } else if (batteryStatus == AntPlus.BATT_STATUS_INVALID) {
+      batteryLevel = 0;
     }
+
+    operatingTimeInSeconds = operatingTime;
+  }
 }

@@ -7,6 +7,10 @@ using Toybox.Time.Gregorian;
 
 class whatmetricsView extends WatchUi.DataField {
   hidden var mFieldSize as String;
+  hidden var mWideField as Boolean = true;
+  hidden var mSmallField as Boolean = false;
+  hidden var mYoffsetFix as Number = 0;
+
   hidden var mDebug as Boolean = true;
   hidden var mPaused as Boolean = true;
   hidden var mActivityStartCountdown as Number = 0;
@@ -61,38 +65,46 @@ class whatmetricsView extends WatchUi.DataField {
     var w = dc.getWidth();
     mFieldSize = Lang.format("$1$x$2$", [dc.getHeight(), dc.getWidth()]);
 
+    mWideField = w > 200;
+    mSmallField = h <= 100;
+
     mGrid = [] as Array<Array<Array<Number> > >;
 
-    var w_2fifth = (w * 2) / 5;
-    var w_center = w - 2 * w_2fifth;
     var h_1fourth = h / 4;
     var h_center = h - 2 * h_1fourth;
 
+    mYoffsetFix = 0;
+    var w_side = (w * 2) / 5;
+    if (mWideField and mSmallField) {
+      w_side = w / 3;
+      mYoffsetFix = 1;
+    }
+    var w_center = w - 2 * w_side;
     var row = [
-      [w_2fifth, h_1fourth],
+      [w_side, h_1fourth],
       [w_center, h_1fourth],
-      [w_2fifth, h_1fourth],
+      [w_side, h_1fourth],
     ];
+
     mGrid.add(row as Array<Array<Number> >);
 
-    row = [
+    var centerRow = [
       [w / 2, h_center],
       [w / 2, h_center],
     ];
-    mGrid.add(row as Array<Array<Number> >);
+    mGrid.add(centerRow as Array<Array<Number> >);
 
-    row = [
-      [w_2fifth, h_1fourth],
-      [w_center, h_1fourth],
-      [w_2fifth, h_1fourth],
-    ];
     mGrid.add(row as Array<Array<Number> >);
   }
 
   function compute(info as Activity.Info) as Void {
     gMetrics.compute(info);
-    // @@
-    mPaused = gHiitt.isActivityPaused();
+
+    mPaused = false;
+    if (info has :timerState) {
+      mPaused = info.timerState == Activity.TIMER_STATE_PAUSED or info.timerState == Activity.TIMER_STATE_OFF;
+    }
+
     if (mPaused) {
       mActivityStartCountdown = 5;
     } else if (mActivityStartCountdown >= 0) {
@@ -120,6 +132,7 @@ class whatmetricsView extends WatchUi.DataField {
     dc.setColor(mFontColor, Graphics.COLOR_TRANSPARENT);
 
     if (gDebug) {
+      // @@ TODO,
       showDebugValues(dc);
       return;
     }
@@ -127,20 +140,20 @@ class whatmetricsView extends WatchUi.DataField {
     // top left, middle, right
     // centerleft, middle, right
     // bottom left, middle, right
-    showGrid(dc);
-    return;   
-  }
+    // !! Less nested function, less stack -> no stack overflow crash :-(
+    // showGrid(dc);
 
-  hidden function showGrid(dc as Dc) as Void {
     var y = 0;
     var f = 0;
-    for (var r = 0; r < mGrid.size(); r++) {
-      var row = mGrid[r] as Array<Array<Number> >;
+    var rowCount = mGrid.size();
+    for (var r = 0; r < rowCount; r++) {
+      var row = mGrid[r]; // as Array<Array<Number> >;
+      var cellCount = row.size();
       var x = 0;
       var h = 0;
-      for (var c = 0; c < row.size(); c++) {
+      for (var c = 0; c < cellCount; c++) {
         //  [w,h]
-        var cell = row[c] as Array<Number>;
+        var cell = row[c]; // as Array<Number>;
 
         if (gShowGrid) {
           dc.setColor(Graphics.COLOR_LT_GRAY, Graphics.COLOR_TRANSPARENT);
@@ -148,14 +161,42 @@ class whatmetricsView extends WatchUi.DataField {
         }
 
         drawField(dc, f, x, y, cell[0], cell[1]);
-
+        
         x = x + cell[0];
         h = cell[1];
         f = f + 1;
       }
       y = y + h;
     }
+
+    return;
   }
+
+  // !! Less nested function, less stack -> no stack overflow crash :-(
+  // hidden function showGrid(dc as Dc) as Void {
+  //   var y = 0;
+  //   var f = 0;
+  //   var rowCount = mGrid.size();
+  //   for (var r = 0; r < rowCount; r++) {
+  //     var row = mGrid[r]; // as Array<Array<Number> >;
+  //     var cellCount = row.size();
+  //     var x = 0;
+  //     var h = 0;
+  //     for (var c = 0; c < cellCount; c++) {
+  //       //  [w,h]
+  //       var cell = row[c]; // as Array<Number>;
+  //       if (gShowGrid) {
+  //         dc.setColor(Graphics.COLOR_LT_GRAY, Graphics.COLOR_TRANSPARENT);
+  //         dc.drawRectangle(x, y, cell[0], cell[1]);
+  //       }
+  //       drawField(dc, f, x, y, cell[0], cell[1]);        
+  //       x = x + cell[0];
+  //       h = cell[1];
+  //       f = f + 1;
+  //     }
+  //     y = y + h;
+  //   }
+  // }
 
   hidden function drawField(
     dc as Dc,
@@ -172,30 +213,53 @@ class whatmetricsView extends WatchUi.DataField {
     var number = "";
     var decimals = "";
     var units = "";
+    var units_side = "";
     var text_botright = "";
     var text_botleft = "";
 
     if (fieldIdx == 0) {
       title = "grade";
-      units = "%";
       var grade = gMetrics.getGrade();
 
-      // mGrade = mGrade + 0.5d;
-      // if (mGrade > 25) {      mGrade = -25.0d;    }
-      // grade = mGrade;
-
       value = grade.format("%0.1f");
-      number = stringLeft(value, ".", value);
-      decimals = stringRight(value, ".", "");
+      if (mSmallField) {
+        text = value;
+        units_side = "%";
+      } else {
+        units = "%";
+        number = stringLeft(value, ".", value);
+        decimals = stringRight(value, ".", "");
+      }
       var g = grade;
       if (grade < 0) {
-        grade = grade * -1;        
+        grade = grade * -1;
       }
       var iconColor = getIconColor(dc, grade, gTargetGrade);
       checkReverseColor(dc, x, y, width, height);
       drawGradeIcon(dc, x, y, width, height, iconColor, g);
     } else if (fieldIdx == 1) {
-      text = getCompassDirection(gMetrics.getBearing());
+      // @QND
+      if (mWideField and mSmallField) {
+        var dist = gMetrics.getDistanceToDestination();
+        if (dist > 0.0f) {
+          var distNext = gMetrics.getDistanceToNextPoint();
+          if (dist > distNext and distNext > 0.0f) {
+            dist = distNext;
+            title = "next";
+            drawNextIcon(dc, x, y, width, height, mIconColor);
+          } else {
+            title = "dest";
+            drawDestinationIcon(dc, x, y, width, height, mIconColor);
+          }
+        } else {
+          title = "distance";
+          dist = gMetrics.getElapsedDistance();
+        }
+        text = getDistanceInMeterOrKm(dist).format(getFormatForMeterAndKm(dist));
+        units_side = getUnitsInMeterOrKm(dist);
+      } else {
+        text = getCompassDirection(gMetrics.getBearing());
+      }
     } else if (fieldIdx == 2) {
       var heartRate = gMetrics.getHeartRate();
       if (mPaused or heartRate == 0) {
@@ -203,7 +267,7 @@ class whatmetricsView extends WatchUi.DataField {
         var today = Gregorian.info(Time.now(), Time.FORMAT_MEDIUM);
         text = Lang.format("$1$:$2$", [today.hour, today.min.format("%02d")]);
         decimals = today.sec.format("%02d");
-        units = Lang.format("$1$ $2$ $3$", [today.day_of_week, today.day, today.month]);        
+        units = Lang.format("$1$ $2$ $3$", [today.day_of_week, today.day, today.month]);
       } else {
         title = "heartrate";
         units = "bpm";
@@ -214,33 +278,55 @@ class whatmetricsView extends WatchUi.DataField {
         text_botleft = "zone " + gMetrics.getHeartRateZone().format("%0d");
       }
     } else if (fieldIdx == 3) {
-      if (gShowPowerPerWeight) {
-        title = "power (" + gMetrics.getPowerPerSec().format("%0d") + " sec) / kg";
-        units = "w/kg";
-        value = gMetrics.getPowerPerWeight().format("%0.1f");
-        number = stringLeft(value, ".", value);
-        decimals = stringRight(value, ".", "");
-        text_botleft = gMetrics.getPower().format("%0d") + " w";
+      // @@ option fallback if power = 0; -> show distance
+      var power = gMetrics.getPower();
+      if (power == 0.0 and mSmallField) {
+        title = "distance";
+        var dist = gMetrics.getElapsedDistance();
+        text = getDistanceInMeterOrKm(dist).format(getFormatForMeterAndKm(dist));
+        units = getUnitsInMeterOrKm(dist);
       } else {
-        title = "power (" + gMetrics.getPowerPerSec().format("%0d") + " sec)";
-        units = "w";
-        number = gMetrics.getPower().format("%0d");
-        text_botleft = gMetrics.getPowerPerWeight().format("%0.1f") + "/kg";
-      }
-      var iconColor = getIconColor(dc, gMetrics.getPower(), gTargetFtp);
-      checkReverseColor(dc, x, y, width, height);
-      drawPowerIcon(dc, x, y, width, height, iconColor);
-      if (gShowPowerBattery) {
-        drawPowerBatteryLevel(dc, x, y, width, height, gMetrics.getPowerBatteryLevel());
-      }
-      if (gShowPowerBalance) {
-        var powerLeft = gMetrics.getPowerBalanceLeft();
-        if (mPaused) {
-          powerLeft = gMetrics.getAveragePowerBalanceLeft();
+        if (gShowPowerPerWeight) {
+          title = "power (" + gMetrics.getPowerPerSec().format("%0d") + " sec) / kg";
+          units = "w/kg";
+          value = gMetrics.getPowerPerWeight().format("%0.1f");
+          number = stringLeft(value, ".", value);
+          decimals = stringRight(value, ".", "");
+          text_botleft = gMetrics.getPower().format("%0d") + " w";
+        } else {
+          title = "power (" + gMetrics.getPowerPerSec().format("%0d") + " sec)";
+          units = "w";
+          number = gMetrics.getPower().format("%0d");
+          text_botleft = gMetrics.getPowerPerWeight().format("%0.1f") + "/kg";
         }
-        if (powerLeft > 0 and powerLeft < 100) {
-          var pwrRight = 100 - (powerLeft as Number);
-          text_botright = Lang.format("$1$|$2$", [(powerLeft as Number).format("%02d"), pwrRight.format("%02d")]);
+        var iconColor = getIconColor(dc, gMetrics.getPower(), gTargetFtp);
+        checkReverseColor(dc, x, y, width, height);
+        drawPowerIcon(dc, x, y, width, height, iconColor);
+        if (gShowPowerBattery) {
+          var batteryLevel = gMetrics.getPowerBatteryLevel();
+          var operatingTimeInSeconds = gMetrics.getPowerOperatingTimeInSeconds();
+
+          var powerTimeString = "";
+          //@@ weird bug when secondsToHourMinutes called inside drawPowerBatteryLevel
+          if (!mSmallField and operatingTimeInSeconds > -1 and (batteryLevel <= 3 or mPaused)) {
+            if ($.gPowerBattMaxSeconds == 0) {
+              powerTimeString = ".. " + secondsToHourMinutes(operatingTimeInSeconds);
+            } else {
+              // remaining
+              powerTimeString = "~ " + secondsToHourMinutes($.gPowerBattMaxSeconds - operatingTimeInSeconds);
+            }
+          }
+          drawPowerBatteryLevel(dc, x, y, width, height, batteryLevel, powerTimeString);
+        }
+        if (gShowPowerBalance) {
+          var powerLeft = gMetrics.getPowerBalanceLeft();
+          if (mPaused) {
+            powerLeft = gMetrics.getAveragePowerBalanceLeft();
+          }
+          if (powerLeft > 0 and powerLeft < 100) {
+            var pwrRight = 100 - (powerLeft as Number);
+            text_botright = Lang.format("$1$|$2$", [(powerLeft as Number).format("%02d"), pwrRight.format("%02d")]);
+          }
         }
       }
     } else if (fieldIdx == 4) {
@@ -258,34 +344,63 @@ class whatmetricsView extends WatchUi.DataField {
       title = "altitude";
       units = "m";
       var altitude = gMetrics.getAltitude();
-      if (mpsToKmPerHour(gMetrics.getSpeed()) < 15) {
-        value = altitude.format("%0.2f");
+      
+      // @@ save every 1 minute -> check diff + / - or ++/--
+      // altitude = 0;
+
+      if ((gHideAltitudeMin != gHideAltitudeMax) and (altitude > gHideAltitudeMin) and (altitude < gHideAltitudeMax)) {
+        var pressure = pascalToMilliBar(gMetrics.getAmbientPressure());
+        title = "pressure";
+        units = "hPa";
+        value = pressure.format("%0.2f");
+
+        
+        if (mWideField and mSmallField) {
+          number = value;
+          units_side = "hPa";
+        } else {
+          number = stringLeft(value, ".", value);
+          decimals = stringRight(value, ".", "");
+        }
+
       } else {
-        value = altitude.format("%0d");
-      }
+        if (mpsToKmPerHour(gMetrics.getSpeed()) < 15) {
+          value = altitude.format("%0.2f");
+        } else {
+          value = altitude.format("%0d");
+        }
 
-      number = stringLeft(value, ".", value);
-      decimals = stringRight(value, ".", "");
+        if (mWideField and mSmallField) {
+          number = value;
+          units_side = "m";
+        } else {
+          number = stringLeft(value, ".", value);
+          decimals = stringRight(value, ".", "");
+        }
 
-      if (altitude < 0) {
-        altitude = altitude * -1;
-      }
-      var iconColor = getIconColor(dc, altitude, gTargetAltitude);
-      checkReverseColor(dc, x, y, width, height);
-      drawAltitudeIcon(dc, x, y, width, height, iconColor);
+        if (altitude < 0) {
+          altitude = altitude * -1;
+        }
+        var iconColor = getIconColor(dc, altitude, gTargetAltitude);
+        checkReverseColor(dc, x, y, width, height);
+        drawAltitudeIcon(dc, x, y, width, height, iconColor);
 
-      var totalAsc = gMetrics.getTotalAscent();
-      if (totalAsc > 0) {
-        text_botleft = "A " + totalAsc.format("%0.0f");
-      }
-      var totalDesc = gMetrics.getTotalDescent();
-      if (totalDesc > 0) {
-        text_botright = "D " + totalDesc.format("%0.0f");
+        var totalAsc = gMetrics.getTotalAscent();
+        if (totalAsc > 0) {
+          text_botleft = "A " + totalAsc.format("%0.0f");
+        }
+        var totalDesc = gMetrics.getTotalDescent();
+        if (totalDesc > 0) {
+          text_botright = "D " + totalDesc.format("%0.0f");
+        }
       }
     } else if (fieldIdx == 6) {
       title = "cadence";
       units = "rpm";
       number = gMetrics.getCadence().format("%0d");
+      if (mWideField and mSmallField) {
+        units_side = "rpm";
+      }
       drawCadenceIcon(dc, x, y, width, height, getIconColor(dc, gMetrics.getCadence(), gTargetCadence));
     } else if (fieldIdx == 7) {
       var showTimerElapsed = true;
@@ -365,11 +480,14 @@ class whatmetricsView extends WatchUi.DataField {
       units = "";
       text_botright = "";
       text_botleft = "";
-    } 
+    }
+    if (width <= 70) {
+      text_botright = "";
+      text_botleft = "";
+    }
     if (decimals.equals("0")) {
       decimals = "";
     }
-
     var dims_prefix = [0, 0] as Array<Number>;
     var dims_number_or_text = [0, 0] as Array<Number>;
     var dims_decimals = [0, 0] as Array<Number>;
@@ -382,6 +500,8 @@ class whatmetricsView extends WatchUi.DataField {
 
     if (units.length() > 0) {
       dims_units = dc.getTextDimensions(units, fontUnits);
+    } else if (units_side.length() > 0) {
+      dims_units = dc.getTextDimensions(units_side, fontUnits);
     }
 
     // @@ when alpha working + show in paused and until 1 minute
@@ -424,7 +544,7 @@ class whatmetricsView extends WatchUi.DataField {
 
       var xSplit = (x + (width - dims_number_or_text[0] - dims_decimals[0]) / 2 + dims_number_or_text[0]).toNumber();
       var yBase = y + (height - dims_number_or_text[1]) / 2;
-      dc.drawText(xSplit, yBase, font, number_or_text, Graphics.TEXT_JUSTIFY_RIGHT);
+      dc.drawText(xSplit, yBase + mYoffsetFix, font, number_or_text, Graphics.TEXT_JUSTIFY_RIGHT);
 
       if (decimals.length() > 0) {
         var yDec =
@@ -462,6 +582,21 @@ class whatmetricsView extends WatchUi.DataField {
           yUnits = yBase + dims_number_or_text[1] - Graphics.getFontDescent(font) + 1; // not needed on device - Graphics.getFontDescent(fontUnits)
         }
         dc.drawText(xUnits, yUnits, fontUnits, units, Graphics.TEXT_JUSTIFY_LEFT);
+      } else if (units_side.length() > 0) {
+        var yUnits =
+          yBase +
+          dims_number_or_text[1] -
+          dims_units[1] -
+          Graphics.getFontDescent(font) +
+          Graphics.getFontDescent(fontUnits);
+
+        if (mReverseColor) {
+          dc.setColor(Graphics.COLOR_WHITE, Graphics.COLOR_TRANSPARENT);
+        } else {
+          dc.setColor(mUnitsColor, Graphics.COLOR_TRANSPARENT);
+        }
+        var xUnits = x + width - 1;
+        dc.drawText(xUnits, yUnits, fontUnits, units_side, Graphics.TEXT_JUSTIFY_RIGHT);
       }
 
       if (text_botright.length() > 0) {
@@ -496,7 +631,7 @@ class whatmetricsView extends WatchUi.DataField {
 
   hidden function getIconColor(dc as Dc, value as Numeric, maxValue as Numeric) as Graphics.ColorType {
     mReverseColor = false;
-    if (gShowColors) {
+    if (gShowColors and gCreateColors) {
       var perc = percentageOf(value, maxValue);
       var darker = 0;
       if (getBackgroundColor() == Graphics.COLOR_BLACK) {
@@ -564,12 +699,14 @@ class whatmetricsView extends WatchUi.DataField {
     width = width - 2 * m;
     height = height - 2 * m;
 
-    setColorFillStroke(dc, color);    
+    setColorFillStroke(dc, color);
     var f = grade / 10.0;
-    if (f < 0) { f = f * -1.0; }
-    
+    if (f < 0) {
+      f = f * -1.0;
+    }
+
     var h = height / 2;
-    var w = width / 2;    
+    var w = width / 2;
     var xc = x + w;
     var yc = y + h;
 
@@ -578,11 +715,11 @@ class whatmetricsView extends WatchUi.DataField {
     if (f != 0.0) {
       yp = f * w;
       if (yp > h) {
-        xp = h / f ;
+        xp = h / f;
         yp = h;
-      }         
+      }
     }
-    if (grade > 0)    {
+    if (grade > 0) {
       if (yp == h) {
         dc.fillPolygon(
           [
@@ -606,7 +743,7 @@ class whatmetricsView extends WatchUi.DataField {
       // dc.drawLine(xc, yc, xc + xp, yc - yp);
     } else {
       if (yp == h) {
-       dc.fillPolygon(
+        dc.fillPolygon(
           [
             [xc + xp, yc + yp],
             [x, y + height],
@@ -615,7 +752,7 @@ class whatmetricsView extends WatchUi.DataField {
           ] as Array<Array<Number> >
         );
       } else {
-         dc.fillPolygon(
+        dc.fillPolygon(
           [
             [xc + xp, yc + yp],
             [x + width, y + height],
@@ -638,8 +775,8 @@ class whatmetricsView extends WatchUi.DataField {
     color as ColorType
   ) as Void {
     var my = height / 5;
-    var mx = height / 8;
-    // If paused @@ then ||
+    var mx = width / 8;
+
     var x1 = x + mx;
     var y1 = y + my;
     var x2 = x + mx;
@@ -656,6 +793,79 @@ class whatmetricsView extends WatchUi.DataField {
       ] as Array<Array<Number> >
     );
   }
+  hidden function drawNextIcon(
+    dc as Dc,
+    x as Number,
+    y as Number,
+    width as Number,
+    height as Number,
+    color as ColorType
+  ) as Void {
+    var my = height / 8;
+    var mx = width / 4;
+
+    var x1 = x + mx;
+    var y1 = y + my;
+    var y2 = y + height - my;
+
+    var x2 = x + 2 * mx;
+    var yc = y + height / 2;
+    var x3 = x + 3 * mx;
+
+    setColorFillStroke(dc, color);
+    dc.fillPolygon(
+      [
+        [x1, y1],
+        [x1, y2],
+        [x2, yc],
+      ] as Array<Array<Number> >
+    );
+    dc.fillPolygon(
+      [
+        [x2, y1],
+        [x2, y2],
+        [x3, yc],
+      ] as Array<Array<Number> >
+    );
+  }
+  hidden function drawDestinationIcon(
+    dc as Dc,
+    x as Number,
+    y as Number,
+    width as Number,
+    height as Number,
+    color as ColorType
+  ) as Void {
+    var my = height / 8;
+    var mx = width / 4;
+
+    var x1 = x + mx;
+    var y1 = y + my;
+    var y2 = y + height - my;
+
+    var x2 = x + 2 * mx;
+    var yc = y + height / 2;
+    var x3 = x + 3 * mx;
+
+    setColorFillStroke(dc, color);
+    dc.fillPolygon(
+      [
+        [x1, y1],
+        [x1, y2],
+        [x2, yc],
+      ] as Array<Array<Number> >
+    );
+    dc.fillPolygon(
+      [
+        [x2, y1],
+        [x2, y2],
+        [x3, yc],
+      ] as Array<Array<Number> >
+    );
+
+    dc.fillRectangle(x3, y1, mx / 2, y2 - y1);
+  }
+
   hidden function drawPowerIcon(
     dc as Dc,
     x as Number,
@@ -698,36 +908,41 @@ class whatmetricsView extends WatchUi.DataField {
     );
   }
 
- hidden function drawPowerBatteryLevel(
+  hidden function drawPowerBatteryLevel(
     dc as Dc,
     x as Number,
     y as Number,
     width as Number,
     height as Number,
-    batteryLevel as Number
+    batteryLevel as Number,
+    remainingTimeString as String
   ) as Void {
-    // batteryLevel = 1;
-    if (batteryLevel < 0) { return; }
+    if (batteryLevel < 0) {
+      return;
+    }
 
     var m = 2;
     var w = 17;
     var h = 7;
     var x1 = x + width - w - m;
-    var y1 = y + m;
+    var y1 = y + 1 + m;
 
     if (batteryLevel >= 4) {
       dc.setColor(Graphics.COLOR_LT_GRAY, Graphics.COLOR_TRANSPARENT);
     } else if (batteryLevel >= 3) {
-      dc.setColor(Graphics.COLOR_DK_GRAY, Graphics.COLOR_TRANSPARENT);
+      dc.setColor(Graphics.COLOR_YELLOW, Graphics.COLOR_TRANSPARENT);
     } else {
       dc.setColor(Graphics.COLOR_RED, Graphics.COLOR_TRANSPARENT);
-    } 
-    dc.drawRoundedRectangle(x1, y1, w, h, 2);
-    dc.fillRectangle(x1-1, y1 + (h/2) - 2, 2, 4);
-    for (var i = 0; i < batteryLevel; i++) {
-      dc.fillRectangle(x1 + w - 1 - ((i + 1) * 3), y1 + 1, 2, 5);
     }
-    
+    dc.drawRoundedRectangle(x1, y1, w, h, 2);
+    dc.fillRectangle(x1 - 1, y1 + h / 2 - 2, 2, 4);
+    for (var i = 0; i < batteryLevel; i++) {
+      dc.fillRectangle(x1 + w - 1 - (i + 1) * 3, y1 + 1, 2, 5);
+    }
+
+    if (remainingTimeString.length() > 0) {
+      dc.drawText(x1 - 2, y, Graphics.FONT_XTINY, remainingTimeString, Graphics.TEXT_JUSTIFY_RIGHT);
+    }
   }
   hidden function drawHiitIcon(
     dc as Dc,
@@ -885,6 +1100,36 @@ class whatmetricsView extends WatchUi.DataField {
         vo2max.format("%0.1f"),
       ]),
       Graphics.TEXT_JUSTIFY_LEFT
+    );
+  }
+
+  function drawArrowUp(dc as Dc, x as Number, y as Number, width as Number, height as Number) as Void {
+    var xm = x + width / 2;
+    var yd = height / 3;
+    var ym = y + yd;
+
+    dc.fillPolygon(
+      [
+        [xm, y],
+        [x, ym],
+        [x + width, ym],
+      ] as Array<Array<Number> >
+    );
+    dc.fillRectangle(xm - 1, ym, 3, height - yd);
+  }
+
+  function drawArrowDown(dc as Dc, x as Number, y as Number, width as Number, height as Number) as Void {
+    var xm = x + width / 2;
+    var yd = height / 3;
+    var ym = y + height - yd;
+
+    dc.fillRectangle(xm - 1, y, 3, height - yd);
+    dc.fillPolygon(
+      [
+        [x, ym],
+        [x + width, ym],
+        [xm, y + height],
+      ] as Array<Array<Number> >
     );
   }
 }

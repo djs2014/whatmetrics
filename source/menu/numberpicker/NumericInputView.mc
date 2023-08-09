@@ -9,21 +9,18 @@ class NumericInputView extends WatchUi.View {
   hidden var _prompt as String = "";
   hidden var _cursorPos as Number = -1;
   hidden var _insert as Boolean = true;
+  hidden var _negative as Boolean = false;
   hidden var _nrOfItemsInRow as Number = 4;
   hidden var _debug as Boolean = false;
   hidden var _partialUpdate as Boolean = false;
   hidden var _debugInfo as String = "";
 
   hidden var _keyPressed as String = "";
-  hidden var _keyCoord as Lang.Array<Lang.Array<Lang.Number> > =
-    [[]] as Lang.Array<Lang.Array<Lang.Number> >;
-  hidden var _controlCoord as Lang.Array<Lang.Array<Lang.Number> > =
-    [[]] as Lang.Array<Lang.Array<Lang.Number> >;
+  hidden var _keyCoord as Lang.Array<Lang.Array<Lang.Number> > = [[]] as Lang.Array<Lang.Array<Lang.Number> >;
+  hidden var _controlCoord as Lang.Array<Lang.Array<Lang.Number> > = [[]] as Lang.Array<Lang.Array<Lang.Number> >;
 
-  hidden var _keys as Array<String> =
-    ["1", "2", "3", "4", "5", "6", "7", "8", "9", "0"] as Array<String>;
-  hidden var _controls as Array<String> =
-    ["<", "BCK", "DEL", ">", "INS", "CLR", "OK"] as Array<String>;
+  hidden var _keys as Array<String> = ["1", "2", "3", "4", "5", "6", "7", "8", "9", "0"] as Array<String>;
+  hidden var _controls as Array<String> = ["<", "BCK", "DEL", ">", "INS", "CLR", "OK"] as Array<String>;
   hidden var _valueFormat as String = "%.2f";
   hidden var _editData as Array<Char> = [] as Array<Char>;
   hidden var _lineHeight as Number = 20;
@@ -37,25 +34,29 @@ class NumericInputView extends WatchUi.View {
   var _onKeypressed as Method?;
 
   //! Constructor
-   function initialize(
-    debug as Boolean,
-    prompt as String,
-    value as Numeric
-  ) {
+  function initialize(debug as Boolean, prompt as String, value as Numeric) {
     WatchUi.View.initialize();
     _prompt = prompt;
     _debug = debug;
 
     _currentValue = value;
+    _negative = _currentValue < 0;
+
     switch (_currentValue) {
       case instanceof Long:
       case instanceof Number:
         _valueFormat = "%0d";
+        if (_negative) {
+          _currentValue = _currentValue * -1;
+        }
         break;
       case instanceof Float:
       case instanceof Double:
         _valueFormat = "%0.2f";
         _keys.add(".");
+        if (_negative) {
+          _currentValue = _currentValue * -1.0;
+        }
         break;
     }
     _editData = buildEditedValue(_currentValue, _valueFormat);
@@ -65,11 +66,12 @@ class NumericInputView extends WatchUi.View {
     _controlCoord = _controlCoord.slice(0, 0);
   }
 
-   function setEditData(
-    editData as Array<Char>,
-    cursorPos as Number?,
-    insert as Boolean
-  ) as Void {
+  function useNegative(negative as Boolean) as Void {
+    if (negative) {
+      _keys.add("-");
+    }
+  }
+  function setEditData(editData as Array<Char>, cursorPos as Number?, insert as Boolean, negative as Boolean) as Void {
     _editData = editData;
     _currentValue = buildCurrentValue(_editData);
     if (cursorPos == null) {
@@ -78,6 +80,7 @@ class NumericInputView extends WatchUi.View {
       _cursorPos = cursorPos as Number;
     }
     _insert = insert;
+    _negative = negative;
   }
 
   function setOnAccept(objInstance as Object, method as Symbol) as Void {
@@ -96,24 +99,23 @@ class NumericInputView extends WatchUi.View {
     _onKeypressed = new Method(objInstance, method);
   }
 
-   function refreshUi() as Void {
+  function refreshUi() as Void {
     // WatchUi.requestUpdate(); not working, so close current view and reopen again.
     if (_onKeypressed == null) {
       return;
     }
-    (_onKeypressed as Method).invoke(_editData, _cursorPos, _insert);
+    (_onKeypressed as Method).invoke(_editData, _cursorPos, _insert, _negative);
     // (
     //   _onKeypressed as
     //     (Method
     //       (editData as Array<Char>, cursorPos as Number, insert as Boolean)
     //     )
     // ).invoke(_editData, _cursorPos, _insert);
-    
   }
 
   //! Load your resources here
   //! @param dc Device context
-   function onLayout(dc as Dc) as Void {
+  function onLayout(dc as Dc) as Void {
     _lineHeight = dc.getFontHeight(Graphics.FONT_SMALL);
     _fontHeightMedium = dc.getFontHeight(Graphics.FONT_MEDIUM);
 
@@ -121,23 +123,20 @@ class NumericInputView extends WatchUi.View {
       _nrOfItemsInRow = 6;
     }
     // Size of key squares (include the spaces between key squares)
-    _keyWidth =
-      (
-        (dc.getWidth() - 2 * (_nrOfItemsInRow - 1) * _space) / _nrOfItemsInRow
-      ) as Number;
+    _keyWidth = ((dc.getWidth() - 2 * (_nrOfItemsInRow - 1) * _space) / _nrOfItemsInRow) as Number;
 
     _margin = ((dc.getWidth() - _keyWidth * _nrOfItemsInRow) / 2) as Number;
     _keyWidth = _keyWidth - _space;
   }
 
   //! Restore the state of the app and prepare the view to be shown
-   function onShow() as Void {}
+  function onShow() as Void {}
 
   // rectangle keypad 123 456 789 0. DEL OK
 
   //! Update the view
   //! @param dc Device context
-   function onUpdate(dc as Dc) as Void {
+  function onUpdate(dc as Dc) as Void {
     var y = 1;
     // var fullscreenRefresh = !_partialUpdate or _keyCoord.size() == 0;
     // view will close and open, so fullscreenr refresh!
@@ -159,10 +158,7 @@ class NumericInputView extends WatchUi.View {
       drawInfoPanel(dc);
     }
   }
-  hidden function buildEditedValue(
-    value as Numeric,
-    format as String
-  ) as Array<Char> {
+  hidden function buildEditedValue(value as Numeric, format as String) as Array<Char> {
     // if (value == 0.0f && !_keyPressed.equals(".")) {
     //   var stringValue = value.format("%d");
     //   return stringValue.toCharArray();
@@ -215,27 +211,16 @@ class NumericInputView extends WatchUi.View {
     }
 
     dc.setColor(Graphics.COLOR_LT_GRAY, Graphics.COLOR_TRANSPARENT);
-    dc.drawText(
-      dc.getWidth() / 2,
-      y,
-      Graphics.FONT_SMALL,
-      _prompt,
-      Graphics.TEXT_JUSTIFY_CENTER
-    );
+    dc.drawText(dc.getWidth() / 2, y, Graphics.FONT_SMALL, _prompt, Graphics.TEXT_JUSTIFY_CENTER);
 
     y = y + _lineHeight;
     drawEditedValue(dc, y, _editData, _insert);
     dc.clearClip();
   }
 
-  hidden function drawEditedValue(
-    dc as Dc,
-    y as Number,
-    data as Array<Char>,
-    insert as Boolean
-  ) as Void {
+  hidden function drawEditedValue(dc as Dc, y as Number, data as Array<Char>, insert as Boolean) as Void {
     dc.setColor(Graphics.COLOR_WHITE, Graphics.COLOR_TRANSPARENT);
-    var x = _margin;
+    var x = _margin + dc.getTextWidthInPixels("-", Graphics.FONT_MEDIUM);
 
     var cursor = "";
     var first = _editData.slice(0, _cursorPos);
@@ -246,27 +231,18 @@ class NumericInputView extends WatchUi.View {
       last = last.slice(1, null);
     }
 
+    if (_negative) {
+      dc.drawText(x, y, Graphics.FONT_MEDIUM, "-", Graphics.TEXT_JUSTIFY_RIGHT);
+    }
     var textFirst = StringUtil.charArrayToString(first);
     var textLast = StringUtil.charArrayToString(last);
 
-    dc.drawText(
-      x,
-      y,
-      Graphics.FONT_MEDIUM,
-      textFirst,
-      Graphics.TEXT_JUSTIFY_LEFT
-    );
+    dc.drawText(x, y, Graphics.FONT_MEDIUM, textFirst, Graphics.TEXT_JUSTIFY_LEFT);
     x = x + dc.getTextWidthInPixels(textFirst, Graphics.FONT_MEDIUM);
     var widthCursor = 0;
     if (cursor.length() > 0) {
       widthCursor = dc.getTextWidthInPixels(cursor, Graphics.FONT_MEDIUM);
-      dc.drawText(
-        x,
-        y,
-        Graphics.FONT_MEDIUM,
-        cursor,
-        Graphics.TEXT_JUSTIFY_LEFT
-      );
+      dc.drawText(x, y, Graphics.FONT_MEDIUM, cursor, Graphics.TEXT_JUSTIFY_LEFT);
     }
     // always draw cursor line (can be also at start / end of text)
     if (insert) {
@@ -278,13 +254,7 @@ class NumericInputView extends WatchUi.View {
     }
     x = x + widthCursor;
 
-    dc.drawText(
-      x,
-      y,
-      Graphics.FONT_MEDIUM,
-      textLast,
-      Graphics.TEXT_JUSTIFY_LEFT
-    );
+    dc.drawText(x, y, Graphics.FONT_MEDIUM, textLast, Graphics.TEXT_JUSTIFY_LEFT);
   }
 
   hidden function drawInfoPanel(dc as Dc) as Void {
@@ -312,22 +282,14 @@ class NumericInputView extends WatchUi.View {
 
   //! Called when this View is removed from the screen. Save the
   //! state of your app here.
-   function onHide() as Void {}
+  function onHide() as Void {}
 
-   function setDebugInfo(
-    event as String,
-    coord as Lang.Array<Lang.Number>
-  ) as Void {
+  function setDebugInfo(event as String, coord as Lang.Array<Lang.Number>) as Void {
     var key = getKeyPressed(coord);
-    _debugInfo = Lang.format("Event[$1$] Coord[$2$,$3$] Key:[$4$]", [
-      event,
-      coord[0],
-      coord[1],
-      key,
-    ]);
+    _debugInfo = Lang.format("Event[$1$] Coord[$2$,$3$] Key:[$4$]", [event, coord[0], coord[1], key]);
   }
 
-   function onKeyPressed(coord as Lang.Array<Lang.Number>) as Void {
+  function onKeyPressed(coord as Lang.Array<Lang.Number>) as Void {
     _keyPressed = getKeyPressed(coord);
 
     // Controls
@@ -345,6 +307,18 @@ class NumericInputView extends WatchUi.View {
       _redrawKeyPad = true;
     } else if (_keyPressed.equals("OK")) {
       // _delegate.onAcceptNumericinput(_currentValue);
+      if (_negative) {
+        switch (_currentValue) {
+          case instanceof Long:
+          case instanceof Number:
+            _currentValue = _currentValue * -1;
+            break;
+          case instanceof Float:
+          case instanceof Double:
+            _currentValue = _currentValue * -1.0;
+            break;
+        }
+      }
       onAccept(_currentValue);
       WatchUi.popView(WatchUi.SLIDE_RIGHT);
       return;
@@ -356,6 +330,9 @@ class NumericInputView extends WatchUi.View {
       removeKey(true);
     } else if (_keyPressed.equals("BCK")) {
       removeKey(false);
+    } else if (_keyPressed.equals("-")) {
+      _negative = !_negative;
+      _redrawKeyPad = true;
     } else {
       addKey(_keyPressed, _insert);
     }
@@ -409,21 +386,21 @@ class NumericInputView extends WatchUi.View {
   //   _clickType = clickType;
   // }
 
-   function getKeyPressed(coord as Lang.Array<Lang.Number>) as String {
+  function getKeyPressed(coord as Lang.Array<Lang.Number>) as String {
+    var x = coord[0] as Number;
+    var y = coord[1] as Number;
+    // Double try/catch fix for bug Value may not be initialized.
     try {
-      var x = coord[0] as Number;
-      var y = coord[1] as Number;
       for (var idxKey = 0; idxKey < _keyCoord.size(); idxKey++) {
         var range = _keyCoord[idxKey] as Lang.Array<Lang.Number>;
-        if (
-          (range[0] as Number) < x &&
-          x < (range[1] as Number) &&
-          (range[2] as Number) < y &&
-          y < range[3]
-        ) {
-          return _keys[idxKey];
+        if ((range[0] as Number) < x && x < (range[1] as Number) && (range[2] as Number) < y && y < range[3]) {
+          return _keys[idxKey] as String;
         }
       }
+    } catch (ex) {
+      ex.printStackTrace();
+    }
+    try {
       for (var idxCtrl = 0; idxCtrl < _controlCoord.size(); idxCtrl++) {
         var range = _controlCoord[idxCtrl] as Lang.Array<Lang.Number>;
         if (
@@ -432,7 +409,7 @@ class NumericInputView extends WatchUi.View {
           (range[2] as Number) < y &&
           y < (range[3] as Number)
         ) {
-          return _controls[idxCtrl];
+          return _controls[idxCtrl] as String;
         }
       }
     } catch (ex) {
@@ -441,12 +418,7 @@ class NumericInputView extends WatchUi.View {
     return "";
   }
 
-  hidden function drawKeyPad(
-    dc as Dc,
-    yStart as Number,
-    keys as Array<String>,
-    controls as Array<String>
-  ) as Void {
+  hidden function drawKeyPad(dc as Dc, yStart as Number, keys as Array<String>, controls as Array<String>) as Void {
     var y = yStart;
     var x = _margin;
     var margin = _margin;
@@ -466,6 +438,15 @@ class NumericInputView extends WatchUi.View {
           y = y + width;
         } else {
           x = x + width + 2 * _space;
+        }
+      }
+      // QND
+      dc.setColor(Graphics.COLOR_WHITE, Graphics.COLOR_TRANSPARENT);
+      dc.drawRectangle(x, y, width, width);
+      if (keys[idxKey].equals("-")) {
+        if (_negative) {
+          dc.fillRectangle(x, y, width, width);
+          dc.setColor(Graphics.COLOR_BLACK, Graphics.COLOR_TRANSPARENT);
         }
       }
       dc.drawRectangle(x, y, width, width);

@@ -116,10 +116,24 @@ class DataFieldSettingsMenuDelegate extends WatchUi.Menu2InputDelegate {
       boolean = Storage.getValue("show_powerbattery") ? true : false;
       powerMenu.addItem(new WatchUi.ToggleMenuItem("Power batt. level", null, "show_powerbattery", boolean, null));
 
+      mi = new WatchUi.MenuItem("Powerbatt max hr", null, "metric_pbattmaxhour", null);
+      mi.setSubLabel($.getStorageNumberAsString(mi.getId() as String));
+      powerMenu.addItem(mi);
+
       boolean = Storage.getValue("show_powerperweight") ? true : false;
       powerMenu.addItem(new WatchUi.ToggleMenuItem("Power per weight", null, "show_powerperweight", boolean, null));
 
       WatchUi.pushView(powerMenu, new $.PowerMenuDelegate(self, powerMenu), WatchUi.SLIDE_LEFT);
+    } else if (id instanceof String && id.equals("pressure")) {
+      var pressMenu = new WatchUi.Menu2({ :title => "Pressure or altitude" });
+
+      var mi = new WatchUi.MenuItem("Min altitude", null, "pressure_altmin", null);
+      mi.setSubLabel($.getStorageNumberAsString(mi.getId() as String));
+      pressMenu.addItem(mi);
+      mi = new WatchUi.MenuItem("Max altitude", null, "pressure_altmax", null);
+      mi.setSubLabel($.getStorageNumberAsString(mi.getId() as String));
+      pressMenu.addItem(mi);
+       WatchUi.pushView(pressMenu, new $.PressMenuDelegate(self, pressMenu), WatchUi.SLIDE_LEFT);
 
     } else if (id instanceof String && menuItem instanceof ToggleMenuItem) {
       Storage.setValue(id as String, menuItem.isEnabled());
@@ -184,11 +198,11 @@ class HiittMenuDelegate extends WatchUi.Menu2InputDelegate {
     }
   }
 
-  function onNumericinput(editData as Array<Char>, cursorPos as Number, insert as Boolean) as Void {
+  function onNumericinput(editData as Array<Char>, cursorPos as Number, insert as Boolean, negative as Boolean) as Void {
     // Hack to refresh screen
     WatchUi.popView(WatchUi.SLIDE_IMMEDIATE);
     var view = new $.NumericInputView(_debug, _currentPrompt, 0);
-    view.setEditData(editData, cursorPos, insert);
+    view.setEditData(editData, cursorPos, insert, negative);
     view.setOnAccept(self, :onAcceptNumericinput);
     view.setOnKeypressed(self, :onNumericinput);
 
@@ -283,11 +297,11 @@ class TargetsMenuDelegate extends WatchUi.Menu2InputDelegate {
     }
   }
 
-  function onNumericinput(editData as Array<Char>, cursorPos as Number, insert as Boolean) as Void {
+  function onNumericinput(editData as Array<Char>, cursorPos as Number, insert as Boolean, negative as Boolean) as Void {
     // Hack to refresh screen
     WatchUi.popView(WatchUi.SLIDE_IMMEDIATE);
     var view = new $.NumericInputView(_debug, _currentPrompt, 0);
-    view.setEditData(editData, cursorPos, insert);
+    view.setEditData(editData, cursorPos, insert, negative);
     view.setOnAccept(self, :onAcceptNumericinput);
     view.setOnKeypressed(self, :onNumericinput);
 
@@ -345,11 +359,11 @@ class GradientMenuDelegate extends WatchUi.Menu2InputDelegate {
     }
   }
 
-  function onNumericinput(editData as Array<Char>, cursorPos as Number, insert as Boolean) as Void {
+  function onNumericinput(editData as Array<Char>, cursorPos as Number, insert as Boolean, negative as Boolean) as Void {
     // Hack to refresh screen
     WatchUi.popView(WatchUi.SLIDE_IMMEDIATE);
     var view = new $.NumericInputView(_debug, _currentPrompt, 0);
-    view.setEditData(editData, cursorPos, insert);
+    view.setEditData(editData, cursorPos, insert, negative);
     view.setOnAccept(self, :onAcceptNumericinput);
     view.setOnKeypressed(self, :onNumericinput);
 
@@ -413,11 +427,80 @@ class PowerMenuDelegate extends WatchUi.Menu2InputDelegate {
     }
   }
 
-  function onNumericinput(editData as Array<Char>, cursorPos as Number, insert as Boolean) as Void {
+  function onNumericinput(editData as Array<Char>, cursorPos as Number, insert as Boolean, negative as Boolean) as Void {
     // Hack to refresh screen
     WatchUi.popView(WatchUi.SLIDE_IMMEDIATE);
     var view = new $.NumericInputView(_debug, _currentPrompt, 0);
-    view.setEditData(editData, cursorPos, insert);
+    view.setEditData(editData, cursorPos, insert, negative);
+    view.setOnAccept(self, :onAcceptNumericinput);
+    view.setOnKeypressed(self, :onNumericinput);
+
+    Toybox.WatchUi.pushView(view, new $.NumericInputDelegate(_debug, view), WatchUi.SLIDE_IMMEDIATE);
+  }
+
+  //! Handle the back key being pressed
+
+  function onBack() as Void {
+    WatchUi.popView(WatchUi.SLIDE_DOWN);
+  }
+
+  //! Handle the done item being selected
+
+  function onDone() as Void {
+    WatchUi.popView(WatchUi.SLIDE_DOWN);
+  }
+}
+
+class PressMenuDelegate extends WatchUi.Menu2InputDelegate {
+  hidden var _delegate as DataFieldSettingsMenuDelegate;
+  hidden var _item as MenuItem?;
+  hidden var _currentPrompt as String = "";
+  hidden var _debug as Boolean = false;
+
+  function initialize(delegate as DataFieldSettingsMenuDelegate, menu as WatchUi.Menu2) {
+    Menu2InputDelegate.initialize();
+    _delegate = delegate;
+  }
+
+  function onSelect(item as MenuItem) as Void {
+    _item = item;
+    var id = item.getId() as String;
+    
+    if (id instanceof String && item instanceof ToggleMenuItem) {
+      Storage.setValue(id as String, item.isEnabled());
+      item.setSubLabel($.subMenuToggleMenuItem(id as String));
+      return;
+    }
+
+    _currentPrompt = item.getLabel();
+
+    var currentValue = $.getStorageValue(id as String, 0) as Number;
+    var view = new $.NumericInputView(_debug, _currentPrompt, currentValue);
+    view.useNegative(true);
+    view.setOnAccept(self, :onAcceptNumericinput);
+    view.setOnKeypressed(self, :onNumericinput);
+
+    Toybox.WatchUi.pushView(view, new $.NumericInputDelegate(_debug, view), WatchUi.SLIDE_RIGHT);
+  }
+
+  function onAcceptNumericinput(value as Number) as Void {
+    try {
+      if (_item != null) {
+        var storageKey = _item.getId() as String;
+        Storage.setValue(storageKey, value);
+        (_item as MenuItem).setSubLabel(value.format("%.0d"));
+      }
+    } catch (ex) {
+      ex.printStackTrace();
+    }
+  }
+
+  function onNumericinput(editData as Array<Char>, cursorPos as Number, insert as Boolean, negative as Boolean) as Void {
+    // Hack to refresh screen
+    WatchUi.popView(WatchUi.SLIDE_IMMEDIATE);
+    var view = new $.NumericInputView(_debug, _currentPrompt, 0);
+    view.setEditData(editData, cursorPos, insert, negative);
+    view.useNegative(true);
     view.setOnAccept(self, :onAcceptNumericinput);
     view.setOnKeypressed(self, :onNumericinput);
 

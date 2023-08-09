@@ -28,6 +28,6 @@ class ABikePowerListener extends AntPlus.BikePowerListener {
 
   function onBatteryStatusUpdate(data as AntPlus.BatteryStatus) as Void {
       if (data == null) { return; }
-      _onBatteryStatusUpdate.invoke(data.batteryStatus);
+      _onBatteryStatusUpdate.invoke(data.batteryStatus, data.operatingTime);
   }
 }

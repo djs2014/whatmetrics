@@ -57,6 +57,11 @@ class whatmetricsApp extends Application.AppBase {
       Storage.setValue("show_powerbalance", gShowPowerBalance);
       Storage.setValue("show_powerbattery", gShowPowerBattery);
       Storage.setValue("show_powerperweight", gShowPowerPerWeight);
+
+      Storage.setValue("metric_pbattmaxhour", gPowerBattMaxSeconds);
+
+      Storage.setValue("pressure_altmin", gHideAltitudeMin);
+      Storage.setValue("pressure_altmax", gHideAltitudeMax);      
     }
 
     gHiitt.setMode(getStorageValue("hiit_mode", WhatHiitt.HiitDisabled) as WhatHiitt.HiitMode);
@@ -95,9 +100,20 @@ class whatmetricsApp extends Application.AppBase {
     gShowColors = getStorageValue("show_colors", gShowColors) as Boolean;
     gShowGrid = getStorageValue("show_grid", gShowGrid) as Boolean;
     gShowTimer = getStorageValue("show_timer", gShowTimer) as Boolean;
+
+    // gWideFieldShowDistance = getStorageValue("wf_toggle_heading", gWideFieldShowDistance) as Boolean;
+
+    gHideAltitudeMin = getStorageValue("pressure_altmin", 0) as Number;
+    gHideAltitudeMax = getStorageValue("pressure_altmax", 0) as Number;
+
     gShowPowerBalance = getStorageValue("show_powerbalance", gShowPowerBalance) as Boolean;
     gShowPowerBattery = getStorageValue("show_powerbattery", gShowPowerBattery) as Boolean;
     gShowPowerPerWeight = getStorageValue("show_powerperweight", gShowPowerPerWeight) as Boolean;
+
+    var hours = (getStorageValue("metric_pbattmaxhour", gPowerBattMaxSeconds / 3600) as Number);
+    if (hours > 0 and hours < 1000) {
+      gPowerBattMaxSeconds = hours * 60 * 60;
+    }
     
     if (gShowPowerBalance or gShowPowerBattery) {
       gMetrics.initPowerBalance();
@@ -126,3 +142,8 @@ var gShowTimer as Boolean = false;
 var gShowPowerBalance as Boolean = true;
 var gShowPowerBattery as Boolean = true;
 var gShowPowerPerWeight as Boolean = false;
+var gPowerBattMaxSeconds as Number = 0;
+// var gWideFieldShowDistance as Boolean = false;
+// var gWideFieldShowDistanceDestination as Boolean = false;
+var gHideAltitudeMin as Number = -10;
+var gHideAltitudeMax as Number = 10;

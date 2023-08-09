@@ -140,6 +140,28 @@ function mpsToKmPerHour(metersPerSecond as Numeric?) as Float {
   return ((metersPerSecond * 60 * 60) / 1000.0) as Float;
 }
 
+function getDistanceInMeterOrKm(distanceInMeters as Float) as Float {
+  if (distanceInMeters > 1000) {
+    return distanceInMeters / 1000.0f;
+  } else {
+    return distanceInMeters;
+  }
+}
+function getUnitsInMeterOrKm(distanceInMeters as Float) as String {
+  if (distanceInMeters > 1000) {
+    return "km";
+  } else {
+    return "m";
+  }
+}
+function getFormatForMeterAndKm(distanceInMeters as Float) as String {
+  if (distanceInMeters > 1000) {
+    return "%0.2f";
+  } else {
+    return "%0d";
+  }
+}
+
 function deg2rad(deg as Numeric) as Double or Float {
   return deg * (Math.PI / 180);
 }
@@ -207,6 +229,14 @@ function getCompassDirection(bearing as Numeric) as String {
   }
 
   return direction;
+}
+
+// pascal -> mbar (hPa)
+function pascalToMilliBar(pascal as Numeric?) as Float {
+  if (pascal == null) {
+    return 0.0f;
+  }
+  return (pascal / 100.0) as Float;
 }
 
 function getMatchingFont(
@@ -362,6 +392,7 @@ function millisecondsToShortTimeString(totalMilliSeconds as Number, template as 
   }
   return "";
 }
+
 // 1:40 or 150:40
 function secondsToCompactTimeString(totalSeconds as Number, template as String) as String {
   if (totalSeconds != null && totalSeconds instanceof Lang.Number) {
@@ -376,17 +407,33 @@ function secondsToCompactTimeString(totalSeconds as Number, template as String) 
   return "";
 }
 
+// 1:40 or 150:40 (if no {h} in template)
+function secondsToHourMinutes(totalSeconds as Number) as String {
+  if (totalSeconds != null && totalSeconds instanceof Lang.Number) {
+    var timeString = "{h}:{m}";
+    var hours = (totalSeconds / (60 * 60)).toNumber(); // % 24;
+    timeString = $.stringReplace(timeString, "{h}", hours.format("%01d"));
+    var minutes = (totalSeconds / 60.0).toNumber() % 60;
+    timeString = $.stringReplace(timeString, "{m}", minutes.format("%01d"));
+
+    return timeString;
+  }
+  return "";
+}
+
 function stringReplace(str as String, oldString as String, newString as String) as String {
-  var result = str;
-  if (str.length() == 0 || oldString.length() == 0 || newString.length() == 0) {
+  //str = str.toString(); // @@ TODO why crash here? -> because of too many nested function calls?
+  if (str.length() == 0 || oldString.length() == 0) {
     return str;
   }
 
+  var result = str;
   var index = result.find(oldString);
   var count = 0;
   while (index != null && count < 30) {
     var indexEnd = index + oldString.length();
-    result = result.substring(0, index) + newString + result.substring(indexEnd, result.length());
+    var res = result.substring(0, index) + newString + result.substring(indexEnd, result.length());
+    result = res;
     index = result.find(oldString);
     count = count + 1;
   }
