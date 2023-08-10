@@ -1,6 +1,4 @@
 <strings>
-    <string id="AppName">whatmetrics</string>
-    <string id="AppNameBeta">BETA whatmetrics</string>
-
-    <string id="label">My Value</string>
+    <string id="AppName">What metrics</string>
+    <string id="AppNameBeta">BETA What metrics</string>    
 </strings>
