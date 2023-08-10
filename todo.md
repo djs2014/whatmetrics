@@ -1,12 +1,5 @@
-display - , remove - when negative when started
-but put it in front as text
-or multiply value ...
+??write ugly code -> less deep nested functions -> else stack overflow errors! max 255 items in stack?
 
-
-write ugly code -> less deep nested functions -> else stack overflow errors! max 255 items in stack?
-option: altitude or pressure display if alt between x and ym
-
-x config for battery life max minutes / operating time
 
 bars under field / show zones hr and pwer zone
 get power zones -> api?

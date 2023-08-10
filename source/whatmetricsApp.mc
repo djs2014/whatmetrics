@@ -105,6 +105,7 @@ class whatmetricsApp extends Application.AppBase {
 
     gHideAltitudeMin = getStorageValue("pressure_altmin", 0) as Number;
     gHideAltitudeMax = getStorageValue("pressure_altmax", 0) as Number;
+    gShowMeanSeaLevel = getStorageValue("pressure_show_meansealevel", gShowMeanSeaLevel) as Boolean;
 
     gShowPowerBalance = getStorageValue("show_powerbalance", gShowPowerBalance) as Boolean;
     gShowPowerBattery = getStorageValue("show_powerbattery", gShowPowerBattery) as Boolean;
@@ -147,3 +148,4 @@ var gPowerBattMaxSeconds as Number = 0;
 // var gWideFieldShowDistanceDestination as Boolean = false;
 var gHideAltitudeMin as Number = -10;
 var gHideAltitudeMax as Number = 10;
+var gShowMeanSeaLevel as Boolean = true;

@@ -133,7 +133,11 @@ class DataFieldSettingsMenuDelegate extends WatchUi.Menu2InputDelegate {
       mi = new WatchUi.MenuItem("Max altitude", null, "pressure_altmax", null);
       mi.setSubLabel($.getStorageNumberAsString(mi.getId() as String));
       pressMenu.addItem(mi);
-       WatchUi.pushView(pressMenu, new $.PressMenuDelegate(self, pressMenu), WatchUi.SLIDE_LEFT);
+
+      var boolean = Storage.getValue("pressure_show_meansealevel") ? true : false;
+      pressMenu.addItem(new WatchUi.ToggleMenuItem("Mean sealevel", null, "pressure_show_meansealevel", boolean, null));
+
+      WatchUi.pushView(pressMenu, new $.PressMenuDelegate(self, pressMenu), WatchUi.SLIDE_LEFT);
 
     } else if (id instanceof String && menuItem instanceof ToggleMenuItem) {
       Storage.setValue(id as String, menuItem.isEnabled());
