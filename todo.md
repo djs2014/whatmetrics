@@ -1,3 +1,14 @@
+debug
+
+-> powermeter batt level / remaining operating time?
+use bluetooth?
+--save operating time when powerlevel = 5 once
+calc diff 
+-> less than x hours -> color
+
+option show time in small field instead of timer
+
+
 ??write ugly code -> less deep nested functions -> else stack overflow errors! max 255 items in stack?
 
 

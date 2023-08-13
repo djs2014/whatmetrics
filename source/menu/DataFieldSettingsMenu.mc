@@ -116,12 +116,19 @@ class DataFieldSettingsMenuDelegate extends WatchUi.Menu2InputDelegate {
       boolean = Storage.getValue("show_powerbattery") ? true : false;
       powerMenu.addItem(new WatchUi.ToggleMenuItem("Power batt. level", null, "show_powerbattery", boolean, null));
 
-      mi = new WatchUi.MenuItem("Powerbatt max hr", null, "metric_pbattmaxhour", null);
+      mi = new WatchUi.MenuItem("Power battery max hour", null, "metric_pbattmaxhour", null);
+      mi.setSubLabel($.getStorageNumberAsString(mi.getId() as String));
+      powerMenu.addItem(mi);
+
+      mi = new WatchUi.MenuItem("Power set remain hour", null, "metric_pbattsetremaininghour", null);
       mi.setSubLabel($.getStorageNumberAsString(mi.getId() as String));
       powerMenu.addItem(mi);
 
       boolean = Storage.getValue("show_powerperweight") ? true : false;
       powerMenu.addItem(new WatchUi.ToggleMenuItem("Power per weight", null, "show_powerperweight", boolean, null));
+
+      boolean = Storage.getValue("show_poweraverage") ? true : false;
+      powerMenu.addItem(new WatchUi.ToggleMenuItem("Power average", null, "show_poweraverage", boolean, null));
 
       WatchUi.pushView(powerMenu, new $.PowerMenuDelegate(self, powerMenu), WatchUi.SLIDE_LEFT);
     } else if (id instanceof String && id.equals("pressure")) {

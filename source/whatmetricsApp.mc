@@ -57,6 +57,7 @@ class whatmetricsApp extends Application.AppBase {
       Storage.setValue("show_powerbalance", gShowPowerBalance);
       Storage.setValue("show_powerbattery", gShowPowerBattery);
       Storage.setValue("show_powerperweight", gShowPowerPerWeight);
+      Storage.setValue("show_poweraverage", gShowPowerAverage);
 
       Storage.setValue("metric_pbattmaxhour", gPowerBattMaxSeconds);
 
@@ -110,12 +111,16 @@ class whatmetricsApp extends Application.AppBase {
     gShowPowerBalance = getStorageValue("show_powerbalance", gShowPowerBalance) as Boolean;
     gShowPowerBattery = getStorageValue("show_powerbattery", gShowPowerBattery) as Boolean;
     gShowPowerPerWeight = getStorageValue("show_powerperweight", gShowPowerPerWeight) as Boolean;
+    gShowPowerAverage = getStorageValue("show_poweraverage", gShowPowerAverage) as Boolean;
 
     var hours = (getStorageValue("metric_pbattmaxhour", gPowerBattMaxSeconds / 3600) as Number);
     if (hours > 0 and hours < 1000) {
       gPowerBattMaxSeconds = hours * 60 * 60;
     }
-    
+    gPowerBattOperTimeCharched = getStorageValue("metric_pbattopertimecharched", 0) as Number;
+    gPowerBattFullyCharched = getStorageValue("metric_pbattfullycharched", gPowerBattFullyCharched) as Boolean;
+    gPowerBattSetRemainingHour = getStorageValue("metric_pbattsetremaininghour", 0) as Number;
+
     if (gShowPowerBalance or gShowPowerBattery) {
       gMetrics.initPowerBalance();
     }
@@ -143,7 +148,13 @@ var gShowTimer as Boolean = false;
 var gShowPowerBalance as Boolean = true;
 var gShowPowerBattery as Boolean = true;
 var gShowPowerPerWeight as Boolean = false;
+var gShowPowerAverage as Boolean = false;
+
 var gPowerBattMaxSeconds as Number = 0;
+var gPowerBattOperTimeCharched as Number = 0;
+var gPowerBattFullyCharched as Boolean = false;
+var gPowerBattSetRemainingHour as Number = 0;
+
 // var gWideFieldShowDistance as Boolean = false;
 // var gWideFieldShowDistanceDestination as Boolean = false;
 var gHideAltitudeMin as Number = -10;

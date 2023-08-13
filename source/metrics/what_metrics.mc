@@ -225,6 +225,12 @@ class WhatMetrics {
     }
     return -1;
   }
+ function getPowerBatteryVoltage() as Float {
+    if (mPowerBalance != null) {
+      return (mPowerBalance as PowerBalance).getBatteryVoltage();
+    }
+    return -1.0f;
+  }
 
   // time of day, timer, elapsed time, date dd-month
   // elapsed time in millisec
@@ -334,11 +340,14 @@ class PowerBalance {
   hidden var avgPowerBalanceLeft as Double = 0.0d;
   hidden var batteryLevel as Number = -1;
 
-  hidden var operatingTimeInSeconds as Number?;
+  hidden var operatingTimeInSeconds as Number;
+  hidden var batteryVoltage as Float;
   
   function initialize() {
     listener = new ABikePowerListener(self.weak(), :onPedalPowerBalanceUpdate, :onBatteryStatusUpdate);
     bikePower = new AntPlus.BikePower(listener);
+    operatingTimeInSeconds = -1;
+    batteryVoltage = -1.0f;
   }
 
   function getLeft() as Number {
@@ -353,12 +362,11 @@ class PowerBalance {
   }
   
   function getOperatingTimeInSeconds() as Number {
-    if (operatingTimeInSeconds == null) {
-      return -1;
-    }
     return operatingTimeInSeconds as Number;
   }
-
+  function getBatteryVoltage() as Float {
+    return batteryVoltage as Float;
+  }
 
   function compute(power as Number) as Void {
     if (power > 0 && mPowerBalanceLeft != null && mPowerBalanceLeft > 0) {
@@ -376,7 +384,7 @@ class PowerBalance {
     }
   }
 
-  function onBatteryStatusUpdate(batteryStatus as AntPlus.BatteryStatusValue, operatingTime as Number) as Void {
+  function onBatteryStatusUpdate(batteryStatus as AntPlus.BatteryStatusValue, operatingTime as Number, abatteryVoltage as Float) as Void {
     batteryLevel = -1;
     if (batteryStatus == AntPlus.BATT_STATUS_NEW) {
       batteryLevel = 5;
@@ -392,6 +400,16 @@ class PowerBalance {
       batteryLevel = 0;
     }
 
-    operatingTimeInSeconds = operatingTime;
+    if (operatingTime == null) {
+      operatingTimeInSeconds = -1;
+    } else {
+      operatingTimeInSeconds = operatingTime;
+    }
+
+    if (abatteryVoltage == null) {
+      batteryVoltage = -1.0f;
+    } else {
+      batteryVoltage = abatteryVoltage;
+    }
   }
 }
