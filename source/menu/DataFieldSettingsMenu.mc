@@ -116,6 +116,13 @@ class DataFieldSettingsMenuDelegate extends WatchUi.Menu2InputDelegate {
       boolean = Storage.getValue("show_powerbattery") ? true : false;
       powerMenu.addItem(new WatchUi.ToggleMenuItem("Power batt. level", null, "show_powerbattery", boolean, null));
 
+      mi = new WatchUi.MenuItem("Sec. to fallback distance", null, "power_countdowntofallback", null);
+      mi.setSubLabel($.getStorageNumberAsString(mi.getId() as String));
+      powerMenu.addItem(mi);
+
+      boolean = Storage.getValue("show_powerbatterytime") ? true : false;
+      powerMenu.addItem(new WatchUi.ToggleMenuItem("Power batt. time", null, "show_powerbatterytime", boolean, null));
+
       mi = new WatchUi.MenuItem("Power battery max hour", null, "metric_pbattmaxhour", null);
       mi.setSubLabel($.getStorageNumberAsString(mi.getId() as String));
       powerMenu.addItem(mi);

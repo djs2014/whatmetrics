@@ -15,6 +15,7 @@ class whatmetricsView extends WatchUi.DataField {
   hidden var mDebug as Boolean = true;
   hidden var mPaused as Boolean = true;
   hidden var mActivityStartCountdown as Number = 0;
+  hidden var mPowerFallbackCountdown as Number = 0;
 
   // [[w,h],[w,h],[w,h]]
   hidden var mGrid as Array<Array<Array<Number> > > = [] as Array<Array<Array<Number> > >;
@@ -114,6 +115,12 @@ class whatmetricsView extends WatchUi.DataField {
     var power = gMetrics.getPower();
     var perc = percentageOf(power, gTargetFtp);
     gHiitt.compute(info, perc);
+
+    if (power > 0.0 and mPowerFallbackCountdown < 5) {
+      mPowerFallbackCountdown = $.gPowerCountdownToFallBack;
+    } else if (mPowerFallbackCountdown > 0) {
+      mPowerFallbackCountdown--;
+    }
   }
 
   function onUpdate(dc as Dc) as Void {
@@ -280,8 +287,8 @@ class whatmetricsView extends WatchUi.DataField {
       }
     } else if (fieldIdx == 3) {
       // @@ option fallback if power = 0; -> show distance
-      var power = gMetrics.getPower();
-      if (power == 0.0 ) { // and mSmallField
+      var power = gMetrics.getPower();     
+      if (power == 0.0 and mSmallField or (mPowerFallbackCountdown == 0 and $.gPowerCountdownToFallBack > 0)) {
         title = "distance";
         var dist = gMetrics.getElapsedDistance();
         text = getDistanceInMeterOrKm(dist).format(getFormatForMeterAndKm(dist));
@@ -302,7 +309,7 @@ class whatmetricsView extends WatchUi.DataField {
           title = "power (" + gMetrics.getPowerPerSec().format("%0d") + " sec)";
           units = "w";
           number = gMetrics.getPower().format("%0d");
-           if (gShowPowerAverage) {
+          if (gShowPowerAverage) {
             text_botleft = "avg " + gMetrics.getAveragePower().format("%0d");
           } else {
             text_botleft = gMetrics.getPowerPerWeight().format("%0.1f") + "/kg";
@@ -314,11 +321,11 @@ class whatmetricsView extends WatchUi.DataField {
         if (gShowPowerBattery) {
           var batteryLevel = gMetrics.getPowerBatteryLevel();
           var operatingTimeInSeconds = gMetrics.getPowerOperatingTimeInSeconds();
-                              
+
           if (operatingTimeInSeconds > 0 and gPowerBattSetRemainingHour > 0) {
-            var spentSeconds = ($.gPowerBattMaxSeconds - (gPowerBattSetRemainingHour * 60 * 60));
+            var spentSeconds = $.gPowerBattMaxSeconds - gPowerBattSetRemainingHour * 60 * 60;
             if (spentSeconds > 0) {
-              gPowerBattOperTimeCharched = operatingTimeInSeconds - spentSeconds;  
+              gPowerBattOperTimeCharched = operatingTimeInSeconds - spentSeconds;
               Storage.setValue("metric_pbattopertimecharched", gPowerBattOperTimeCharched);
               gPowerBattFullyCharched = true;
               Storage.setValue("metric_pbattfullycharched", gPowerBattFullyCharched);
@@ -326,22 +333,27 @@ class whatmetricsView extends WatchUi.DataField {
             gPowerBattSetRemainingHour = 0;
             Storage.setValue("metric_pbattsetremaininghour", gPowerBattSetRemainingHour);
           }
-           
-              
+
           // If fully charched, save operatingtime of powermeter
-          if (batteryLevel == 5 & !gPowerBattFullyCharched) {
+          if (batteryLevel == (5 & !gPowerBattFullyCharched)) {
             gPowerBattOperTimeCharched = operatingTimeInSeconds;
             Storage.setValue("metric_pbattopertimecharched", gPowerBattOperTimeCharched);
             gPowerBattFullyCharched = true;
             Storage.setValue("metric_pbattfullycharched", gPowerBattFullyCharched);
-          } else if (batteryLevel == 4 & gPowerBattFullyCharched) {
+          } else if (batteryLevel == (4 & gPowerBattFullyCharched)) {
             gPowerBattFullyCharched = false;
             Storage.setValue("metric_pbattfullycharched", gPowerBattFullyCharched);
           }
-          
-          var operatingTimeAfterCharched = operatingTimeInSeconds - gPowerBattOperTimeCharched;          
-          var powerTimeString = "";          
-          if (!mSmallField and operatingTimeInSeconds > -1 and operatingTimeAfterCharched > 0 and (batteryLevel <= 3 or mPaused)) {
+
+          var operatingTimeAfterCharched = operatingTimeInSeconds - gPowerBattOperTimeCharched;
+          var powerTimeString = "";
+          if (
+            gShowPowerBattTime and
+            !mSmallField and
+            operatingTimeInSeconds > -1 and
+            operatingTimeAfterCharched > 0 and
+            (batteryLevel <= 3 or mPaused)
+          ) {
             if ($.gPowerBattMaxSeconds == 0) {
               // o perating time
               powerTimeString = "o " + secondsToHourMinutes(operatingTimeAfterCharched);
@@ -1165,13 +1177,12 @@ class whatmetricsView extends WatchUi.DataField {
       Graphics.TEXT_JUSTIFY_LEFT
     );
 
-
     var batteryLevel = gMetrics.getPowerBatteryLevel();
     var operatingTimeInSeconds = gMetrics.getPowerOperatingTimeInSeconds();
     if (operatingTimeInSeconds > 0 and gPowerBattSetRemainingHour > 0) {
-      var spentSeconds = ($.gPowerBattMaxSeconds - (gPowerBattSetRemainingHour * 60 * 60));
+      var spentSeconds = $.gPowerBattMaxSeconds - gPowerBattSetRemainingHour * 60 * 60;
       if (spentSeconds > 0) {
-        gPowerBattOperTimeCharched = operatingTimeInSeconds - spentSeconds;  
+        gPowerBattOperTimeCharched = operatingTimeInSeconds - spentSeconds;
         Storage.setValue("metric_pbattopertimecharched", gPowerBattOperTimeCharched);
         gPowerBattFullyCharched = true;
         Storage.setValue("metric_pbattfullycharched", gPowerBattFullyCharched);
@@ -1179,20 +1190,19 @@ class whatmetricsView extends WatchUi.DataField {
       gPowerBattSetRemainingHour = 0;
       Storage.setValue("metric_pbattsetremaininghour", gPowerBattSetRemainingHour);
     }
-           
 
     // If fully charched, save operatingtime of powermeter
-    if (batteryLevel == 5 & !gPowerBattFullyCharched) {
+    if (batteryLevel == (5 & !gPowerBattFullyCharched)) {
       gPowerBattOperTimeCharched = operatingTimeInSeconds;
       Storage.setValue("metric_pbattopertimecharched", gPowerBattOperTimeCharched);
       gPowerBattFullyCharched = true;
       Storage.setValue("metric_pbattfullycharched", gPowerBattFullyCharched);
-    } else if (batteryLevel == 4 & gPowerBattFullyCharched) {
+    } else if (batteryLevel == (4 & gPowerBattFullyCharched)) {
       gPowerBattFullyCharched = false;
       Storage.setValue("metric_pbattfullycharched", gPowerBattFullyCharched);
     }
-    
-    var operatingTimeAfterCharched = operatingTimeInSeconds - gPowerBattOperTimeCharched; 
+
+    var operatingTimeAfterCharched = operatingTimeInSeconds - gPowerBattOperTimeCharched;
 
     y = y + l;
     dc.drawText(
@@ -1220,9 +1230,8 @@ class whatmetricsView extends WatchUi.DataField {
       Graphics.TEXT_JUSTIFY_LEFT
     );
 
-
     y = y + l;
-    var remainingSeconds = $.gPowerBattMaxSeconds - operatingTimeAfterCharched;         
+    var remainingSeconds = $.gPowerBattMaxSeconds - operatingTimeAfterCharched;
     dc.drawText(
       x,
       y,

@@ -1,4 +1,7 @@
 debug
+setting show batt hours j/n
+show time / timer / elapsed
+x power 0 for 5 seconds -> show distance
 
 -> powermeter batt level / remaining operating time?
 use bluetooth?

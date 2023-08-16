@@ -56,6 +56,7 @@ class whatmetricsApp extends Application.AppBase {
       Storage.setValue("show_timer", gShowTimer);
       Storage.setValue("show_powerbalance", gShowPowerBalance);
       Storage.setValue("show_powerbattery", gShowPowerBattery);
+      Storage.setValue("show_powerbatterytime", gShowPowerBattTime);
       Storage.setValue("show_powerperweight", gShowPowerPerWeight);
       Storage.setValue("show_poweraverage", gShowPowerAverage);
 
@@ -110,8 +111,11 @@ class whatmetricsApp extends Application.AppBase {
 
     gShowPowerBalance = getStorageValue("show_powerbalance", gShowPowerBalance) as Boolean;
     gShowPowerBattery = getStorageValue("show_powerbattery", gShowPowerBattery) as Boolean;
+    gShowPowerBattTime = getStorageValue("show_powerbatterytime", gShowPowerBattTime) as Boolean;
     gShowPowerPerWeight = getStorageValue("show_powerperweight", gShowPowerPerWeight) as Boolean;
     gShowPowerAverage = getStorageValue("show_poweraverage", gShowPowerAverage) as Boolean;
+
+    gPowerCountdownToFallBack = getStorageValue("power_countdowntofallback", gPowerCountdownToFallBack) as Number;
 
     var hours = (getStorageValue("metric_pbattmaxhour", gPowerBattMaxSeconds / 3600) as Number);
     if (hours > 0 and hours < 1000) {
@@ -120,6 +124,7 @@ class whatmetricsApp extends Application.AppBase {
     gPowerBattOperTimeCharched = getStorageValue("metric_pbattopertimecharched", 0) as Number;
     gPowerBattFullyCharched = getStorageValue("metric_pbattfullycharched", gPowerBattFullyCharched) as Boolean;
     gPowerBattSetRemainingHour = getStorageValue("metric_pbattsetremaininghour", 0) as Number;
+    
 
     if (gShowPowerBalance or gShowPowerBattery) {
       gMetrics.initPowerBalance();
@@ -150,6 +155,7 @@ var gShowPowerBattery as Boolean = true;
 var gShowPowerPerWeight as Boolean = false;
 var gShowPowerAverage as Boolean = false;
 
+var gShowPowerBattTime as Boolean = false;
 var gPowerBattMaxSeconds as Number = 0;
 var gPowerBattOperTimeCharched as Number = 0;
 var gPowerBattFullyCharched as Boolean = false;
@@ -160,3 +166,4 @@ var gPowerBattSetRemainingHour as Number = 0;
 var gHideAltitudeMin as Number = -10;
 var gHideAltitudeMax as Number = 10;
 var gShowMeanSeaLevel as Boolean = true;
+var gPowerCountdownToFallBack as Number = 10;
