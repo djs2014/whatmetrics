@@ -6,6 +6,7 @@ import Toybox.Application.Storage;
 using Toybox.Time;
 using Toybox.Time.Gregorian;
 
+
 class whatmetricsView extends WatchUi.DataField {
   hidden var mFieldSize as String;
   hidden var mWideField as Boolean = true;
@@ -46,12 +47,19 @@ class whatmetricsView extends WatchUi.DataField {
     Graphics.FONT_SYSTEM_LARGE,
   ];
 
+  // @@ QND
+  hidden var mHiitt as WhatHiitt;
+  hidden var mMetrics as WhatMetrics;
   // hidden var mGrade as Double = 0.0d;
   function initialize() {
     DataField.initialize();
     mFieldSize = "?x?";
 
+    mHiitt = getHiitt();
+    mMetrics = getWhatMetrics();
+
     checkFeatures();
+     if ( $.gCreateColors) {
     mDecimalsColorDay = Graphics.createColor(180, 50, 50, 50);
     mDecimalsColorNight = Graphics.createColor(180, 150, 150, 150);
 
@@ -60,6 +68,7 @@ class whatmetricsView extends WatchUi.DataField {
 
     mIconColorDay = Graphics.createColor(255, 220, 220, 220);
     mIconColorNight = Graphics.createColor(255, 100, 100, 100);
+     }
   }
 
   function onLayout(dc as Dc) as Void {
@@ -100,7 +109,7 @@ class whatmetricsView extends WatchUi.DataField {
   }
 
   function compute(info as Activity.Info) as Void {
-    gMetrics.compute(info);
+    mMetrics.compute(info);
 
     mPaused = false;
     if (info has :timerState) {
@@ -112,9 +121,9 @@ class whatmetricsView extends WatchUi.DataField {
     } else if (mActivityStartCountdown >= 0) {
       mActivityStartCountdown--;
     }
-    var power = gMetrics.getPower();
+    var power = mMetrics.getPower();
     var perc = percentageOf(power, gTargetFtp);
-    gHiitt.compute(info, perc);
+    mHiitt.compute(info, perc);
 
     if (power > 0.0 and mPowerFallbackCountdown < 5) {
       mPowerFallbackCountdown = $.gPowerCountdownToFallBack;
@@ -124,6 +133,12 @@ class whatmetricsView extends WatchUi.DataField {
   }
 
   function onUpdate(dc as Dc) as Void {
+    if ($.gExitedMenu) {
+      // fix for leaving menu, draw complete screen, large field
+      dc.clearClip();
+      $.gExitedMenu = false;
+    }
+
     dc.setColor(getBackgroundColor(), getBackgroundColor());
     dc.clear();
 
@@ -224,10 +239,10 @@ class whatmetricsView extends WatchUi.DataField {
     var units_side = "";
     var text_botright = "";
     var text_botleft = "";
-
+  
     if (fieldIdx == 0) {
       title = "grade";
-      var grade = gMetrics.getGrade();
+      var grade = mMetrics.getGrade();
 
       value = grade.format("%0.1f");
       if (mSmallField) {
@@ -248,9 +263,9 @@ class whatmetricsView extends WatchUi.DataField {
     } else if (fieldIdx == 1) {
       // @QND
       if (mWideField and mSmallField) {
-        var dist = gMetrics.getDistanceToDestination();
+        var dist = mMetrics.getDistanceToDestination();
         if (dist > 0.0f) {
-          var distNext = gMetrics.getDistanceToNextPoint();
+          var distNext = mMetrics.getDistanceToNextPoint();
           if (dist > distNext and distNext > 0.0f) {
             dist = distNext;
             title = "next";
@@ -261,15 +276,15 @@ class whatmetricsView extends WatchUi.DataField {
           }
         } else {
           title = "distance";
-          dist = gMetrics.getElapsedDistance();
+          dist = mMetrics.getElapsedDistance();
         }
         text = getDistanceInMeterOrKm(dist).format(getFormatForMeterAndKm(dist));
         units_side = getUnitsInMeterOrKm(dist);
       } else {
-        text = getCompassDirection(gMetrics.getBearing());
+        text = getCompassDirection(mMetrics.getBearing());
       }
     } else if (fieldIdx == 2) {
-      var heartRate = gMetrics.getHeartRate();
+      var heartRate = mMetrics.getHeartRate();
       if (mPaused or heartRate == 0) {
         title = "time";
         var today = Gregorian.info(Time.now(), Time.FORMAT_MEDIUM);
@@ -282,45 +297,46 @@ class whatmetricsView extends WatchUi.DataField {
         number = heartRate.format("%0d");
         var iconColor = getIconColor(dc, heartRate, gTargetHeartRate);
         checkReverseColor(dc, x, y, width, height);
-        drawHeartIcon(dc, x, y, width, height, iconColor);
-        text_botleft = "zone " + gMetrics.getHeartRateZone().format("%0d");
+        var hrZone = mMetrics.getHeartRateZone();
+        drawHeartIcon(dc, x, y, width, height, iconColor, hrZone);
+        text_botleft = "zone " + hrZone.format("%0d");
       }
     } else if (fieldIdx == 3) {
       // @@ option fallback if power = 0; -> show distance
-      var power = gMetrics.getPower();     
+      var power = mMetrics.getPower();     
       if (power == 0.0 and mSmallField or (mPowerFallbackCountdown == 0 and $.gPowerCountdownToFallBack > 0)) {
         title = "distance";
-        var dist = gMetrics.getElapsedDistance();
+        var dist = mMetrics.getElapsedDistance();
         text = getDistanceInMeterOrKm(dist).format(getFormatForMeterAndKm(dist));
         units = getUnitsInMeterOrKm(dist);
       } else {
         if (gShowPowerPerWeight) {
-          title = "power (" + gMetrics.getPowerPerSec().format("%0d") + " sec) / kg";
+          title = "power (" + mMetrics.getPowerPerSec().format("%0d") + " sec) / kg";
           units = "w/kg";
-          value = gMetrics.getPowerPerWeight().format("%0.1f");
+          value = mMetrics.getPowerPerWeight().format("%0.1f");
           number = stringLeft(value, ".", value);
           decimals = stringRight(value, ".", "");
           if (gShowPowerAverage) {
-            text_botleft = "avg " + gMetrics.getAveragePower().format("%0d");
+            text_botleft = "avg " + mMetrics.getAveragePower().format("%0d");
           } else {
-            text_botleft = gMetrics.getPower().format("%0d") + " w";
+            text_botleft = mMetrics.getPower().format("%0d") + " w";
           }
         } else {
-          title = "power (" + gMetrics.getPowerPerSec().format("%0d") + " sec)";
+          title = "power (" + mMetrics.getPowerPerSec().format("%0d") + " sec)";
           units = "w";
-          number = gMetrics.getPower().format("%0d");
+          number = mMetrics.getPower().format("%0d");
           if (gShowPowerAverage) {
-            text_botleft = "avg " + gMetrics.getAveragePower().format("%0d");
+            text_botleft = "avg " + mMetrics.getAveragePower().format("%0d");
           } else {
-            text_botleft = gMetrics.getPowerPerWeight().format("%0.1f") + "/kg";
+            text_botleft = mMetrics.getPowerPerWeight().format("%0.1f") + "/kg";
           }
         }
-        var iconColor = getIconColor(dc, gMetrics.getPower(), gTargetFtp);
+        var iconColor = getIconColor(dc, mMetrics.getPower(), gTargetFtp);
         checkReverseColor(dc, x, y, width, height);
         drawPowerIcon(dc, x, y, width, height, iconColor);
         if (gShowPowerBattery) {
-          var batteryLevel = gMetrics.getPowerBatteryLevel();
-          var operatingTimeInSeconds = gMetrics.getPowerOperatingTimeInSeconds();
+          var batteryLevel = mMetrics.getPowerBatteryLevel();
+          var operatingTimeInSeconds = mMetrics.getPowerOperatingTimeInSeconds();
 
           if (operatingTimeInSeconds > 0 and gPowerBattSetRemainingHour > 0) {
             var spentSeconds = $.gPowerBattMaxSeconds - gPowerBattSetRemainingHour * 60 * 60;
@@ -335,12 +351,12 @@ class whatmetricsView extends WatchUi.DataField {
           }
 
           // If fully charched, save operatingtime of powermeter
-          if (batteryLevel == (5 & !gPowerBattFullyCharched)) {
+          if (batteryLevel == 5 and !gPowerBattFullyCharched) {
             gPowerBattOperTimeCharched = operatingTimeInSeconds;
             Storage.setValue("metric_pbattopertimecharched", gPowerBattOperTimeCharched);
             gPowerBattFullyCharched = true;
             Storage.setValue("metric_pbattfullycharched", gPowerBattFullyCharched);
-          } else if (batteryLevel == (4 & gPowerBattFullyCharched)) {
+          } else if (batteryLevel == 4 and gPowerBattFullyCharched) {
             gPowerBattFullyCharched = false;
             Storage.setValue("metric_pbattfullycharched", gPowerBattFullyCharched);
           }
@@ -368,9 +384,9 @@ class whatmetricsView extends WatchUi.DataField {
           drawPowerBatteryLevel(dc, x, y, width, height, batteryLevel, powerTimeString);
         }
         if (gShowPowerBalance) {
-          var powerLeft = gMetrics.getPowerBalanceLeft();
+          var powerLeft = mMetrics.getPowerBalanceLeft();
           if (mPaused) {
-            powerLeft = gMetrics.getAveragePowerBalanceLeft();
+            powerLeft = mMetrics.getAveragePowerBalanceLeft();
           }
           if (powerLeft > 0 and powerLeft < 100) {
             var pwrRight = 100 - (powerLeft as Number);
@@ -381,18 +397,18 @@ class whatmetricsView extends WatchUi.DataField {
     } else if (fieldIdx == 4) {
       title = "speed";
       units = "km/h";
-      var speed = mpsToKmPerHour(gMetrics.getSpeed());
+      var speed = mpsToKmPerHour(mMetrics.getSpeed());
       value = speed.format("%0.1f");
       number = stringLeft(value, ".", value);
       decimals = stringRight(value, ".", "");
       var iconColor = getIconColor(dc, speed, gTargetSpeed);
       checkReverseColor(dc, x, y, width, height);
       drawSpeedIcon(dc, x, y, width, height, iconColor);
-      text_botleft = "avg " + mpsToKmPerHour(gMetrics.getAverageSpeed()).format("%0.1f");
+      text_botleft = "avg " + mpsToKmPerHour(mMetrics.getAverageSpeed()).format("%0.1f");
     } else if (fieldIdx == 5) {
       title = "altitude";
       units = "m";
-      var altitude = gMetrics.getAltitude();
+      var altitude = mMetrics.getAltitude();
 
       // @@ save every 1 minute -> check diff + / - or ++/--
       // altitude = 0;
@@ -401,10 +417,10 @@ class whatmetricsView extends WatchUi.DataField {
         var pressure;
         if ($.gShowMeanSeaLevel) {
           title = "pressure sealevel";
-          pressure = pascalToMilliBar(gMetrics.getMeanSeaLevelPressure());
+          pressure = pascalToMilliBar(mMetrics.getMeanSeaLevelPressure());
         } else {
           title = "pressure";
-          pressure = pascalToMilliBar(gMetrics.getAmbientPressure());
+          pressure = pascalToMilliBar(mMetrics.getAmbientPressure());
         }
         units = "hPa";
         value = pressure.format("%0.2f");
@@ -417,7 +433,7 @@ class whatmetricsView extends WatchUi.DataField {
           decimals = stringRight(value, ".", "");
         }
       } else {
-        if (mpsToKmPerHour(gMetrics.getSpeed()) < 15) {
+        if (mpsToKmPerHour(mMetrics.getSpeed()) < 15) {
           value = altitude.format("%0.2f");
         } else {
           value = altitude.format("%0d");
@@ -438,11 +454,11 @@ class whatmetricsView extends WatchUi.DataField {
         checkReverseColor(dc, x, y, width, height);
         drawAltitudeIcon(dc, x, y, width, height, iconColor);
 
-        var totalAsc = gMetrics.getTotalAscent();
+        var totalAsc = mMetrics.getTotalAscent();
         if (totalAsc > 0) {
           text_botleft = "A " + totalAsc.format("%0.0f");
         }
-        var totalDesc = gMetrics.getTotalDescent();
+        var totalDesc = mMetrics.getTotalDescent();
         if (totalDesc > 0) {
           text_botright = "D " + totalDesc.format("%0.0f");
         }
@@ -450,47 +466,47 @@ class whatmetricsView extends WatchUi.DataField {
     } else if (fieldIdx == 6) {
       title = "cadence";
       units = "rpm";
-      number = gMetrics.getCadence().format("%0d");
+      number = mMetrics.getCadence().format("%0d");
       if (mWideField and mSmallField) {
         units_side = "rpm";
       }
-      drawCadenceIcon(dc, x, y, width, height, getIconColor(dc, gMetrics.getCadence(), gTargetCadence));
+      drawCadenceIcon(dc, x, y, width, height, getIconColor(dc, mMetrics.getCadence(), gTargetCadence));
     } else if (fieldIdx == 7) {
       var showTimerElapsed = true;
-      if (gHiitt.isEnabled()) {
+      if (mHiitt.isEnabled()) {
         title = "hiit";
-        var recovery = gHiitt.getRecoveryElapsedSeconds();
+        var recovery = mHiitt.getRecoveryElapsedSeconds();
         if (recovery > 0) {
           showTimerElapsed = false;
           text = secondsToCompactTimeString(recovery, "({m}:{s})");
-          if (gHiitt.wasValidHiit()) {
-            drawHiitIcon(dc, x, y, width, height, Graphics.COLOR_GREEN);
+          if (mHiitt.wasValidHiit()) {
+            drawHiitIcon(dc, x, y, width, height, Graphics.COLOR_BLUE);
           }
         } else {
-          var counter = gHiitt.getCounter();
+          var counter = mHiitt.getCounter();
           if (counter > 0) {
             text = counter.format("%01d");
           } else {
-            var hiitElapsed = gHiitt.getElapsedSeconds();
+            var hiitElapsed = mHiitt.getElapsedSeconds();
             if (hiitElapsed > 0) {
               showTimerElapsed = false;
               text = secondsToCompactTimeString(hiitElapsed, "({m}:{s})");
-              if (gHiitt.wasValidHiit()) {
+              if (mHiitt.wasValidHiit()) {
                 drawHiitIcon(dc, x, y, width, height, Graphics.COLOR_GREEN);
               }
-              var vo2max = gHiitt.getVo2Max();
+              var vo2max = mHiitt.getVo2Max();
               if (vo2max > 30) {
                 decimals = vo2max.format("%0.1f");
               }
             }
           }
         }
-        var nrHiit = gHiitt.getNumberOfHits();
+        var nrHiit = mHiitt.getNumberOfHits();
         if (nrHiit > 0) {
           text_botleft = "H " + nrHiit.format("%0.0d");
         }
 
-        var scores = gHiitt.getHitScores();
+        var scores = mHiitt.getHitScores();
         if (scores.size() > 0) {
           var sCounter = 0;
 
@@ -507,10 +523,10 @@ class whatmetricsView extends WatchUi.DataField {
         var valueElapsed = 0;
         if (gShowTimer) {
           title = "timer";
-          valueElapsed = gMetrics.getTimerTime();
+          valueElapsed = mMetrics.getTimerTime();
         } else {
           title = "elapsed";
-          valueElapsed = gMetrics.getElapsedTime();
+          valueElapsed = mMetrics.getElapsedTime();
         }
         var elapsed = millisecondsToShortTimeString(valueElapsed, "{h}.{m}:{s}");
         prefix = stringLeft(elapsed, ".", "");
@@ -518,7 +534,7 @@ class whatmetricsView extends WatchUi.DataField {
           prefix = "";
         }
         text = stringRight(elapsed, ".", elapsed);
-        drawElapsedTimeIcon(dc, x, y, width, height, mIconColor, gMetrics.getElapsedTime());
+        drawElapsedTimeIcon(dc, x, y, width, height, mIconColor, mMetrics.getElapsedTime());
       }
     }
 
@@ -712,7 +728,8 @@ class whatmetricsView extends WatchUi.DataField {
     y as Number,
     width as Number,
     height as Number,
-    color as ColorType
+    color as ColorType,
+    hrZone as Number
   ) as Void {
     var r = (height / 3.85).toNumber();
     var x0 = (x + width / 2).toNumber();
@@ -724,9 +741,18 @@ class whatmetricsView extends WatchUi.DataField {
     var yc1 = pointOnCircle_y(x1, y1, r, 135);
     var xc2 = pointOnCircle_x(x2, y1, r, 45);
     var yc2 = pointOnCircle_y(x2, y1, r, 45);
-    var y3 = y + height - 0.5 * r;
+    var y3 = (y + height - 0.5 * r).toNumber();
 
     setColorFillStroke(dc, color);
+
+    var hrzFont = Graphics.FONT_SYSTEM_NUMBER_MILD;
+    var fh = dc.getFontHeight(hrzFont);
+    if (fh > height) {
+      hrzFont = Graphics.FONT_SMALL;
+    }
+        
+    dc.drawText(x + 2, y + height/ 2 - 1, hrzFont, hrZone.format("%0d"), Graphics.TEXT_JUSTIFY_LEFT | Graphics.TEXT_JUSTIFY_VCENTER);
+
     dc.fillCircle(x1, y1, r);
     dc.fillCircle(x2, y1, r);
     dc.fillPolygon(
@@ -1076,16 +1102,16 @@ class whatmetricsView extends WatchUi.DataField {
     height as Number,
     color as ColorType
   ) as Void {
-    var m = height / 5;
-    var d = width / 6;
+    var m = (height / 5).toNumber();
+    var d = (width / 6).toNumber();
     var x1 = x + d;
     var y1 = y + height - m;
-    var x2 = x1 + 1.5 * d;
+    var x2 = (x1 + 1.5 * d).toNumber();
     var y2 = y + m;
-    var x3 = x2 + 0.5 * d;
-    var y3 = y + 3 * m;
+    var x3 = (x2 + 0.5 * d).toNumber();
+    var y3 = (y + 3 * m).toNumber();
     var x4 = x3 + d;
-    var y4 = y + 2 * m;
+    var y4 = (y + 2 * m).toNumber();
     var x5 = x4 + d;
     var y5 = y1;
 
@@ -1108,20 +1134,20 @@ class whatmetricsView extends WatchUi.DataField {
     var l = dc.getFontHeight(font);
 
     y = y + l;
-    dc.drawText(x, y, font, Lang.format("Alt: $1$", [gMetrics.getAltitude()]), Graphics.TEXT_JUSTIFY_LEFT);
+    dc.drawText(x, y, font, Lang.format("Alt: $1$", [mMetrics.getAltitude()]), Graphics.TEXT_JUSTIFY_LEFT);
     y = y + l;
     dc.drawText(
       x,
       y,
       font,
-      Lang.format("Grade: $1$", [gMetrics.getGrade().format("%0.1f")]),
+      Lang.format("Grade: $1$", [mMetrics.getGrade().format("%0.1f")]),
       Graphics.TEXT_JUSTIFY_LEFT
     );
 
     y = y + l;
     var grades = "";
-    for (var i = 0; i < gMetrics.getGradeArray().size(); i++) {
-      grades = grades + gMetrics.getGradeArray()[i].format("%0.2f") + " ";
+    for (var i = 0; i < mMetrics.getGradeArray().size(); i++) {
+      grades = grades + mMetrics.getGradeArray()[i].format("%0.2f") + " ";
     }
     dc.drawText(x, y, Graphics.FONT_SMALL, Lang.format("Grade: $1$", [grades]), Graphics.TEXT_JUSTIFY_LEFT);
     // y = y + l;
@@ -1129,7 +1155,7 @@ class whatmetricsView extends WatchUi.DataField {
     //   x,
     //   y,
     //   font,
-    //   Lang.format("Bearing: $1$", [getCompassDirection(gMetrics.getBearing())]),
+    //   Lang.format("Bearing: $1$", [getCompassDirection(mMetrics.getBearing())]),
     //   Graphics.TEXT_JUSTIFY_LEFT
     // );
     y = y + l;
@@ -1137,7 +1163,7 @@ class whatmetricsView extends WatchUi.DataField {
       x,
       y,
       font,
-      Lang.format("Power: $1$", [gMetrics.getPower().format("%0.0d")]),
+      Lang.format("Power: $1$", [mMetrics.getPower().format("%0.0d")]),
       Graphics.TEXT_JUSTIFY_LEFT
     );
 
@@ -1146,7 +1172,7 @@ class whatmetricsView extends WatchUi.DataField {
       x,
       y,
       font,
-      Lang.format(".. Battery level: $1$", [gMetrics.getPowerBatteryLevel().format("%0d")]),
+      Lang.format(".. Battery level: $1$", [mMetrics.getPowerBatteryLevel().format("%0d")]),
       Graphics.TEXT_JUSTIFY_LEFT
     );
     y = y + l;
@@ -1154,11 +1180,11 @@ class whatmetricsView extends WatchUi.DataField {
       x,
       y,
       font,
-      Lang.format(".. Battery voltage: $1$", [gMetrics.getPowerBatteryVoltage().format("%0.0f")]),
+      Lang.format(".. Battery voltage: $1$", [mMetrics.getPowerBatteryVoltage().format("%0.0f")]),
       Graphics.TEXT_JUSTIFY_LEFT
     );
 
-    var operatingTimeInSeconds = gMetrics.getPowerOperatingTimeInSeconds();
+    var operatingTimeInSeconds = mMetrics.getPowerOperatingTimeInSeconds();
     y = y + l;
     dc.drawText(
       x,
@@ -1177,8 +1203,7 @@ class whatmetricsView extends WatchUi.DataField {
       Graphics.TEXT_JUSTIFY_LEFT
     );
 
-    var batteryLevel = gMetrics.getPowerBatteryLevel();
-    var operatingTimeInSeconds = gMetrics.getPowerOperatingTimeInSeconds();
+    var batteryLevel = mMetrics.getPowerBatteryLevel();
     if (operatingTimeInSeconds > 0 and gPowerBattSetRemainingHour > 0) {
       var spentSeconds = $.gPowerBattMaxSeconds - gPowerBattSetRemainingHour * 60 * 60;
       if (spentSeconds > 0) {
@@ -1192,12 +1217,12 @@ class whatmetricsView extends WatchUi.DataField {
     }
 
     // If fully charched, save operatingtime of powermeter
-    if (batteryLevel == (5 & !gPowerBattFullyCharched)) {
+    if (batteryLevel == 5 and !gPowerBattFullyCharched) {
       gPowerBattOperTimeCharched = operatingTimeInSeconds;
       Storage.setValue("metric_pbattopertimecharched", gPowerBattOperTimeCharched);
       gPowerBattFullyCharched = true;
       Storage.setValue("metric_pbattfullycharched", gPowerBattFullyCharched);
-    } else if (batteryLevel == (4 & gPowerBattFullyCharched)) {
+    } else if (batteryLevel == 4 and gPowerBattFullyCharched) {
       gPowerBattFullyCharched = false;
       Storage.setValue("metric_pbattfullycharched", gPowerBattFullyCharched);
     }
@@ -1240,15 +1265,15 @@ class whatmetricsView extends WatchUi.DataField {
       Graphics.TEXT_JUSTIFY_LEFT
     );
 
-    var HiitElapsed = gHiitt.getElapsedSeconds();
-    var vo2max = gHiitt.getVo2Max();
+    var HiitElapsed = mHiitt.getElapsedSeconds();
+    var vo2max = mHiitt.getVo2Max();
     y = y + l;
     dc.drawText(
       x,
       y,
       font,
       Lang.format("Hiit: #$1$ $2$ $3$", [
-        gHiitt.getNumberOfHits().format("%0.0d"),
+        mHiitt.getNumberOfHits().format("%0.0d"),
         HiitElapsed.format("%0.0d"),
         vo2max.format("%0.1f"),
       ]),

@@ -13,7 +13,7 @@ import Toybox.Time;
 // Calc vo2 max approx + add Hiit counter
 
 class WhatHiitt {
-  hidden enum HiitStatus {
+  enum HiitStatus {
     InActive = 0,
     WarmingUp = 1,
     CoolingDown = 2,
@@ -46,8 +46,8 @@ class WhatHiitt {
   hidden var hitElapsedTime as Time.Moment?;
   hidden var hitElapsedRecoveryTime as Time.Moment?;
 
-  hidden var minimalElapsedSeconds as Number = 30; 
-  hidden var minimalRecoverySeconds as Number = 300; 
+  hidden var minimalElapsedSeconds as Number = 30;
+  hidden var minimalRecoverySeconds as Number = 300;
   hidden var mValidHiitPerformed as Boolean = false;
 
   hidden var activityPaused as Boolean = false;
@@ -210,14 +210,14 @@ class WhatHiitt {
               hitPerformed = hitPerformed + 1;
               hitElapsedRecoveryTime = Time.now();
               hitScores.add(currentScore);
-              hitDurations.add(currentDuration);             
+              hitDurations.add(currentDuration);
             } else {
               // No proper Hiit (no sound)
               hitStatus = InActive;
               hitCounter = 0;
               hitElapsedRecoveryTime = null;
               currentScore = 0.0f;
-              currentDuration = 0;              
+              currentDuration = 0;
             }
             hitElapsedTime = null;
           }

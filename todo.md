@@ -1,6 +1,28 @@
+Dualpower detect 
+60 sec -> r/l = 0/x -> power times 2
+add new numeric input 
+
+Show zone info larger z2
+
+Record time in zones z2 = 3 hour / week
+
+Zone 2 -> 3 hour a week
+3-8 minutes as hard as possible rest 3 - 8  --> do that 4x / week
+
+
 debug
 setting show batt hours j/n
-show time / timer / elapsed
+bars under field / show zones hr and pwer zone
+get power zones -> api?
+gear combi fall back -> for ??
+
+hr target zone
+-> show average zone 1..5  < target >
+
+show time / timer / elapsed / gear
+- enum 
+
+
 x power 0 for 5 seconds -> show distance
 
 -> powermeter batt level / remaining operating time?
@@ -15,8 +37,7 @@ option show time in small field instead of timer
 ??write ugly code -> less deep nested functions -> else stack overflow errors! max 255 items in stack?
 
 
-bars under field / show zones hr and pwer zone
-get power zones -> api?
+
 
 x show title when stopped and paused
 asc/desc = arrows

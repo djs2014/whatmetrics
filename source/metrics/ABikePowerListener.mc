@@ -14,9 +14,9 @@ class ABikePowerListener extends AntPlus.BikePowerListener {
   }
 
   function onPedalPowerBalanceUpdate(data as AntPlus.PedalPowerBalance) as Void {
-    if (data == null) {
-      return;
-    }
+    // if (data == null) {
+    //   return;
+    // }
     if (data.rightPedalIndicator == null) {
       return;
     }
@@ -27,7 +27,7 @@ class ABikePowerListener extends AntPlus.BikePowerListener {
   }
 
   function onBatteryStatusUpdate(data as AntPlus.BatteryStatus) as Void {
-      if (data == null) { return; }
+      // if (data == null) { return; }
       _onBatteryStatusUpdate.invoke(data.batteryStatus, data.operatingTime, data.batteryVoltage);
   }
 }

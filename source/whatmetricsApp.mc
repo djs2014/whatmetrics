@@ -26,7 +26,8 @@ class whatmetricsApp extends Application.AppBase {
     return [new $.DataFieldSettingsView(), new $.DataFieldSettingsDelegate()] as Array<Views or InputDelegates>;
   }
   function onSettingsChanged() {
-    gHiitt.updateProfile();
+    var hiitt = getHiitt();
+    hiitt.updateProfile();
     if (Storage.getValue("hiit_mode") == null) {
       Storage.setValue("hiit_mode", WhatHiitt.HiitDisabled);
       Storage.setValue("hiit_sound", WhatHiitt.StartOnlySound);
@@ -43,7 +44,7 @@ class whatmetricsApp extends Application.AppBase {
       Storage.setValue("target_calories", gTargetCalories);
       Storage.setValue("target_grade", gTargetGrade);
       Storage.setValue("target_altitude", gTargetAltitude);
-      Storage.setValue("target_hrzone", 4);    
+      Storage.setValue("target_hrzone", 4);
 
       Storage.setValue("metric_ppersec", 3);
       Storage.setValue("metric_gradews", 4);
@@ -63,22 +64,23 @@ class whatmetricsApp extends Application.AppBase {
       Storage.setValue("metric_pbattmaxhour", gPowerBattMaxSeconds);
 
       Storage.setValue("pressure_altmin", gHideAltitudeMin);
-      Storage.setValue("pressure_altmax", gHideAltitudeMax);      
+      Storage.setValue("pressure_altmax", gHideAltitudeMax);
     }
 
-    gHiitt.setMode(getStorageValue("hiit_mode", WhatHiitt.HiitDisabled) as WhatHiitt.HiitMode);
-    gHiitt.setSound(getStorageValue("hiit_sound", WhatHiitt.StartOnlySound) as WhatHiitt.HiitSound);
-    gHiitt.setStartOnPerc(getStorageValue("hiit_startperc", 0) as Number);
-    gHiitt.setStopOnPerc(getStorageValue("hiit_stopperc", 0) as Number);
-    gHiitt.setStartCountDownSeconds(getStorageValue("hiit_countdown", 3) as Number);
-    gHiitt.setStopCountDownSeconds(getStorageValue("hiit_inactivity", 10) as Number);
-    gHiitt.setMinimalElapsedSeconds(getStorageValue("hiit_valid_sec", 30) as Number);
-    gHiitt.setMinimalRecoverySeconds(getStorageValue("hiit_recovery_sec", 300) as Number);
+    hiitt.setMode(getStorageValue("hiit_mode", WhatHiitt.HiitDisabled) as WhatHiitt.HiitMode);
+    hiitt.setSound(getStorageValue("hiit_sound", WhatHiitt.StartOnlySound) as WhatHiitt.HiitSound);
+    hiitt.setStartOnPerc(getStorageValue("hiit_startperc", 0) as Number);
+    hiitt.setStopOnPerc(getStorageValue("hiit_stopperc", 0) as Number);
+    hiitt.setStartCountDownSeconds(getStorageValue("hiit_countdown", 3) as Number);
+    hiitt.setStopCountDownSeconds(getStorageValue("hiit_inactivity", 10) as Number);
+    hiitt.setMinimalElapsedSeconds(getStorageValue("hiit_valid_sec", 30) as Number);
+    hiitt.setMinimalRecoverySeconds(getStorageValue("hiit_recovery_sec", 300) as Number);
 
-    gMetrics.setPowerPerSec(getStorageValue("metric_ppersec", 0) as Number);
-    gMetrics.setGradeWindowSize(getStorageValue("metric_gradews", 0) as Number);
-    gMetrics.setGradeMinimalRise(getStorageValue("metric_grademinrise", 0) as Number);
-    gMetrics.setGradeMinimalRun(getStorageValue("metric_grademinrun", 20) as Number);
+    var metrics = getWhatMetrics();
+    metrics.setPowerPerSec(getStorageValue("metric_ppersec", 0) as Number);
+    metrics.setGradeWindowSize(getStorageValue("metric_gradews", 0) as Number);
+    metrics.setGradeMinimalRise(getStorageValue("metric_grademinrise", 0) as Number);
+    metrics.setGradeMinimalRun(getStorageValue("metric_grademinrun", 20) as Number);
 
     gTargetFtp = getStorageValue("target_ftp", 0) as Number;
     gTargetSpeed = getStorageValue("target_speed", 0) as Number;
@@ -117,14 +119,13 @@ class whatmetricsApp extends Application.AppBase {
 
     gPowerCountdownToFallBack = getStorageValue("power_countdowntofallback", gPowerCountdownToFallBack) as Number;
 
-    var hours = (getStorageValue("metric_pbattmaxhour", gPowerBattMaxSeconds / 3600) as Number);
+    var hours = getStorageValue("metric_pbattmaxhour", gPowerBattMaxSeconds / 3600) as Number;
     if (hours > 0 and hours < 1000) {
       gPowerBattMaxSeconds = hours * 60 * 60;
     }
     gPowerBattOperTimeCharched = getStorageValue("metric_pbattopertimecharched", 0) as Number;
     gPowerBattFullyCharched = getStorageValue("metric_pbattfullycharched", gPowerBattFullyCharched) as Boolean;
     gPowerBattSetRemainingHour = getStorageValue("metric_pbattsetremaininghour", 0) as Number;
-    
 
     if (gShowPowerBalance or gShowPowerBattery) {
       gMetrics.initPowerBalance();
@@ -137,8 +138,20 @@ function getApp() as whatmetricsApp {
   return Application.getApp() as whatmetricsApp;
 }
 
-var gHiitt as WhatHiitt = new WhatHiitt();
-var gMetrics as WhatMetrics = new WhatMetrics();
+function getHiitt() as WhatHiitt {
+  if (gHiitt == null) {
+    $.gHiitt = new WhatHiitt();
+  }
+  return $.gHiitt as WhatHiitt;
+}
+function getWhatMetrics() as WhatMetrics {
+  if (gMetrics == null) {
+    $.gMetrics = new WhatMetrics();
+  }
+  return $.gMetrics as WhatMetrics;
+}
+var gHiitt as WhatHiitt?; // = new WhatHiitt(); Gives weird symbol not found error
+var gMetrics as WhatMetrics?; // = new WhatMetrics(); Gives weird symbol not found error
 var gTargetFtp as Number = 250;
 var gTargetSpeed as Number = 30;
 var gTargetCadence as Number = 90;

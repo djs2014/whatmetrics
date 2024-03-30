@@ -147,6 +147,9 @@ class WhatMetrics {
   function getFrontDerailleurIndex() as Number {
     return getActivityValue(a_info, :frontDerailleurIndex, 0.0f) as Number;
   }
+  function getRearDerailleurIndex() as Number {
+    return getActivityValue(a_info, :rearDerailleurIndex, 0.0f) as Number;
+  }
 
   function getGrade() as Double {
     return mCurrentGrade;
