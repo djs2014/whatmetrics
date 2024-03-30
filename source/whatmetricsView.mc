@@ -6,7 +6,6 @@ import Toybox.Application.Storage;
 using Toybox.Time;
 using Toybox.Time.Gregorian;
 
-
 class whatmetricsView extends WatchUi.DataField {
   hidden var mFieldSize as String;
   hidden var mWideField as Boolean = true;
@@ -47,28 +46,28 @@ class whatmetricsView extends WatchUi.DataField {
     Graphics.FONT_SYSTEM_LARGE,
   ];
 
-  // @@ QND
   hidden var mHiitt as WhatHiitt;
   hidden var mMetrics as WhatMetrics;
+  
   // hidden var mGrade as Double = 0.0d;
   function initialize() {
     DataField.initialize();
     mFieldSize = "?x?";
 
-    mHiitt = getHiitt();
-    mMetrics = getWhatMetrics();
+    mHiitt = $.getHiitt() as WhatHiitt;
+    mMetrics = $.getWhatMetrics() as WhatMetrics;
 
     checkFeatures();
-     if ( $.gCreateColors) {
-    mDecimalsColorDay = Graphics.createColor(180, 50, 50, 50);
-    mDecimalsColorNight = Graphics.createColor(180, 150, 150, 150);
+    if ($.gCreateColors) {
+      mDecimalsColorDay = Graphics.createColor(180, 50, 50, 50);
+      mDecimalsColorNight = Graphics.createColor(180, 150, 150, 150);
 
-    mUnitsColorDay = Graphics.createColor(180, 100, 100, 100);
-    mUnitsColorNight = Graphics.createColor(180, 220, 220, 220);
+      mUnitsColorDay = Graphics.createColor(180, 100, 100, 100);
+      mUnitsColorNight = Graphics.createColor(180, 220, 220, 220);
 
-    mIconColorDay = Graphics.createColor(255, 220, 220, 220);
-    mIconColorNight = Graphics.createColor(255, 100, 100, 100);
-     }
+      mIconColorDay = Graphics.createColor(255, 220, 220, 220);
+      mIconColorNight = Graphics.createColor(255, 100, 100, 100);
+    }
   }
 
   function onLayout(dc as Dc) as Void {
@@ -123,7 +122,7 @@ class whatmetricsView extends WatchUi.DataField {
     }
     var power = mMetrics.getPower();
     var perc = percentageOf(power, gTargetFtp);
-    mHiitt.compute(info, perc);
+    mHiitt.compute(info, perc, power);
 
     if (power > 0.0 and mPowerFallbackCountdown < 5) {
       mPowerFallbackCountdown = $.gPowerCountdownToFallBack;
@@ -239,7 +238,7 @@ class whatmetricsView extends WatchUi.DataField {
     var units_side = "";
     var text_botright = "";
     var text_botleft = "";
-  
+
     if (fieldIdx == 0) {
       title = "grade";
       var grade = mMetrics.getGrade();
@@ -303,13 +302,16 @@ class whatmetricsView extends WatchUi.DataField {
       }
     } else if (fieldIdx == 3) {
       // @@ option fallback if power = 0; -> show distance
-      var power = mMetrics.getPower();     
+      var power = mMetrics.getPower();
       if (power == 0.0 and mSmallField or (mPowerFallbackCountdown == 0 and $.gPowerCountdownToFallBack > 0)) {
         title = "distance";
         var dist = mMetrics.getElapsedDistance();
         text = getDistanceInMeterOrKm(dist).format(getFormatForMeterAndKm(dist));
         units = getUnitsInMeterOrKm(dist);
       } else {
+        if (mMetrics.getHasFailingDualpower()) {
+          prefix = "!";                    
+        } 
         if (gShowPowerPerWeight) {
           title = "power (" + mMetrics.getPowerPerSec().format("%0d") + " sec) / kg";
           units = "w/kg";
@@ -750,8 +752,14 @@ class whatmetricsView extends WatchUi.DataField {
     if (fh > height) {
       hrzFont = Graphics.FONT_SMALL;
     }
-        
-    dc.drawText(x + 2, y + height/ 2 - 1, hrzFont, hrZone.format("%0d"), Graphics.TEXT_JUSTIFY_LEFT | Graphics.TEXT_JUSTIFY_VCENTER);
+
+    dc.drawText(
+      x + 2,
+      y + height / 2 - 1,
+      hrzFont,
+      hrZone.format("%0d"),
+      Graphics.TEXT_JUSTIFY_LEFT | Graphics.TEXT_JUSTIFY_VCENTER
+    );
 
     dc.fillCircle(x1, y1, r);
     dc.fillCircle(x2, y1, r);
@@ -954,25 +962,29 @@ class whatmetricsView extends WatchUi.DataField {
     height as Number,
     color as ColorType
   ) as Void {
-    var my = height / 5;
-    var mx = width / 6;
+    var my = (height / 5).toNumber();
+    var mx = (width / 6).toNumber();
 
-    var x1 = x + width / 2 + mx;
+    var halfWidth = (width / 2).toNumber();
+    var halfHeight = (height / 2).toNumber();
+    var mx13 = (mx * 1.3).toNumber();
+
+    var x1 = x + halfWidth + mx;
     var y1 = y + my;
 
-    var x2 = x + width / 2 - 1.3 * mx;
-    var y2 = y + height / 2 + 2;
+    var x2 = x + halfWidth - mx13;
+    var y2 = y + halfHeight + 2;
 
     var x3 = x2 + mx;
     var y3 = y2;
 
-    var x4 = x + width / 2 - mx;
+    var x4 = x + halfWidth - mx;
     var y4 = y + height - my;
 
-    var x5 = x + width / 2 + 1.3 * mx;
-    var y5 = y + height / 2 - 2;
+    var x5 = x + halfWidth + mx13;
+    var y5 = y + halfHeight - 2;
 
-    var x6 = x + width / 2;
+    var x6 = x + halfWidth;
     var y6 = y5;
 
     setColorFillStroke(dc, color);

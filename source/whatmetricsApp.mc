@@ -4,8 +4,9 @@ import Toybox.WatchUi;
 import Toybox.UserProfile;
 
 class whatmetricsApp extends Application.AppBase {
+  
   function initialize() {
-    AppBase.initialize();
+    AppBase.initialize();   
   }
 
   // onStart() is called on application start up
@@ -60,6 +61,7 @@ class whatmetricsApp extends Application.AppBase {
       Storage.setValue("show_powerbatterytime", gShowPowerBattTime);
       Storage.setValue("show_powerperweight", gShowPowerPerWeight);
       Storage.setValue("show_poweraverage", gShowPowerAverage);
+      Storage.setValue("power_dual_sec_fallback", 0);
 
       Storage.setValue("metric_pbattmaxhour", gPowerBattMaxSeconds);
 
@@ -76,7 +78,7 @@ class whatmetricsApp extends Application.AppBase {
     hiitt.setMinimalElapsedSeconds(getStorageValue("hiit_valid_sec", 30) as Number);
     hiitt.setMinimalRecoverySeconds(getStorageValue("hiit_recovery_sec", 300) as Number);
 
-    var metrics = getWhatMetrics();
+    var metrics = $.getWhatMetrics();
     metrics.setPowerPerSec(getStorageValue("metric_ppersec", 0) as Number);
     metrics.setGradeWindowSize(getStorageValue("metric_gradews", 0) as Number);
     metrics.setGradeMinimalRise(getStorageValue("metric_grademinrise", 0) as Number);
@@ -97,7 +99,7 @@ class whatmetricsApp extends Application.AppBase {
       } else {
         gTargetHeartRate = heartRateZones[heartRateZones.size() - 1];
       }
-      gMetrics.initHrZones(heartRateZones);
+      metrics.initHrZones(heartRateZones);
     }
 
     gDebug = getStorageValue("debug", gDebug) as Boolean;
@@ -117,6 +119,7 @@ class whatmetricsApp extends Application.AppBase {
     gShowPowerPerWeight = getStorageValue("show_powerperweight", gShowPowerPerWeight) as Boolean;
     gShowPowerAverage = getStorageValue("show_poweraverage", gShowPowerAverage) as Boolean;
 
+    var powerDualSecFallback = getStorageValue("power_dual_sec_fallback", 0) as Number;
     gPowerCountdownToFallBack = getStorageValue("power_countdowntofallback", gPowerCountdownToFallBack) as Number;
 
     var hours = getStorageValue("metric_pbattmaxhour", gPowerBattMaxSeconds / 3600) as Number;
@@ -127,10 +130,10 @@ class whatmetricsApp extends Application.AppBase {
     gPowerBattFullyCharched = getStorageValue("metric_pbattfullycharched", gPowerBattFullyCharched) as Boolean;
     gPowerBattSetRemainingHour = getStorageValue("metric_pbattsetremaininghour", 0) as Number;
 
-    if (gShowPowerBalance or gShowPowerBattery) {
-      gMetrics.initPowerBalance();
+    if (gShowPowerBalance or gShowPowerBattery or (powerDualSecFallback>0)) {
+      metrics.initPowerBalance(powerDualSecFallback);
     }
-    gMetrics.initWeight();
+    metrics.initWeight();
   }
 }
 
@@ -150,8 +153,8 @@ function getWhatMetrics() as WhatMetrics {
   }
   return $.gMetrics as WhatMetrics;
 }
-var gHiitt as WhatHiitt?; // = new WhatHiitt(); Gives weird symbol not found error
-var gMetrics as WhatMetrics?; // = new WhatMetrics(); Gives weird symbol not found error
+var gHiitt as WhatHiitt?;
+var gMetrics as WhatMetrics?;
 var gTargetFtp as Number = 250;
 var gTargetSpeed as Number = 30;
 var gTargetCadence as Number = 90;

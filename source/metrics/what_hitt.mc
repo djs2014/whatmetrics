@@ -137,7 +137,7 @@ class WhatHiitt {
     return mValidHiitPerformed;
   }
 
-  function compute(info as Activity.Info, percOfTarget as Numeric) as Void {
+  function compute(info as Activity.Info, percOfTarget as Numeric, power as Number) as Void {
     if (!isEnabled()) {
       hitElapsedRecoveryTime = null;
       hitElapsedTime = null;
@@ -236,7 +236,7 @@ class WhatHiitt {
           playTone = soundEnabled && mValidHiitPerformed;
           currentScore = getVo2Max();
         } else {
-          addAveragePower(info);
+          addAveragePower(power);
         }
         break;
     }
@@ -246,8 +246,7 @@ class WhatHiitt {
     powerTicks = 0;
     avgPowerPerSec = 0.0d;
   }
-  hidden function addAveragePower(info as Activity.Info) as Void {
-    var power = getActivityValue(info, :currentPower, 0) as Number;
+  hidden function addAveragePower(power as Number) as Void {    
     // [ avg' * (n-1) + x ] / n
     powerTicks = powerTicks + 1;
     avgPowerPerSec = (avgPowerPerSec * (powerTicks - 1) + power) / powerTicks.toDouble();

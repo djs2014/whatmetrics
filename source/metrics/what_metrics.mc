@@ -30,14 +30,21 @@ class WhatMetrics {
   hidden var mPowerBalance as PowerBalance? = null;
   hidden var userWeightKg as Float = 0.0f;
 
+  // detect if l/r power is not 0 for x seconds
+  hidden var mPowerDualSecFallback as Number = 0;
+  hidden var mFailingPowerPedalsCounter as Number = 0;
+  hidden var mHasFailingDualpower as Boolean = false;
+
   // heartrate
   hidden var mHrZones as Lang.Array<Lang.Number> = [] as Lang.Array<Lang.Number>;
   function initialize() {}
 
-  function initPowerBalance() as Void {
+  function initPowerBalance(powerDualSecFallback as Number) as Void {
     if (mPowerBalance == null) {
       mPowerBalance = new PowerBalance();
     }
+    mPowerDualSecFallback = powerDualSecFallback;
+    mHasFailingDualpower = false;
   }
 
   function initWeight() as Void {
@@ -189,6 +196,10 @@ class WhatMetrics {
   }
   // power watts / x seconds
   function getPower() as Number {
+    if (mHasFailingDualpower) {
+      // Compensate for 1 failing pedal
+      return mCurrentPowerPerX * 2;
+    }
     return mCurrentPowerPerX;
   }
   function getAveragePower() as Number {
@@ -216,6 +227,11 @@ class WhatMetrics {
     }
     return 0.0d;
   }
+
+  function getHasFailingDualpower() as Boolean {
+    return mHasFailingDualpower;
+  }
+
   function getPowerBatteryLevel() as Number {
     if (mPowerBalance != null) {
       return (mPowerBalance as PowerBalance).getBatteryLevel();
@@ -228,7 +244,7 @@ class WhatMetrics {
     }
     return -1;
   }
- function getPowerBatteryVoltage() as Float {
+  function getPowerBatteryVoltage() as Float {
     if (mPowerBalance != null) {
       return (mPowerBalance as PowerBalance).getBatteryVoltage();
     }
@@ -277,15 +293,31 @@ class WhatMetrics {
   hidden function calculatePower() as Number {
     var power = getActivityValue(a_info, :currentPower, 0) as Number;
 
-    if (mPowerDataPerSec.size() >= mPowerPerSec) {
-      mPowerDataPerSec = mPowerDataPerSec.slice(1, mPowerPerSec);
+    if (mPowerDualSecFallback > 0 && mPowerBalance != null) {
+      var pedal = mPowerBalance.getActivePowerPedals();
+      if (pedal == "L" || pedal == "R") {
+        mFailingPowerPedalsCounter = mFailingPowerPedalsCounter + 1;
+      } else {
+        mFailingPowerPedalsCounter = 0;
+      }
+      mHasFailingDualpower = mFailingPowerPedalsCounter > mPowerDualSecFallback;
+      System.println(
+        "FailingPowerPedalsCounter " + mFailingPowerPedalsCounter + " mHasFailingDualpower " + mHasFailingDualpower
+      );
     }
-    mPowerDataPerSec.add(power);
+    return calculatePowerFor(power, mPowerDataPerSec, mPowerPerSec);
+  }
 
-    if (mPowerDataPerSec.size() == 0) {
+  hidden function calculatePowerFor(power as Number, dataPerSec as Array<Number>, powerPerSec as Number) as Number {
+    if (dataPerSec.size() >= powerPerSec) {
+      dataPerSec = dataPerSec.slice(1, powerPerSec);
+    }
+    dataPerSec.add(power);
+
+    if (dataPerSec.size() == 0) {
       return 0;
     }
-    return Math.mean(mPowerDataPerSec as Array<Number>).toNumber();
+    return Math.mean(dataPerSec as Array<Number>).toNumber();
   }
 
   hidden function calculateGrade(intermediateAltitude as Float, intermediateDistance as Float) as Double {
@@ -301,7 +333,7 @@ class WhatMetrics {
       previousRise = tmpRise;
       arrGrade = [] as Array<Float>;
       return 0.0d;
-    } else if (tmpRise < minimalRiseDown or tmpRise > minimalRiseUp and tmpRun >= minimalRun) {
+    } else if (tmpRise < minimalRiseDown or (tmpRise > minimalRiseUp and tmpRun >= minimalRun)) {
       // valid rise and valid run
       previousAltitude = intermediateAltitude;
       previousDistance = intermediateDistance;
@@ -345,7 +377,7 @@ class PowerBalance {
 
   hidden var operatingTimeInSeconds as Number;
   hidden var batteryVoltage as Float;
-  
+
   function initialize() {
     listener = new ABikePowerListener(self.weak(), :onPedalPowerBalanceUpdate, :onBatteryStatusUpdate);
     bikePower = new AntPlus.BikePower(listener);
@@ -363,12 +395,31 @@ class PowerBalance {
   function getBatteryLevel() as Number {
     return batteryLevel;
   }
-  
+
   function getOperatingTimeInSeconds() as Number {
     return operatingTimeInSeconds as Number;
   }
   function getBatteryVoltage() as Float {
     return batteryVoltage as Float;
+  }
+
+  function getActivePowerPedals() as String {
+    var balance = bikePower.getPedalPowerBalance();
+    if (balance == null) {
+      // can be null!
+      return "";
+    }
+    var pedalPowerPercent = balance.pedalPowerPercent;
+    var rightPedalIndicator = balance.rightPedalIndicator;
+
+    if (pedalPowerPercent == null || rightPedalIndicator == null) {
+      return "";
+    } else if (pedalPowerPercent == 100 && rightPedalIndicator) {
+      return "R";
+    } else if (pedalPowerPercent == 100 && !rightPedalIndicator) {
+      return "L";
+    }
+    return "LR";
   }
 
   function compute(power as Number) as Void {
@@ -387,7 +438,11 @@ class PowerBalance {
     }
   }
 
-  function onBatteryStatusUpdate(batteryStatus as AntPlus.BatteryStatusValue, operatingTime as Number, abatteryVoltage as Float) as Void {
+  function onBatteryStatusUpdate(
+    batteryStatus as AntPlus.BatteryStatusValue,
+    operatingTime as Number,
+    abatteryVoltage as Float
+  ) as Void {
     batteryLevel = -1;
     if (batteryStatus == AntPlus.BATT_STATUS_NEW) {
       batteryLevel = 5;

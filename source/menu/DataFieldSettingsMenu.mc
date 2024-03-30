@@ -36,19 +36,19 @@ class DataFieldSettingsMenuDelegate extends WatchUi.Menu2InputDelegate {
       mi.setSubLabel($.getHiittSoundText(value));
       hiitMenu.addItem(mi);
 
-      mi = new WatchUi.MenuItem("Start when % of target", null, "hiit_startperc", null);
+      mi = new WatchUi.MenuItem("Start when % of target|0~500", null, "hiit_startperc", null);
       mi.setSubLabel($.getStorageNumberAsString(mi.getId() as String));
       hiitMenu.addItem(mi);
 
-      mi = new WatchUi.MenuItem("Stop when % of target", null, "hiit_stopperc", null);
+      mi = new WatchUi.MenuItem("Stop when % of target|0~500", null, "hiit_stopperc", null);
       mi.setSubLabel($.getStorageNumberAsString(mi.getId() as String));
       hiitMenu.addItem(mi);
 
-      mi = new WatchUi.MenuItem("Sec countdown to start", null, "hiit_countdown", null);
+      mi = new WatchUi.MenuItem("Sec countdown to start|0~30", null, "hiit_countdown", null);
       mi.setSubLabel($.getStorageNumberAsString(mi.getId() as String));
       hiitMenu.addItem(mi);
 
-      mi = new WatchUi.MenuItem("Sec inactivity until stop", null, "hiit_inactivity", null);
+      mi = new WatchUi.MenuItem("Sec inactivity until stop|0~60", null, "hiit_inactivity", null);
       mi.setSubLabel($.getStorageNumberAsString(mi.getId() as String));
       hiitMenu.addItem(mi);
 
@@ -60,7 +60,7 @@ class DataFieldSettingsMenuDelegate extends WatchUi.Menu2InputDelegate {
       mi.setSubLabel($.getStorageNumberAsString(mi.getId() as String));
       hiitMenu.addItem(mi);
 
-      WatchUi.pushView(hiitMenu, new $.HiittMenuDelegate(self, hiitMenu), WatchUi.SLIDE_UP);
+      WatchUi.pushView(hiitMenu, new $.GeneralMenuDelegate(self, hiitMenu), WatchUi.SLIDE_UP);
     } else if (id instanceof String && id.equals("targets")) {
       var targetMenu = new WatchUi.Menu2({ :title => "Targets" });
       // "Functional threshold power"
@@ -87,8 +87,8 @@ class DataFieldSettingsMenuDelegate extends WatchUi.Menu2InputDelegate {
       mi = new WatchUi.MenuItem("Target heartrate zone", null, "target_hrzone", null);
       mi.setSubLabel("zone " + $.getStorageNumberAsString(mi.getId() as String));
       targetMenu.addItem(mi);
-  
-      WatchUi.pushView(targetMenu, new $.TargetsMenuDelegate(self, targetMenu), WatchUi.SLIDE_UP);
+
+      WatchUi.pushView(targetMenu, new $.GeneralMenuDelegate(self, targetMenu), WatchUi.SLIDE_UP);
     } else if (id instanceof String && id.equals("gradient")) {
       var gradientMenu = new WatchUi.Menu2({ :title => "Gradient" });
 
@@ -102,7 +102,7 @@ class DataFieldSettingsMenuDelegate extends WatchUi.Menu2InputDelegate {
       mi.setSubLabel($.getStorageNumberAsString(mi.getId() as String));
       gradientMenu.addItem(mi);
 
-      WatchUi.pushView(gradientMenu, new $.GradientMenuDelegate(self, gradientMenu), WatchUi.SLIDE_LEFT);
+      WatchUi.pushView(gradientMenu, new $.GeneralMenuDelegate(self, gradientMenu), WatchUi.SLIDE_LEFT);
     } else if (id instanceof String && id.equals("power")) {
       var powerMenu = new WatchUi.Menu2({ :title => "Power metrics" });
 
@@ -112,7 +112,7 @@ class DataFieldSettingsMenuDelegate extends WatchUi.Menu2InputDelegate {
 
       var boolean = Storage.getValue("show_powerbalance") ? true : false;
       powerMenu.addItem(new WatchUi.ToggleMenuItem("Power balance", null, "show_powerbalance", boolean, null));
-      
+
       boolean = Storage.getValue("show_powerbattery") ? true : false;
       powerMenu.addItem(new WatchUi.ToggleMenuItem("Power batt. level", null, "show_powerbattery", boolean, null));
 
@@ -137,7 +137,11 @@ class DataFieldSettingsMenuDelegate extends WatchUi.Menu2InputDelegate {
       boolean = Storage.getValue("show_poweraverage") ? true : false;
       powerMenu.addItem(new WatchUi.ToggleMenuItem("Power average", null, "show_poweraverage", boolean, null));
 
-      WatchUi.pushView(powerMenu, new $.PowerMenuDelegate(self, powerMenu), WatchUi.SLIDE_LEFT);
+      mi = new WatchUi.MenuItem("Dualpwr sec fallback", null, "power_dual_sec_fallback", null);
+      mi.setSubLabel($.getStorageNumberAsString(mi.getId() as String));
+      powerMenu.addItem(mi);
+
+      WatchUi.pushView(powerMenu, new $.GeneralMenuDelegate(self, powerMenu), WatchUi.SLIDE_LEFT);
     } else if (id instanceof String && id.equals("pressure")) {
       var pressMenu = new WatchUi.Menu2({ :title => "Pressure or altitude" });
 
@@ -151,8 +155,7 @@ class DataFieldSettingsMenuDelegate extends WatchUi.Menu2InputDelegate {
       var boolean = Storage.getValue("pressure_show_meansealevel") ? true : false;
       pressMenu.addItem(new WatchUi.ToggleMenuItem("Mean sealevel", null, "pressure_show_meansealevel", boolean, null));
 
-      WatchUi.pushView(pressMenu, new $.PressMenuDelegate(self, pressMenu), WatchUi.SLIDE_LEFT);
-
+      WatchUi.pushView(pressMenu, new $.GeneralMenuDelegate(self, pressMenu), WatchUi.SLIDE_LEFT);
     } else if (id instanceof String && menuItem instanceof ToggleMenuItem) {
       Storage.setValue(id as String, menuItem.isEnabled());
       menuItem.setSubLabel($.subMenuToggleMenuItem(id as String));
@@ -160,7 +163,7 @@ class DataFieldSettingsMenuDelegate extends WatchUi.Menu2InputDelegate {
   }
 }
 
-class HiittMenuDelegate extends WatchUi.Menu2InputDelegate {
+class GeneralMenuDelegate extends WatchUi.Menu2InputDelegate {
   hidden var _delegate as DataFieldSettingsMenuDelegate;
   hidden var _item as MenuItem?;
   hidden var _currentPrompt as String = "";
@@ -173,8 +176,13 @@ class HiittMenuDelegate extends WatchUi.Menu2InputDelegate {
 
   function onSelect(item as MenuItem) as Void {
     _item = item;
-    var id = item.getId();
-    if (id instanceof String && id.equals("hiit_mode")) {
+    var id = item.getId() as String;
+
+    if (id instanceof String && item instanceof ToggleMenuItem) {
+      Storage.setValue(id as String, item.isEnabled());
+      item.setSubLabel($.subMenuToggleMenuItem(id as String));
+      return;
+    } else if (id instanceof String && id.equals("hiit_mode")) {
       var sp = new selectionMenuPicker("Hiit mode", id as String);
       sp.add("Disabled", "hiit is not active", WhatHiitt.HiitDisabled);
       sp.add("Minimal", "hiit minimized", WhatHiitt.HiitMinimal);
@@ -182,6 +190,7 @@ class HiittMenuDelegate extends WatchUi.Menu2InputDelegate {
 
       sp.setOnSelected(self, :onSelectedHiitMode);
       sp.show();
+      return;
     } else if (id instanceof String && id.equals("hiit_sound")) {
       var sp = new selectionMenuPicker("Hiit sound", id as String);
       sp.add("No sound", null, WhatHiitt.NoSound);
@@ -191,40 +200,91 @@ class HiittMenuDelegate extends WatchUi.Menu2InputDelegate {
 
       sp.setOnSelected(self, :onSelectedHiitSound);
       sp.show();
-    } else {
-      _currentPrompt = item.getLabel();
+      return;
+    } else if (id.equals("target_hrzone")) {
+      var sp = new selectionMenuPicker("Target heartrate zone", id as String);
+      sp.add("Zone 1", null, 1);
+      sp.add("Zone 2", null, 2);
+      sp.add("Zone 3", null, 3);
+      sp.add("Zone 4", null, 4);
+      sp.add("Zone 5", null, 5);
 
-      var currentValue = $.getStorageValue(id as String, 0) as Number;
-      var view = new $.NumericInputView(_debug, _currentPrompt, currentValue);
-
-      view.setOnAccept(self, :onAcceptNumericinput);
-      view.setOnKeypressed(self, :onNumericinput);
-
-      Toybox.WatchUi.pushView(view, new $.NumericInputDelegate(_debug, view), WatchUi.SLIDE_RIGHT);
+      sp.setOnSelected(self, :onSelectedHrZone);
+      sp.show();
+      return;
     }
+
+    _currentPrompt = item.getLabel();
+    var numericOptions = parseLabelToOptions(_currentPrompt);
+
+    var currentValue = $.getStorageValue(id as String, 0) as Numeric;
+    if (numericOptions.isFloat) {
+      currentValue = currentValue.toFloat();
+    }
+    var view = new $.NumericInputView(_debug, _currentPrompt, currentValue);
+    view.processOptions(numericOptions);
+
+    view.setOnAccept(self, :onAcceptNumericinput);
+    view.setOnKeypressed(self, :onNumericinput);
+
+    Toybox.WatchUi.pushView(view, new $.NumericInputDelegate(_debug, view), WatchUi.SLIDE_RIGHT);
   }
 
-  function onAcceptNumericinput(value as Number) as Void {
+  function onAcceptNumericinput(value as Numeric) as Void {
     try {
       if (_item != null) {
         var storageKey = _item.getId() as String;
         Storage.setValue(storageKey, value);
-        (_item as MenuItem).setSubLabel(value.format("%.0d"));
+
+        switch (value) {
+          case instanceof Long:
+          case instanceof Number:
+            (_item as MenuItem).setSubLabel(value.format("%.0d"));
+            break;
+          case instanceof Float:
+          case instanceof Double:
+            (_item as MenuItem).setSubLabel(value.format("%.2f"));
+            break;
+        }
       }
     } catch (ex) {
       ex.printStackTrace();
     }
   }
 
-  function onNumericinput(editData as Array<Char>, cursorPos as Number, insert as Boolean, negative as Boolean) as Void {
+  function onNumericinput(
+    editData as Array<Char>,
+    cursorPos as Number,
+    insert as Boolean,
+    negative as Boolean,
+    opt as NumericOptions
+  ) as Void {
     // Hack to refresh screen
     WatchUi.popView(WatchUi.SLIDE_IMMEDIATE);
     var view = new $.NumericInputView(_debug, _currentPrompt, 0);
+    view.processOptions(opt);
     view.setEditData(editData, cursorPos, insert, negative);
     view.setOnAccept(self, :onAcceptNumericinput);
     view.setOnKeypressed(self, :onNumericinput);
 
     Toybox.WatchUi.pushView(view, new $.NumericInputDelegate(_debug, view), WatchUi.SLIDE_IMMEDIATE);
+  }
+
+  //! Handle the back key being pressed
+
+  function onBack() as Void {
+    WatchUi.popView(WatchUi.SLIDE_DOWN);
+  }
+
+  //! Handle the done item being selected
+
+  function onDone() as Void {
+    WatchUi.popView(WatchUi.SLIDE_DOWN);
+  }
+
+  // --
+  function onSelectedSelection(value as Object, storageKey as String) as Void {
+    Storage.setValue(storageKey, value as Number);
   }
 
   function onSelectedHiitMode(value as Object, storageKey as String) as Void {
@@ -243,58 +303,6 @@ class HiittMenuDelegate extends WatchUi.Menu2InputDelegate {
     }
   }
 
-  //! Handle the back key being pressed
-
-  function onBack() as Void {
-    WatchUi.popView(WatchUi.SLIDE_DOWN);
-  }
-
-  //! Handle the done item being selected
-
-  function onDone() as Void {
-    WatchUi.popView(WatchUi.SLIDE_DOWN);
-  }
-}
-
-class TargetsMenuDelegate extends WatchUi.Menu2InputDelegate {
-  hidden var _delegate as DataFieldSettingsMenuDelegate;
-  hidden var _item as MenuItem?;
-  hidden var _currentPrompt as String = "";
-  hidden var _debug as Boolean = false;
-
-  function initialize(delegate as DataFieldSettingsMenuDelegate, menu as WatchUi.Menu2) {
-    Menu2InputDelegate.initialize();
-    _delegate = delegate;
-  }
-
-  function onSelect(item as MenuItem) as Void {
-    _item = item;
-    var id = item.getId() as String;
-
-    if (id.equals("target_hrzone")) {
-      var sp = new selectionMenuPicker("Target heartrate zone", id as String);
-      sp.add("Zone 1", null, 1);
-      sp.add("Zone 2", null, 2);
-      sp.add("Zone 3", null, 3);
-      sp.add("Zone 4", null, 4);
-      sp.add("Zone 5", null, 5);
-
-      sp.setOnSelected(self, :onSelectedHrZone);
-      sp.show();
-      return;
-    }
-
-    _currentPrompt = item.getLabel();
-
-    var currentValue = $.getStorageValue(id as String, 0) as Number;
-    var view = new $.NumericInputView(_debug, _currentPrompt, currentValue);
-
-    view.setOnAccept(self, :onAcceptNumericinput);
-    view.setOnKeypressed(self, :onNumericinput);
-
-    Toybox.WatchUi.pushView(view, new $.NumericInputDelegate(_debug, view), WatchUi.SLIDE_RIGHT);
-  }
-
   function onSelectedHrZone(value as Object, storageKey as String) as Void {
     var zone = value as Number;
     Storage.setValue(storageKey, zone);
@@ -302,241 +310,8 @@ class TargetsMenuDelegate extends WatchUi.Menu2InputDelegate {
       (_item as MenuItem).setSubLabel("zone " + zone.format("%0d"));
     }
   }
-
-  function onAcceptNumericinput(value as Number) as Void {
-    try {
-      if (_item != null) {
-        var storageKey = _item.getId() as String;
-        Storage.setValue(storageKey, value);
-        (_item as MenuItem).setSubLabel(value.format("%.0d"));
-      }
-    } catch (ex) {
-      ex.printStackTrace();
-    }
-  }
-
-  function onNumericinput(editData as Array<Char>, cursorPos as Number, insert as Boolean, negative as Boolean) as Void {
-    // Hack to refresh screen
-    WatchUi.popView(WatchUi.SLIDE_IMMEDIATE);
-    var view = new $.NumericInputView(_debug, _currentPrompt, 0);
-    view.setEditData(editData, cursorPos, insert, negative);
-    view.setOnAccept(self, :onAcceptNumericinput);
-    view.setOnKeypressed(self, :onNumericinput);
-
-    Toybox.WatchUi.pushView(view, new $.NumericInputDelegate(_debug, view), WatchUi.SLIDE_IMMEDIATE);
-  }
-
-  //! Handle the back key being pressed
-
-  function onBack() as Void {
-    WatchUi.popView(WatchUi.SLIDE_DOWN);
-  }
-
-  //! Handle the done item being selected
-
-  function onDone() as Void {
-    WatchUi.popView(WatchUi.SLIDE_DOWN);
-  }
 }
 
-class GradientMenuDelegate extends WatchUi.Menu2InputDelegate {
-  hidden var _delegate as DataFieldSettingsMenuDelegate;
-  hidden var _item as MenuItem?;
-  hidden var _currentPrompt as String = "";
-  hidden var _debug as Boolean = false;
-
-  function initialize(delegate as DataFieldSettingsMenuDelegate, menu as WatchUi.Menu2) {
-    Menu2InputDelegate.initialize();
-    _delegate = delegate;
-  }
-
-  function onSelect(item as MenuItem) as Void {
-    _item = item;
-    var id = item.getId() as String;
-    
-    _currentPrompt = item.getLabel();
-
-    var currentValue = $.getStorageValue(id as String, 0) as Number;
-    var view = new $.NumericInputView(_debug, _currentPrompt, currentValue);
-
-    view.setOnAccept(self, :onAcceptNumericinput);
-    view.setOnKeypressed(self, :onNumericinput);
-
-    Toybox.WatchUi.pushView(view, new $.NumericInputDelegate(_debug, view), WatchUi.SLIDE_RIGHT);
-  }
-
-  function onAcceptNumericinput(value as Number) as Void {
-    try {
-      if (_item != null) {
-        var storageKey = _item.getId() as String;
-        Storage.setValue(storageKey, value);
-        (_item as MenuItem).setSubLabel(value.format("%.0d"));
-      }
-    } catch (ex) {
-      ex.printStackTrace();
-    }
-  }
-
-  function onNumericinput(editData as Array<Char>, cursorPos as Number, insert as Boolean, negative as Boolean) as Void {
-    // Hack to refresh screen
-    WatchUi.popView(WatchUi.SLIDE_IMMEDIATE);
-    var view = new $.NumericInputView(_debug, _currentPrompt, 0);
-    view.setEditData(editData, cursorPos, insert, negative);
-    view.setOnAccept(self, :onAcceptNumericinput);
-    view.setOnKeypressed(self, :onNumericinput);
-
-    Toybox.WatchUi.pushView(view, new $.NumericInputDelegate(_debug, view), WatchUi.SLIDE_IMMEDIATE);
-  }
-
-  //! Handle the back key being pressed
-
-  function onBack() as Void {
-    WatchUi.popView(WatchUi.SLIDE_DOWN);
-  }
-
-  //! Handle the done item being selected
-
-  function onDone() as Void {
-    WatchUi.popView(WatchUi.SLIDE_DOWN);
-  }
-}
-
-class PowerMenuDelegate extends WatchUi.Menu2InputDelegate {
-  hidden var _delegate as DataFieldSettingsMenuDelegate;
-  hidden var _item as MenuItem?;
-  hidden var _currentPrompt as String = "";
-  hidden var _debug as Boolean = false;
-
-  function initialize(delegate as DataFieldSettingsMenuDelegate, menu as WatchUi.Menu2) {
-    Menu2InputDelegate.initialize();
-    _delegate = delegate;
-  }
-
-  function onSelect(item as MenuItem) as Void {
-    _item = item;
-    var id = item.getId() as String;
-    
-    if (id instanceof String && item instanceof ToggleMenuItem) {
-      Storage.setValue(id as String, item.isEnabled());
-      item.setSubLabel($.subMenuToggleMenuItem(id as String));
-      return;
-    }
-
-    _currentPrompt = item.getLabel();
-
-    var currentValue = $.getStorageValue(id as String, 0) as Number;
-    var view = new $.NumericInputView(_debug, _currentPrompt, currentValue);
-
-    view.setOnAccept(self, :onAcceptNumericinput);
-    view.setOnKeypressed(self, :onNumericinput);
-
-    Toybox.WatchUi.pushView(view, new $.NumericInputDelegate(_debug, view), WatchUi.SLIDE_RIGHT);
-  }
-
-  function onAcceptNumericinput(value as Number) as Void {
-    try {
-      if (_item != null) {
-        var storageKey = _item.getId() as String;
-        Storage.setValue(storageKey, value);
-        (_item as MenuItem).setSubLabel(value.format("%.0d"));
-      }
-    } catch (ex) {
-      ex.printStackTrace();
-    }
-  }
-
-  function onNumericinput(editData as Array<Char>, cursorPos as Number, insert as Boolean, negative as Boolean) as Void {
-    // Hack to refresh screen
-    WatchUi.popView(WatchUi.SLIDE_IMMEDIATE);
-    var view = new $.NumericInputView(_debug, _currentPrompt, 0);
-    view.setEditData(editData, cursorPos, insert, negative);
-    view.setOnAccept(self, :onAcceptNumericinput);
-    view.setOnKeypressed(self, :onNumericinput);
-
-    Toybox.WatchUi.pushView(view, new $.NumericInputDelegate(_debug, view), WatchUi.SLIDE_IMMEDIATE);
-  }
-
-  //! Handle the back key being pressed
-
-  function onBack() as Void {
-    WatchUi.popView(WatchUi.SLIDE_DOWN);
-  }
-
-  //! Handle the done item being selected
-
-  function onDone() as Void {
-    WatchUi.popView(WatchUi.SLIDE_DOWN);
-  }
-}
-
-class PressMenuDelegate extends WatchUi.Menu2InputDelegate {
-  hidden var _delegate as DataFieldSettingsMenuDelegate;
-  hidden var _item as MenuItem?;
-  hidden var _currentPrompt as String = "";
-  hidden var _debug as Boolean = false;
-
-  function initialize(delegate as DataFieldSettingsMenuDelegate, menu as WatchUi.Menu2) {
-    Menu2InputDelegate.initialize();
-    _delegate = delegate;
-  }
-
-  function onSelect(item as MenuItem) as Void {
-    _item = item;
-    var id = item.getId() as String;
-    
-    if (id instanceof String && item instanceof ToggleMenuItem) {
-      Storage.setValue(id as String, item.isEnabled());
-      item.setSubLabel($.subMenuToggleMenuItem(id as String));
-      return;
-    }
-
-    _currentPrompt = item.getLabel();
-
-    var currentValue = $.getStorageValue(id as String, 0) as Number;
-    var view = new $.NumericInputView(_debug, _currentPrompt, currentValue);
-    view.useNegative(true);
-    view.setOnAccept(self, :onAcceptNumericinput);
-    view.setOnKeypressed(self, :onNumericinput);
-
-    Toybox.WatchUi.pushView(view, new $.NumericInputDelegate(_debug, view), WatchUi.SLIDE_RIGHT);
-  }
-
-  function onAcceptNumericinput(value as Number) as Void {
-    try {
-      if (_item != null) {
-        var storageKey = _item.getId() as String;
-        Storage.setValue(storageKey, value);
-        (_item as MenuItem).setSubLabel(value.format("%.0d"));
-      }
-    } catch (ex) {
-      ex.printStackTrace();
-    }
-  }
-
-  function onNumericinput(editData as Array<Char>, cursorPos as Number, insert as Boolean, negative as Boolean) as Void {
-    // Hack to refresh screen
-    WatchUi.popView(WatchUi.SLIDE_IMMEDIATE);
-    var view = new $.NumericInputView(_debug, _currentPrompt, 0);
-    view.setEditData(editData, cursorPos, insert, negative);
-    view.useNegative(true);
-    view.setOnAccept(self, :onAcceptNumericinput);
-    view.setOnKeypressed(self, :onNumericinput);
-
-    Toybox.WatchUi.pushView(view, new $.NumericInputDelegate(_debug, view), WatchUi.SLIDE_IMMEDIATE);
-  }
-
-  //! Handle the back key being pressed
-
-  function onBack() as Void {
-    WatchUi.popView(WatchUi.SLIDE_DOWN);
-  }
-
-  //! Handle the done item being selected
-
-  function onDone() as Void {
-    WatchUi.popView(WatchUi.SLIDE_DOWN);
-  }
-}
 // global
 function getHiittModeText(value as WhatHiitt.HiitMode) as String {
   switch (value) {

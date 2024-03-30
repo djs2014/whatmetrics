@@ -23,7 +23,7 @@ class selectionMenuPicker {
 
   // :onselect(value)
   function setOnSelected(objInstance as Object, method as Symbol) as Void {
-    _onSelectedCb = new Method(objInstance, method);
+    _onSelectedCb = new Method(objInstance, method) as Method;
   }
 
   function onSelected(value as Object) as Void {

@@ -1,7 +1,11 @@
 Dualpower detect 
 60 sec -> r/l = 0/x -> power times 2
-add new numeric input 
+power_dual_sec_fallback
++ underline --check dual power--
++ getHasFailingDualpower() 
+ hiit --> also fix dual power failing
 
+Combine all menuDelegate to GeneralMenuDelegate
 Show zone info larger z2
 
 Record time in zones z2 = 3 hour / week
