@@ -65,10 +65,15 @@ class DataFieldSettingsDelegate extends WatchUi.BehaviorDelegate {
     boolean = Storage.getValue("show_grid") ? true : false;
     menu.addItem(new WatchUi.ToggleMenuItem("Grid lines", null, "show_grid", boolean, null));
 
-    boolean = Storage.getValue("show_timer") ? true : false;
-    mi = new WatchUi.ToggleMenuItem("Timer", null, "show_timer", boolean, null);
-    mi.setSubLabel($.subMenuToggleMenuItem(mi.getId() as String));
+    mi = new WatchUi.MenuItem("Timer", null, "show_timer", null);
+    var value = getStorageValue(mi.getId() as String, $.gShowTimer) as Number;
+    mi.setSubLabel($.getShowTimerText(value));
     menu.addItem(mi);
+
+    // boolean = Storage.getValue("show_timer") ? true : false;
+    // mi = new WatchUi.ToggleMenuItem("Timer", null, "show_timer", boolean, null);
+    // mi.setSubLabel($.subMenuToggleMenuItem(mi.getId() as String));
+    // menu.addItem(mi);
   
     // @@QND
     // boolean = Storage.getValue("wf_toggle_heading") ? true : false;
@@ -92,14 +97,17 @@ class DataFieldSettingsDelegate extends WatchUi.BehaviorDelegate {
   }
 }
 
+
+
+
 function subMenuToggleMenuItem(key as String) as String {
-  if (key.equals("show_timer")) {
-    if (Storage.getValue(key) ? true : false) {
-      return "timer time";
-    } else {
-      return "elapsed time";
-    }
-  } 
+  // if (key.equals("show_timer")) {
+  //   if (Storage.getValue(key) ? true : false) {
+  //     return "timer time";
+  //   } else {
+  //     return "elapsed time";
+  //   }
+  // } 
   // else if (key.equals("wf_toggle_heading")) {
   //   if (Storage.getValue(key) ? true : false) {
   //     return "distance (next)";

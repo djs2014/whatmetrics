@@ -48,7 +48,7 @@ class whatmetricsView extends WatchUi.DataField {
 
   hidden var mHiitt as WhatHiitt;
   hidden var mMetrics as WhatMetrics;
-  
+
   // hidden var mGrade as Double = 0.0d;
   function initialize() {
     DataField.initialize();
@@ -239,6 +239,9 @@ class whatmetricsView extends WatchUi.DataField {
     var text_botright = "";
     var text_botleft = "";
 
+    var text_middleleft = "";
+    var text_middleright = "";
+
     if (fieldIdx == 0) {
       title = "grade";
       var grade = mMetrics.getGrade();
@@ -301,6 +304,9 @@ class whatmetricsView extends WatchUi.DataField {
         text_botleft = "zone " + hrZone.format("%0d");
       }
     } else if (fieldIdx == 3) {
+      if (mMetrics.getFrontDerailleurSize() > 0) {
+        text_middleright = mMetrics.getFrontDerailleurSize().format("%0d");
+      }
       // @@ option fallback if power = 0; -> show distance
       var power = mMetrics.getPower();
       if (power == 0.0 and mSmallField or (mPowerFallbackCountdown == 0 and $.gPowerCountdownToFallBack > 0)) {
@@ -310,8 +316,8 @@ class whatmetricsView extends WatchUi.DataField {
         units = getUnitsInMeterOrKm(dist);
       } else {
         if (mMetrics.getHasFailingDualpower()) {
-          prefix = "!";                    
-        } 
+          prefix = "!";
+        }
         if (gShowPowerPerWeight) {
           title = "power (" + mMetrics.getPowerPerSec().format("%0d") + " sec) / kg";
           units = "w/kg";
@@ -379,7 +385,7 @@ class whatmetricsView extends WatchUi.DataField {
               var remainingSeconds = $.gPowerBattMaxSeconds - operatingTimeAfterCharched;
               // r emaining time
               if (remainingSeconds >= 0) {
-                powerTimeString = "r " + secondsToHourMinutes(operatingTimeAfterCharched);
+                powerTimeString = "rpp " + secondsToHourMinutes(operatingTimeAfterCharched);
               }
             }
           }
@@ -397,6 +403,9 @@ class whatmetricsView extends WatchUi.DataField {
         }
       }
     } else if (fieldIdx == 4) {
+      if (mMetrics.getRearDerailleurSize() > 0) {
+        text_middleleft = mMetrics.getRearDerailleurSize().format("%0d");
+      }
       title = "speed";
       units = "km/h";
       var speed = mpsToKmPerHour(mMetrics.getSpeed());
@@ -522,27 +531,47 @@ class whatmetricsView extends WatchUi.DataField {
       }
 
       if (showTimerElapsed) {
-        var valueElapsed = 0;
-        if (gShowTimer) {
-          title = "timer";
-          valueElapsed = mMetrics.getTimerTime();
+        var valueInMMSeconds = 0;
+        var elapsedString = "";
+        var showTime = false;
+        title = $.getShowTimerText($.gShowTimer);
+        switch ($.gShowTimer) {
+          case 0: // timer
+            valueInMMSeconds = mMetrics.getTimerTime();
+            break;
+          case 1: // elapsed
+            valueInMMSeconds = mMetrics.getElapsedTime();
+            break;
+          case 2: // time
+            showTime = true;
+            valueInMMSeconds = Time.now().value() * 1000;
+            break;
+        }
+        if (showTime) {
+          var today = Gregorian.info(Time.now(), Time.FORMAT_MEDIUM);
+          text = Lang.format("$1$:$2$", [today.hour, today.min.format("%02d")]);
+          decimals = today.sec.format("%02d");
+          units = Lang.format("$1$ $2$ $3$", [today.day_of_week, today.day, today.month]);
         } else {
-          title = "elapsed";
-          valueElapsed = mMetrics.getElapsedTime();
+          var elapsed = millisecondsToShortTimeString(valueInMMSeconds, "{h}.{m}:{s}");
+          prefix = stringLeft(elapsed, ".", "");
+          if (prefix.equals("0")) {
+            prefix = "";
+          }
+          text = stringRight(elapsed, ".", elapsed);
         }
-        var elapsed = millisecondsToShortTimeString(valueElapsed, "{h}.{m}:{s}");
-        prefix = stringLeft(elapsed, ".", "");
-        if (prefix.equals("0")) {
-          prefix = "";
-        }
-        text = stringRight(elapsed, ".", elapsed);
-        drawElapsedTimeIcon(dc, x, y, width, height, mIconColor, mMetrics.getElapsedTime());
+        drawElapsedTimeIcon(dc, x, y, width, height, mIconColor, valueInMMSeconds);
       }
     }
 
     // small fields, no decimals and units
+    System.println([height, width]);
     var font_text_bot = Graphics.FONT_SMALL;
     var fontUnits = Graphics.FONT_SYSTEM_XTINY;
+    if (height > 60 and height < 100) {
+      text_middleleft = "";
+      text_middleright = "";
+    }
     if (height < 60) {
       font_text_bot = Graphics.FONT_XTINY;
     }
@@ -555,6 +584,8 @@ class whatmetricsView extends WatchUi.DataField {
     if (width <= 70) {
       text_botright = "";
       text_botleft = "";
+      text_middleleft = "";
+      text_middleright = "";
     }
     if (decimals.equals("0")) {
       decimals = "";
@@ -698,6 +729,19 @@ class whatmetricsView extends WatchUi.DataField {
         dc.setColor(mUnitsColor, Graphics.COLOR_TRANSPARENT);
         dc.drawText(xPrefix, yPrefix, fontPrefix, prefix, Graphics.TEXT_JUSTIFY_LEFT);
       }
+    }
+
+    if (text_middleleft.length() > 0) {
+      dc.drawText(x + 1, y + height / 4, Graphics.FONT_SYSTEM_TINY, text_middleleft, Graphics.TEXT_JUSTIFY_LEFT);
+    }
+    if (text_middleright.length() > 0) {
+      dc.drawText(
+        x + width - 1,
+        y + height / 4,
+        Graphics.FONT_SYSTEM_TINY,
+        text_middleright,
+        Graphics.TEXT_JUSTIFY_RIGHT
+      );
     }
   }
 

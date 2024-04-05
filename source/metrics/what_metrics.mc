@@ -150,12 +150,14 @@ class WhatMetrics {
     return getActivityValue(a_info, :distanceToDestination, 0.0f) as Float;
   }
 
-  // gear /Index, Max and Size -> calc ratio Index values range from from 1 to the rearDerailleurMax.
-  function getFrontDerailleurIndex() as Number {
-    return getActivityValue(a_info, :frontDerailleurIndex, 0.0f) as Number;
+  // gear /Index, Max and Size -> calc ratio Index values range from from 1 to the rearDerailleurMax. @@ 2/7 == 50:17
+  function getFrontDerailleurSize() as Number {
+    // return getActivityValue(a_info, :frontDerailleurIndex, 0) as Number;
+    return getActivityValue(a_info, :frontDerailleurSize, 0) as Number;
   }
-  function getRearDerailleurIndex() as Number {
-    return getActivityValue(a_info, :rearDerailleurIndex, 0.0f) as Number;
+  function getRearDerailleurSize() as Number {
+    // return getActivityValue(a_info, :rearDerailleurIndex, 0) as Number;
+    return getActivityValue(a_info, :rearDerailleurSize, 0) as Number;
   }
 
   function getGrade() as Double {
@@ -294,30 +296,32 @@ class WhatMetrics {
     var power = getActivityValue(a_info, :currentPower, 0) as Number;
 
     if (mPowerDualSecFallback > 0 && mPowerBalance != null) {
-      var pedal = mPowerBalance.getActivePowerPedals();
-      if (pedal == "L" || pedal == "R") {
-        mFailingPowerPedalsCounter = mFailingPowerPedalsCounter + 1;
-      } else {
-        mFailingPowerPedalsCounter = 0;
-      }
-      mHasFailingDualpower = mFailingPowerPedalsCounter > mPowerDualSecFallback;
-      System.println(
-        "FailingPowerPedalsCounter " + mFailingPowerPedalsCounter + " mHasFailingDualpower " + mHasFailingDualpower
-      );
+      checkForFalingDualPower();
     }
-    return calculatePowerFor(power, mPowerDataPerSec, mPowerPerSec);
-  }
 
-  hidden function calculatePowerFor(power as Number, dataPerSec as Array<Number>, powerPerSec as Number) as Number {
-    if (dataPerSec.size() >= powerPerSec) {
-      dataPerSec = dataPerSec.slice(1, powerPerSec);
+    if (mPowerDataPerSec.size() >= mPowerPerSec) {
+      mPowerDataPerSec = mPowerDataPerSec.slice(1, mPowerPerSec);
     }
-    dataPerSec.add(power);
+    mPowerDataPerSec.add(power);
 
-    if (dataPerSec.size() == 0) {
+    if (mPowerDataPerSec.size() == 0) {
       return 0;
     }
-    return Math.mean(dataPerSec as Array<Number>).toNumber();
+    return Math.mean(mPowerDataPerSec as Array<Number>).toNumber();
+  }
+
+  hidden function checkForFalingDualPower() as Void {
+    var pedal = mPowerBalance.getActivePowerPedals();
+
+    if (pedal == "L" || pedal == "R") {
+      mFailingPowerPedalsCounter = mFailingPowerPedalsCounter + 1;
+    } else {
+      mFailingPowerPedalsCounter = 0;
+    }
+    mHasFailingDualpower = mFailingPowerPedalsCounter > mPowerDualSecFallback;
+    System.println(
+      "FailingPowerPedalsCounter " + mFailingPowerPedalsCounter + " mHasFailingDualpower " + mHasFailingDualpower
+    );
   }
 
   hidden function calculateGrade(intermediateAltitude as Float, intermediateDistance as Float) as Double {

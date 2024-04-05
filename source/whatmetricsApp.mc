@@ -105,7 +105,7 @@ class whatmetricsApp extends Application.AppBase {
     gDebug = getStorageValue("debug", gDebug) as Boolean;
     gShowColors = getStorageValue("show_colors", gShowColors) as Boolean;
     gShowGrid = getStorageValue("show_grid", gShowGrid) as Boolean;
-    gShowTimer = getStorageValue("show_timer", gShowTimer) as Boolean;
+    gShowTimer = getStorageValue("show_timer", gShowTimer) as Number;
 
     // gWideFieldShowDistance = getStorageValue("wf_toggle_heading", gWideFieldShowDistance) as Boolean;
 
@@ -165,7 +165,7 @@ var gTargetHeartRate as Number = 200;
 var gDebug as Boolean = false;
 var gShowColors as Boolean = false;
 var gShowGrid as Boolean = true;
-var gShowTimer as Boolean = false;
+var gShowTimer as Number = 0; // 0  = timer, 1 = elapsed time, 2 = clock
 var gShowPowerBalance as Boolean = true;
 var gShowPowerBattery as Boolean = true;
 var gShowPowerPerWeight as Boolean = false;

@@ -19,9 +19,9 @@ class DataFieldSettingsMenuDelegate extends WatchUi.Menu2InputDelegate {
     _view = view;
   }
 
-  function onSelect(menuItem as MenuItem) as Void {
-    _currentMenuItem = menuItem;
-    var id = menuItem.getId();
+  function onSelect(item as MenuItem) as Void {
+    _currentMenuItem = item;
+    var id = item.getId();
 
     if (id instanceof String && id.equals("hiit")) {
       var hiitMenu = new WatchUi.Menu2({ :title => "High-intensity interval" });
@@ -61,7 +61,9 @@ class DataFieldSettingsMenuDelegate extends WatchUi.Menu2InputDelegate {
       hiitMenu.addItem(mi);
 
       WatchUi.pushView(hiitMenu, new $.GeneralMenuDelegate(self, hiitMenu), WatchUi.SLIDE_UP);
-    } else if (id instanceof String && id.equals("targets")) {
+      return;
+    }
+    if (id instanceof String && id.equals("targets")) {
       var targetMenu = new WatchUi.Menu2({ :title => "Targets" });
       // "Functional threshold power"
       var mi = new WatchUi.MenuItem("FTP", null, "target_ftp", null);
@@ -89,7 +91,9 @@ class DataFieldSettingsMenuDelegate extends WatchUi.Menu2InputDelegate {
       targetMenu.addItem(mi);
 
       WatchUi.pushView(targetMenu, new $.GeneralMenuDelegate(self, targetMenu), WatchUi.SLIDE_UP);
-    } else if (id instanceof String && id.equals("gradient")) {
+      return;
+    }
+    if (id instanceof String && id.equals("gradient")) {
       var gradientMenu = new WatchUi.Menu2({ :title => "Gradient" });
 
       var mi = new WatchUi.MenuItem("Window size", null, "metric_gradews", null);
@@ -103,7 +107,9 @@ class DataFieldSettingsMenuDelegate extends WatchUi.Menu2InputDelegate {
       gradientMenu.addItem(mi);
 
       WatchUi.pushView(gradientMenu, new $.GeneralMenuDelegate(self, gradientMenu), WatchUi.SLIDE_LEFT);
-    } else if (id instanceof String && id.equals("power")) {
+      return;
+    }
+    if (id instanceof String && id.equals("power")) {
       var powerMenu = new WatchUi.Menu2({ :title => "Power metrics" });
 
       var mi = new WatchUi.MenuItem("Power per sec", null, "metric_ppersec", null);
@@ -142,7 +148,9 @@ class DataFieldSettingsMenuDelegate extends WatchUi.Menu2InputDelegate {
       powerMenu.addItem(mi);
 
       WatchUi.pushView(powerMenu, new $.GeneralMenuDelegate(self, powerMenu), WatchUi.SLIDE_LEFT);
-    } else if (id instanceof String && id.equals("pressure")) {
+      return;
+    }
+    if (id instanceof String && id.equals("pressure")) {
       var pressMenu = new WatchUi.Menu2({ :title => "Pressure or altitude" });
 
       var mi = new WatchUi.MenuItem("Min altitude", null, "pressure_altmin", null);
@@ -156,10 +164,28 @@ class DataFieldSettingsMenuDelegate extends WatchUi.Menu2InputDelegate {
       pressMenu.addItem(new WatchUi.ToggleMenuItem("Mean sealevel", null, "pressure_show_meansealevel", boolean, null));
 
       WatchUi.pushView(pressMenu, new $.GeneralMenuDelegate(self, pressMenu), WatchUi.SLIDE_LEFT);
-    } else if (id instanceof String && menuItem instanceof ToggleMenuItem) {
-      Storage.setValue(id as String, menuItem.isEnabled());
-      menuItem.setSubLabel($.subMenuToggleMenuItem(id as String));
+      return;
     }
+
+    if (id instanceof String && id.equals("show_timer")) {
+      var sp = new selectionMenuPicker("Show time(r)", id as String);
+      for (var i = 0; i <= 2; i++) {
+        sp.add($.getShowTimerText(i), null, i);
+      }
+      sp.setOnSelected(self, :onSelectedSelection, item);
+      sp.show();
+      return;
+    }
+
+    if (id instanceof String && item instanceof ToggleMenuItem) {
+      Storage.setValue(id as String, item.isEnabled());
+      item.setSubLabel($.subMenuToggleMenuItem(id as String));
+      return;
+    }
+  }
+
+  function onSelectedSelection(value as Object, storageKey as String) as Void {
+    Storage.setValue(storageKey, value as Number);
   }
 }
 
@@ -188,7 +214,8 @@ class GeneralMenuDelegate extends WatchUi.Menu2InputDelegate {
       sp.add("Minimal", "hiit minimized", WhatHiitt.HiitMinimal);
       sp.add("Normal", "hiit full screen", WhatHiitt.HiitNormal);
 
-      sp.setOnSelected(self, :onSelectedHiitMode);
+      //sp.setOnSelected(self, :onSelectedHiitMode, item);
+      sp.setOnSelected(self, :onSelectedSelection, item);
       sp.show();
       return;
     } else if (id instanceof String && id.equals("hiit_sound")) {
@@ -198,7 +225,8 @@ class GeneralMenuDelegate extends WatchUi.Menu2InputDelegate {
       sp.add("Low", "low noise", WhatHiitt.LowNoise);
       sp.add("Loud", "loud noise", WhatHiitt.LoudNoise);
 
-      sp.setOnSelected(self, :onSelectedHiitSound);
+      //sp.setOnSelected(self, :onSelectedHiitSound, item);
+      sp.setOnSelected(self, :onSelectedSelection, item);
       sp.show();
       return;
     } else if (id.equals("target_hrzone")) {
@@ -209,7 +237,8 @@ class GeneralMenuDelegate extends WatchUi.Menu2InputDelegate {
       sp.add("Zone 4", null, 4);
       sp.add("Zone 5", null, 5);
 
-      sp.setOnSelected(self, :onSelectedHrZone);
+      //sp.setOnSelected(self, :onSelectedHrZone, item);
+      sp.setOnSelected(self, :onSelectedSelection, item);
       sp.show();
       return;
     }
@@ -283,36 +312,52 @@ class GeneralMenuDelegate extends WatchUi.Menu2InputDelegate {
   }
 
   // --
+
   function onSelectedSelection(value as Object, storageKey as String) as Void {
     Storage.setValue(storageKey, value as Number);
   }
 
-  function onSelectedHiitMode(value as Object, storageKey as String) as Void {
-    var HiitMode = value as WhatHiitt.HiitMode;
-    Storage.setValue(storageKey, HiitMode);
-    if (_item != null) {
-      (_item as MenuItem).setSubLabel($.getHiittModeText(HiitMode));
-    }
-  }
+  // function onSelectedHiitMode(value as Object, storageKey as String) as Void {
+  //   var HiitMode = value as WhatHiitt.HiitMode;
+  //   Storage.setValue(storageKey, HiitMode);
+  //   if (_item != null) {
+  //     (_item as MenuItem).setSubLabel($.getHiittModeText(HiitMode));
+  //   }
+  // }
 
-  function onSelectedHiitSound(value as Object, storageKey as String) as Void {
-    var HiitSound = value as WhatHiitt.HiitSound;
-    Storage.setValue(storageKey, HiitSound);
-    if (_item != null) {
-      (_item as MenuItem).setSubLabel($.getHiittSoundText(HiitSound));
-    }
-  }
+  // function onSelectedHiitSound(value as Object, storageKey as String) as Void {
+  //   var HiitSound = value as WhatHiitt.HiitSound;
+  //   Storage.setValue(storageKey, HiitSound);
+  //   if (_item != null) {
+  //     (_item as MenuItem).setSubLabel($.getHiittSoundText(HiitSound));
+  //   }
+  // }
 
-  function onSelectedHrZone(value as Object, storageKey as String) as Void {
-    var zone = value as Number;
-    Storage.setValue(storageKey, zone);
-    if (_item != null) {
-      (_item as MenuItem).setSubLabel("zone " + zone.format("%0d"));
-    }
-  }
+  // function onSelectedHrZone(value as Object, storageKey as String) as Void {
+  //   var zone = value as Number;
+  //   Storage.setValue(storageKey, zone);
+  //   if (_item != null) {
+  //     (_item as MenuItem).setSubLabel("zone " + zone.format("%0d"));
+  //   }
+  // }
 }
 
 // global
+
+function getShowTimerText(value as Number) as String {
+  switch (value) {
+    case 0:
+      return "timer";
+    case 1:
+      return "elapsed time";
+    case 2:
+      return "clock";
+
+    default:
+      return "--";
+  }
+}
+
 function getHiittModeText(value as WhatHiitt.HiitMode) as String {
   switch (value) {
     case WhatHiitt.HiitMinimal:

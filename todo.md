@@ -1,3 +1,47 @@
+field A,B,C/D,E,F/G,H,I
+- props
+fallback 
+  Seconds to detect:
+  HR related: 0 for x sec
+  Power related:  0 for x sec
+fallback when paused:
+
+one field
+: nr fields 3/6/9  
+large field
+wide field
+small field
+
+show timer/elapsed or time
+
+fields:
+grade
+distance
+clock
+timer
+elapsed time
+power
+power/kg
+altitude
+cadence
+speed
+hiit
+vo2max
+heartrate
+hr zone
+
+option: 
+  show averages
+
+
+
+
+
+
+
+
+------
+option
 Dualpower detect 
 60 sec -> r/l = 0/x -> power times 2
 power_dual_sec_fallback
@@ -5,8 +49,9 @@ power_dual_sec_fallback
 + getHasFailingDualpower() 
  hiit --> also fix dual power failing
 
-Combine all menuDelegate to GeneralMenuDelegate
+x Combine all menuDelegate to GeneralMenuDelegate
 Show zone info larger z2
+docu
 
 Record time in zones z2 = 3 hour / week
 
