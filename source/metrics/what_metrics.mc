@@ -311,7 +311,10 @@ class WhatMetrics {
   }
 
   hidden function checkForFalingDualPower() as Void {
-    var pedal = mPowerBalance.getActivePowerPedals();
+    if (mPowerBalance != null) {
+      return;
+    }
+    var pedal = (mPowerBalance as PowerBalance).getActivePowerPedals();
 
     if (pedal == "L" || pedal == "R") {
       mFailingPowerPedalsCounter = mFailingPowerPedalsCounter + 1;
@@ -319,9 +322,9 @@ class WhatMetrics {
       mFailingPowerPedalsCounter = 0;
     }
     mHasFailingDualpower = mFailingPowerPedalsCounter > mPowerDualSecFallback;
-    System.println(
-      "FailingPowerPedalsCounter " + mFailingPowerPedalsCounter + " mHasFailingDualpower " + mHasFailingDualpower
-    );
+    // System.println(
+    //   "FailingPowerPedalsCounter " + mFailingPowerPedalsCounter + " mHasFailingDualpower " + mHasFailingDualpower
+    // );
   }
 
   hidden function calculateGrade(intermediateAltitude as Float, intermediateDistance as Float) as Double {

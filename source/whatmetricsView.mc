@@ -182,7 +182,11 @@ class whatmetricsView extends WatchUi.DataField {
           dc.drawRectangle(x, y, cell[0], cell[1]);
         }
 
-        drawField(dc, f, x, y, cell[0], cell[1]);
+        // drawField(dc, f, x, y, cell[0], cell[1]);
+
+        var fi = getFieldInfo(f);
+        drawFieldBackground(dc, fi, x, y, cell[0], cell[1]);
+        drawFieldInfo(dc, fi, x, y, cell[0], cell[1]);
 
         x = x + cell[0];
         h = cell[1];
@@ -194,40 +198,7 @@ class whatmetricsView extends WatchUi.DataField {
     return;
   }
 
-  // !! Less nested function, less stack -> no stack overflow crash :-(
-  // hidden function showGrid(dc as Dc) as Void {
-  //   var y = 0;
-  //   var f = 0;
-  //   var rowCount = mGrid.size();
-  //   for (var r = 0; r < rowCount; r++) {
-  //     var row = mGrid[r]; // as Array<Array<Number> >;
-  //     var cellCount = row.size();
-  //     var x = 0;
-  //     var h = 0;
-  //     for (var c = 0; c < cellCount; c++) {
-  //       //  [w,h]
-  //       var cell = row[c]; // as Array<Number>;
-  //       if (gShowGrid) {
-  //         dc.setColor(Graphics.COLOR_LT_GRAY, Graphics.COLOR_TRANSPARENT);
-  //         dc.drawRectangle(x, y, cell[0], cell[1]);
-  //       }
-  //       drawField(dc, f, x, y, cell[0], cell[1]);
-  //       x = x + cell[0];
-  //       h = cell[1];
-  //       f = f + 1;
-  //     }
-  //     y = y + h;
-  //   }
-  // }
-
-  hidden function drawField(
-    dc as Dc,
-    fieldIdx as Number,
-    x as Number,
-    y as Number,
-    width as Number,
-    height as Number
-  ) as Void {
+  function getFieldInfo(fieldIdx as Number) as FieldInfo {
     var title = "";
     var value = "";
     var prefix = "";
@@ -241,9 +212,13 @@ class whatmetricsView extends WatchUi.DataField {
 
     var text_middleleft = "";
     var text_middleright = "";
+    var iconColor = -1;
+    var iconValue = 0;
+    var fieldType = FTUnknown;
 
     if (fieldIdx == 0) {
       title = "grade";
+      fieldType = FTGrade;
       var grade = mMetrics.getGrade();
 
       value = grade.format("%0.1f");
@@ -259,9 +234,8 @@ class whatmetricsView extends WatchUi.DataField {
       if (grade < 0) {
         grade = grade * -1;
       }
-      var iconColor = getIconColor(dc, grade, gTargetGrade);
-      checkReverseColor(dc, x, y, width, height);
-      drawGradeIcon(dc, x, y, width, height, iconColor, g);
+      iconColor = getIconColor(grade, gTargetGrade);
+      iconValue = g;
     } else if (fieldIdx == 1) {
       // @QND
       if (mWideField and mSmallField) {
@@ -271,37 +245,39 @@ class whatmetricsView extends WatchUi.DataField {
           if (dist > distNext and distNext > 0.0f) {
             dist = distNext;
             title = "next";
-            drawNextIcon(dc, x, y, width, height, mIconColor);
+            fieldType = FTDistanceNext;
           } else {
             title = "dest";
-            drawDestinationIcon(dc, x, y, width, height, mIconColor);
+            fieldType = FTDistanceDest;
           }
         } else {
           title = "distance";
+          fieldType = FTDistance;
           dist = mMetrics.getElapsedDistance();
         }
         text = getDistanceInMeterOrKm(dist).format(getFormatForMeterAndKm(dist));
         units_side = getUnitsInMeterOrKm(dist);
       } else {
         text = getCompassDirection(mMetrics.getBearing());
+        fieldType = FTBearing;
       }
     } else if (fieldIdx == 2) {
       var heartRate = mMetrics.getHeartRate();
       if (mPaused or heartRate == 0) {
-        title = "time";
+        title = "clock";
+        fieldType = FTClock;
         var today = Gregorian.info(Time.now(), Time.FORMAT_MEDIUM);
         text = Lang.format("$1$:$2$", [today.hour, today.min.format("%02d")]);
         decimals = today.sec.format("%02d");
         units = Lang.format("$1$ $2$ $3$", [today.day_of_week, today.day, today.month]);
       } else {
         title = "heartrate";
+        fieldType = FTHeartRate;
         units = "bpm";
         number = heartRate.format("%0d");
-        var iconColor = getIconColor(dc, heartRate, gTargetHeartRate);
-        checkReverseColor(dc, x, y, width, height);
-        var hrZone = mMetrics.getHeartRateZone();
-        drawHeartIcon(dc, x, y, width, height, iconColor, hrZone);
-        text_botleft = "zone " + hrZone.format("%0d");
+        iconColor = getIconColor(heartRate, gTargetHeartRate);
+        iconValue = mMetrics.getHeartRateZone();
+        text_botleft = "zone " + iconValue.format("%0d");
       }
     } else if (fieldIdx == 3) {
       if (mMetrics.getFrontDerailleurSize() > 0) {
@@ -311,6 +287,7 @@ class whatmetricsView extends WatchUi.DataField {
       var power = mMetrics.getPower();
       if (power == 0.0 and mSmallField or (mPowerFallbackCountdown == 0 and $.gPowerCountdownToFallBack > 0)) {
         title = "distance";
+        fieldType = FTDistance;
         var dist = mMetrics.getElapsedDistance();
         text = getDistanceInMeterOrKm(dist).format(getFormatForMeterAndKm(dist));
         units = getUnitsInMeterOrKm(dist);
@@ -320,6 +297,7 @@ class whatmetricsView extends WatchUi.DataField {
         }
         if (gShowPowerPerWeight) {
           title = "power (" + mMetrics.getPowerPerSec().format("%0d") + " sec) / kg";
+          fieldType = FTPower;
           units = "w/kg";
           value = mMetrics.getPowerPerWeight().format("%0.1f");
           number = stringLeft(value, ".", value);
@@ -331,6 +309,7 @@ class whatmetricsView extends WatchUi.DataField {
           }
         } else {
           title = "power (" + mMetrics.getPowerPerSec().format("%0d") + " sec)";
+          fieldType = FTPower;
           units = "w";
           number = mMetrics.getPower().format("%0d");
           if (gShowPowerAverage) {
@@ -339,9 +318,8 @@ class whatmetricsView extends WatchUi.DataField {
             text_botleft = mMetrics.getPowerPerWeight().format("%0.1f") + "/kg";
           }
         }
-        var iconColor = getIconColor(dc, mMetrics.getPower(), gTargetFtp);
-        checkReverseColor(dc, x, y, width, height);
-        drawPowerIcon(dc, x, y, width, height, iconColor);
+        iconColor = getIconColor(mMetrics.getPower(), gTargetFtp);
+
         if (gShowPowerBattery) {
           var batteryLevel = mMetrics.getPowerBatteryLevel();
           var operatingTimeInSeconds = mMetrics.getPowerOperatingTimeInSeconds();
@@ -389,7 +367,8 @@ class whatmetricsView extends WatchUi.DataField {
               }
             }
           }
-          drawPowerBatteryLevel(dc, x, y, width, height, batteryLevel, powerTimeString);
+          // @@ TODO power battery
+          // drawPowerBatteryLevel(dc, x, y, width, height, batteryLevel, powerTimeString);
         }
         if (gShowPowerBalance) {
           var powerLeft = mMetrics.getPowerBalanceLeft();
@@ -407,17 +386,17 @@ class whatmetricsView extends WatchUi.DataField {
         text_middleleft = mMetrics.getRearDerailleurSize().format("%0d");
       }
       title = "speed";
+      fieldType = FTSpeed;
       units = "km/h";
       var speed = mpsToKmPerHour(mMetrics.getSpeed());
       value = speed.format("%0.1f");
       number = stringLeft(value, ".", value);
       decimals = stringRight(value, ".", "");
-      var iconColor = getIconColor(dc, speed, gTargetSpeed);
-      checkReverseColor(dc, x, y, width, height);
-      drawSpeedIcon(dc, x, y, width, height, iconColor);
+      iconColor = getIconColor(speed, gTargetSpeed);
       text_botleft = "avg " + mpsToKmPerHour(mMetrics.getAverageSpeed()).format("%0.1f");
     } else if (fieldIdx == 5) {
       title = "altitude";
+      fieldType = FTAltitude;
       units = "m";
       var altitude = mMetrics.getAltitude();
 
@@ -428,9 +407,11 @@ class whatmetricsView extends WatchUi.DataField {
         var pressure;
         if ($.gShowMeanSeaLevel) {
           title = "pressure sealevel";
+          fieldType = FTPressureAtSea;
           pressure = pascalToMilliBar(mMetrics.getMeanSeaLevelPressure());
         } else {
           title = "pressure";
+          fieldType = FTPressure;
           pressure = pascalToMilliBar(mMetrics.getAmbientPressure());
         }
         units = "hPa";
@@ -461,9 +442,7 @@ class whatmetricsView extends WatchUi.DataField {
         if (altitude < 0) {
           altitude = altitude * -1;
         }
-        var iconColor = getIconColor(dc, altitude, gTargetAltitude);
-        checkReverseColor(dc, x, y, width, height);
-        drawAltitudeIcon(dc, x, y, width, height, iconColor);
+        iconColor = getIconColor(altitude, gTargetAltitude);
 
         var totalAsc = mMetrics.getTotalAscent();
         if (totalAsc > 0) {
@@ -476,22 +455,24 @@ class whatmetricsView extends WatchUi.DataField {
       }
     } else if (fieldIdx == 6) {
       title = "cadence";
+      fieldType = FTCadence;
       units = "rpm";
       number = mMetrics.getCadence().format("%0d");
       if (mWideField and mSmallField) {
         units_side = "rpm";
       }
-      drawCadenceIcon(dc, x, y, width, height, getIconColor(dc, mMetrics.getCadence(), gTargetCadence));
+      iconColor = getIconColor(mMetrics.getCadence(), gTargetCadence);
     } else if (fieldIdx == 7) {
       var showTimerElapsed = true;
       if (mHiitt.isEnabled()) {
         title = "hiit";
+        fieldType = FTHiit;
         var recovery = mHiitt.getRecoveryElapsedSeconds();
         if (recovery > 0) {
           showTimerElapsed = false;
           text = secondsToCompactTimeString(recovery, "({m}:{s})");
           if (mHiitt.wasValidHiit()) {
-            drawHiitIcon(dc, x, y, width, height, Graphics.COLOR_BLUE);
+            iconColor = Graphics.COLOR_BLUE;
           }
         } else {
           var counter = mHiitt.getCounter();
@@ -503,7 +484,7 @@ class whatmetricsView extends WatchUi.DataField {
               showTimerElapsed = false;
               text = secondsToCompactTimeString(hiitElapsed, "({m}:{s})");
               if (mHiitt.wasValidHiit()) {
-                drawHiitIcon(dc, x, y, width, height, Graphics.COLOR_GREEN);
+                iconColor = Graphics.COLOR_GREEN;
               }
               var vo2max = mHiitt.getVo2Max();
               if (vo2max > 30) {
@@ -538,9 +519,11 @@ class whatmetricsView extends WatchUi.DataField {
         switch ($.gShowTimer) {
           case 0: // timer
             valueInMMSeconds = mMetrics.getTimerTime();
+            fieldType = FTTimer;
             break;
           case 1: // elapsed
             valueInMMSeconds = mMetrics.getElapsedTime();
+            fieldType = FTTimeElapsed;
             break;
           case 2: // time
             showTime = true;
@@ -548,6 +531,7 @@ class whatmetricsView extends WatchUi.DataField {
             break;
         }
         if (showTime) {
+          fieldType = FTClock;
           var today = Gregorian.info(Time.now(), Time.FORMAT_MEDIUM);
           text = Lang.format("$1$:$2$", [today.hour, today.min.format("%02d")]);
           decimals = today.sec.format("%02d");
@@ -560,9 +544,107 @@ class whatmetricsView extends WatchUi.DataField {
           }
           text = stringRight(elapsed, ".", elapsed);
         }
-        drawElapsedTimeIcon(dc, x, y, width, height, mIconColor, valueInMMSeconds);
+        iconValue = valueInMMSeconds;
       }
     }
+
+    var fi = new FieldInfo();
+    fi.index = fieldIdx;
+    fi.type = fieldType as FieldType;
+    fi.title = title;
+    fi.value = value;
+    fi.prefix = prefix;
+    fi.text = text;
+    fi.number = number;
+    fi.decimals = decimals;
+    fi.units = units;
+    fi.units_side = units_side;
+    fi.text_botleft = text_botleft;
+    fi.text_botright = text_botright;
+    fi.text_middleleft = text_middleleft;
+    fi.text_middleright = text_middleright;
+    fi.iconColor = iconColor;
+    fi.iconValue = iconValue;
+    return fi;
+  }
+
+  function drawFieldBackground(
+    dc as Dc,
+    fieldInfo as FieldInfo,
+    x as Number,
+    y as Number,
+    width as Number,
+    height as Number
+  ) as Void {
+    var fi = fieldInfo;
+
+    checkReverseColor(dc, x, y, width, height);
+
+    if (fi.type == FTUnknown) {
+      return;
+    }
+    if (fi.type == FTDistanceNext) {
+      drawNextIcon(dc, x, y, width, height, mIconColor);
+      return;
+    }
+    if (fi.type == FTDistanceDest) {
+      drawDestinationIcon(dc, x, y, width, height, mIconColor);
+      return;
+    }
+    if (fi.type == FTGrade) {
+      drawGradeIcon(dc, x, y, width, height, fi.iconColor, fi.iconValue.toDouble());
+      return;
+    }
+    if (fi.type == FTClock || fi.type == FTTimeElapsed || fi.type == FTTimer) {
+      drawElapsedTimeIcon(dc, x, y, width, height, mIconColor, fi.iconValue.toNumber());
+      return;
+    }
+    if (fi.type == FTHeartRate) {
+      drawHeartIcon(dc, x, y, width, height, fi.iconColor, fi.iconValue.toNumber());
+      return;
+    }
+    if (fi.type == FTPower) {
+      drawPowerIcon(dc, x, y, width, height, fi.iconColor);
+      return;
+    }
+    if (fi.type == FTSpeed) {
+      drawSpeedIcon(dc, x, y, width, height, fi.iconColor);
+      return;
+    }
+    if (fi.type == FTAltitude) {
+      drawAltitudeIcon(dc, x, y, width, height, fi.iconColor);
+      return;
+    }
+    if (fi.type == FTCadence) {
+      drawCadenceIcon(dc, x, y, width, height, fi.iconColor);
+      return;
+    }
+    if (fi.type == FTHiit && fi.iconColor != -1) {
+      drawHiitIcon(dc, x, y, width, height, fi.iconColor);
+      return;
+    }
+  }
+
+  function drawFieldInfo(
+    dc as Dc,
+    fieldInfo as FieldInfo,
+    x as Number,
+    y as Number,
+    width as Number,
+    height as Number
+  ) as Void {
+    var title = fieldInfo.title;
+    var value = fieldInfo.value;
+    var prefix = fieldInfo.prefix;
+    var text = fieldInfo.text;
+    var number = fieldInfo.number;
+    var decimals = fieldInfo.decimals;
+    var units = fieldInfo.units;
+    var units_side = fieldInfo.units_side;
+    var text_botleft = fieldInfo.text_botleft;
+    var text_botright = fieldInfo.text_botright;
+    var text_middleleft = fieldInfo.text_middleleft;
+    var text_middleright = fieldInfo.text_middleright;
 
     // small fields, no decimals and units
     System.println([height, width]);
@@ -744,8 +826,558 @@ class whatmetricsView extends WatchUi.DataField {
       );
     }
   }
+  // !! Less nested function, less stack -> no stack overflow crash :-(
+  // hidden function showGrid(dc as Dc) as Void {
+  //   var y = 0;
+  //   var f = 0;
+  //   var rowCount = mGrid.size();
+  //   for (var r = 0; r < rowCount; r++) {
+  //     var row = mGrid[r]; // as Array<Array<Number> >;
+  //     var cellCount = row.size();
+  //     var x = 0;
+  //     var h = 0;
+  //     for (var c = 0; c < cellCount; c++) {
+  //       //  [w,h]
+  //       var cell = row[c]; // as Array<Number>;
+  //       if (gShowGrid) {
+  //         dc.setColor(Graphics.COLOR_LT_GRAY, Graphics.COLOR_TRANSPARENT);
+  //         dc.drawRectangle(x, y, cell[0], cell[1]);
+  //       }
+  //       drawField(dc, f, x, y, cell[0], cell[1]);
+  //       x = x + cell[0];
+  //       h = cell[1];
+  //       f = f + 1;
+  //     }
+  //     y = y + h;
+  //   }
+  // }
 
-  hidden function getIconColor(dc as Dc, value as Numeric, maxValue as Numeric) as Graphics.ColorType {
+  // hidden function drawField(
+  //   dc as Dc,
+  //   fieldIdx as Number,
+  //   x as Number,
+  //   y as Number,
+  //   width as Number,
+  //   height as Number
+  // ) as Void {
+  //   var title = "";
+  //   var value = "";
+  //   var prefix = "";
+  //   var text = "";
+  //   var number = "";
+  //   var decimals = "";
+  //   var units = "";
+  //   var units_side = "";
+  //   var text_botright = "";
+  //   var text_botleft = "";
+
+  //   var text_middleleft = "";
+  //   var text_middleright = "";
+
+  //   if (fieldIdx == 0) {
+  //     title = "grade";
+  //     var grade = mMetrics.getGrade();
+
+  //     value = grade.format("%0.1f");
+  //     if (mSmallField) {
+  //       text = value;
+  //       units_side = "%";
+  //     } else {
+  //       units = "%";
+  //       number = stringLeft(value, ".", value);
+  //       decimals = stringRight(value, ".", "");
+  //     }
+  //     var g = grade;
+  //     if (grade < 0) {
+  //       grade = grade * -1;
+  //     }
+  //     var iconColor = getIconColor(grade, gTargetGrade);
+  //     checkReverseColor(dc, x, y, width, height);
+  //     drawGradeIcon(dc, x, y, width, height, iconColor, g);
+  //   } else if (fieldIdx == 1) {
+  //     // @QND
+  //     if (mWideField and mSmallField) {
+  //       var dist = mMetrics.getDistanceToDestination();
+  //       if (dist > 0.0f) {
+  //         var distNext = mMetrics.getDistanceToNextPoint();
+  //         if (dist > distNext and distNext > 0.0f) {
+  //           dist = distNext;
+  //           title = "next";
+  //           drawNextIcon(dc, x, y, width, height, mIconColor);
+  //         } else {
+  //           title = "dest";
+  //           drawDestinationIcon(dc, x, y, width, height, mIconColor);
+  //         }
+  //       } else {
+  //         title = "distance";
+  //         dist = mMetrics.getElapsedDistance();
+  //       }
+  //       text = getDistanceInMeterOrKm(dist).format(getFormatForMeterAndKm(dist));
+  //       units_side = getUnitsInMeterOrKm(dist);
+  //     } else {
+  //       text = getCompassDirection(mMetrics.getBearing());
+  //     }
+  //   } else if (fieldIdx == 2) {
+  //     var heartRate = mMetrics.getHeartRate();
+  //     if (mPaused or heartRate == 0) {
+  //       title = "time";
+  //       var today = Gregorian.info(Time.now(), Time.FORMAT_MEDIUM);
+  //       text = Lang.format("$1$:$2$", [today.hour, today.min.format("%02d")]);
+  //       decimals = today.sec.format("%02d");
+  //       units = Lang.format("$1$ $2$ $3$", [today.day_of_week, today.day, today.month]);
+  //     } else {
+  //       title = "heartrate";
+  //       units = "bpm";
+  //       number = heartRate.format("%0d");
+  //       var iconColor = getIconColor(heartRate, gTargetHeartRate);
+  //       checkReverseColor(dc, x, y, width, height);
+  //       var hrZone = mMetrics.getHeartRateZone();
+  //       drawHeartIcon(dc, x, y, width, height, iconColor, hrZone);
+  //       text_botleft = "zone " + hrZone.format("%0d");
+  //     }
+  //   } else if (fieldIdx == 3) {
+  //     if (mMetrics.getFrontDerailleurSize() > 0) {
+  //       text_middleright = mMetrics.getFrontDerailleurSize().format("%0d");
+  //     }
+  //     // @@ option fallback if power = 0; -> show distance
+  //     var power = mMetrics.getPower();
+  //     if (power == 0.0 and mSmallField or (mPowerFallbackCountdown == 0 and $.gPowerCountdownToFallBack > 0)) {
+  //       title = "distance";
+  //       var dist = mMetrics.getElapsedDistance();
+  //       text = getDistanceInMeterOrKm(dist).format(getFormatForMeterAndKm(dist));
+  //       units = getUnitsInMeterOrKm(dist);
+  //     } else {
+  //       if (mMetrics.getHasFailingDualpower()) {
+  //         prefix = "!";
+  //       }
+  //       if (gShowPowerPerWeight) {
+  //         title = "power (" + mMetrics.getPowerPerSec().format("%0d") + " sec) / kg";
+  //         units = "w/kg";
+  //         value = mMetrics.getPowerPerWeight().format("%0.1f");
+  //         number = stringLeft(value, ".", value);
+  //         decimals = stringRight(value, ".", "");
+  //         if (gShowPowerAverage) {
+  //           text_botleft = "avg " + mMetrics.getAveragePower().format("%0d");
+  //         } else {
+  //           text_botleft = mMetrics.getPower().format("%0d") + " w";
+  //         }
+  //       } else {
+  //         title = "power (" + mMetrics.getPowerPerSec().format("%0d") + " sec)";
+  //         units = "w";
+  //         number = mMetrics.getPower().format("%0d");
+  //         if (gShowPowerAverage) {
+  //           text_botleft = "avg " + mMetrics.getAveragePower().format("%0d");
+  //         } else {
+  //           text_botleft = mMetrics.getPowerPerWeight().format("%0.1f") + "/kg";
+  //         }
+  //       }
+  //       var iconColor = getIconColor(mMetrics.getPower(), gTargetFtp);
+  //       checkReverseColor(dc, x, y, width, height);
+  //       drawPowerIcon(dc, x, y, width, height, iconColor);
+  //       if (gShowPowerBattery) {
+  //         var batteryLevel = mMetrics.getPowerBatteryLevel();
+  //         var operatingTimeInSeconds = mMetrics.getPowerOperatingTimeInSeconds();
+
+  //         if (operatingTimeInSeconds > 0 and gPowerBattSetRemainingHour > 0) {
+  //           var spentSeconds = $.gPowerBattMaxSeconds - gPowerBattSetRemainingHour * 60 * 60;
+  //           if (spentSeconds > 0) {
+  //             gPowerBattOperTimeCharched = operatingTimeInSeconds - spentSeconds;
+  //             Storage.setValue("metric_pbattopertimecharched", gPowerBattOperTimeCharched);
+  //             gPowerBattFullyCharched = true;
+  //             Storage.setValue("metric_pbattfullycharched", gPowerBattFullyCharched);
+  //           }
+  //           gPowerBattSetRemainingHour = 0;
+  //           Storage.setValue("metric_pbattsetremaininghour", gPowerBattSetRemainingHour);
+  //         }
+
+  //         // If fully charched, save operatingtime of powermeter
+  //         if (batteryLevel == 5 and !gPowerBattFullyCharched) {
+  //           gPowerBattOperTimeCharched = operatingTimeInSeconds;
+  //           Storage.setValue("metric_pbattopertimecharched", gPowerBattOperTimeCharched);
+  //           gPowerBattFullyCharched = true;
+  //           Storage.setValue("metric_pbattfullycharched", gPowerBattFullyCharched);
+  //         } else if (batteryLevel == 4 and gPowerBattFullyCharched) {
+  //           gPowerBattFullyCharched = false;
+  //           Storage.setValue("metric_pbattfullycharched", gPowerBattFullyCharched);
+  //         }
+
+  //         var operatingTimeAfterCharched = operatingTimeInSeconds - gPowerBattOperTimeCharched;
+  //         var powerTimeString = "";
+  //         if (
+  //           gShowPowerBattTime and
+  //           !mSmallField and
+  //           operatingTimeInSeconds > -1 and
+  //           operatingTimeAfterCharched > 0 and
+  //           (batteryLevel <= 3 or mPaused)
+  //         ) {
+  //           if ($.gPowerBattMaxSeconds == 0) {
+  //             // o perating time
+  //             powerTimeString = "o " + secondsToHourMinutes(operatingTimeAfterCharched);
+  //           } else {
+  //             var remainingSeconds = $.gPowerBattMaxSeconds - operatingTimeAfterCharched;
+  //             // r emaining time
+  //             if (remainingSeconds >= 0) {
+  //               powerTimeString = "rpp " + secondsToHourMinutes(operatingTimeAfterCharched);
+  //             }
+  //           }
+  //         }
+  //         drawPowerBatteryLevel(dc, x, y, width, height, batteryLevel, powerTimeString);
+  //       }
+  //       if (gShowPowerBalance) {
+  //         var powerLeft = mMetrics.getPowerBalanceLeft();
+  //         if (mPaused) {
+  //           powerLeft = mMetrics.getAveragePowerBalanceLeft();
+  //         }
+  //         if (powerLeft > 0 and powerLeft < 100) {
+  //           var pwrRight = 100 - (powerLeft as Number);
+  //           text_botright = Lang.format("$1$|$2$", [(powerLeft as Number).format("%02d"), pwrRight.format("%02d")]);
+  //         }
+  //       }
+  //     }
+  //   } else if (fieldIdx == 4) {
+  //     if (mMetrics.getRearDerailleurSize() > 0) {
+  //       text_middleleft = mMetrics.getRearDerailleurSize().format("%0d");
+  //     }
+  //     title = "speed";
+  //     units = "km/h";
+  //     var speed = mpsToKmPerHour(mMetrics.getSpeed());
+  //     value = speed.format("%0.1f");
+  //     number = stringLeft(value, ".", value);
+  //     decimals = stringRight(value, ".", "");
+  //     var iconColor = getIconColor(speed, gTargetSpeed);
+  //     checkReverseColor(dc, x, y, width, height);
+  //     drawSpeedIcon(dc, x, y, width, height, iconColor);
+  //     text_botleft = "avg " + mpsToKmPerHour(mMetrics.getAverageSpeed()).format("%0.1f");
+  //   } else if (fieldIdx == 5) {
+  //     title = "altitude";
+  //     units = "m";
+  //     var altitude = mMetrics.getAltitude();
+
+  //     // @@ save every 1 minute -> check diff + / - or ++/--
+  //     // altitude = 0;
+
+  //     if (gHideAltitudeMin != gHideAltitudeMax and altitude > gHideAltitudeMin and altitude < gHideAltitudeMax) {
+  //       var pressure;
+  //       if ($.gShowMeanSeaLevel) {
+  //         title = "pressure sealevel";
+  //         pressure = pascalToMilliBar(mMetrics.getMeanSeaLevelPressure());
+  //       } else {
+  //         title = "pressure";
+  //         pressure = pascalToMilliBar(mMetrics.getAmbientPressure());
+  //       }
+  //       units = "hPa";
+  //       value = pressure.format("%0.2f");
+
+  //       if (mWideField and mSmallField) {
+  //         number = value;
+  //         units_side = "hPa";
+  //       } else {
+  //         number = stringLeft(value, ".", value);
+  //         decimals = stringRight(value, ".", "");
+  //       }
+  //     } else {
+  //       if (mpsToKmPerHour(mMetrics.getSpeed()) < 15) {
+  //         value = altitude.format("%0.2f");
+  //       } else {
+  //         value = altitude.format("%0d");
+  //       }
+
+  //       if (mWideField and mSmallField) {
+  //         number = value;
+  //         units_side = "m";
+  //       } else {
+  //         number = stringLeft(value, ".", value);
+  //         decimals = stringRight(value, ".", "");
+  //       }
+
+  //       if (altitude < 0) {
+  //         altitude = altitude * -1;
+  //       }
+  //       var iconColor = getIconColor(altitude, gTargetAltitude);
+  //       checkReverseColor(dc, x, y, width, height);
+  //       drawAltitudeIcon(dc, x, y, width, height, iconColor);
+
+  //       var totalAsc = mMetrics.getTotalAscent();
+  //       if (totalAsc > 0) {
+  //         text_botleft = "A " + totalAsc.format("%0.0f");
+  //       }
+  //       var totalDesc = mMetrics.getTotalDescent();
+  //       if (totalDesc > 0) {
+  //         text_botright = "D " + totalDesc.format("%0.0f");
+  //       }
+  //     }
+  //   } else if (fieldIdx == 6) {
+  //     title = "cadence";
+  //     units = "rpm";
+  //     number = mMetrics.getCadence().format("%0d");
+  //     if (mWideField and mSmallField) {
+  //       units_side = "rpm";
+  //     }
+  //     drawCadenceIcon(dc, x, y, width, height, getIconColor(mMetrics.getCadence(), gTargetCadence));
+  //   } else if (fieldIdx == 7) {
+  //     var showTimerElapsed = true;
+  //     if (mHiitt.isEnabled()) {
+  //       title = "hiit";
+  //       var recovery = mHiitt.getRecoveryElapsedSeconds();
+  //       if (recovery > 0) {
+  //         showTimerElapsed = false;
+  //         text = secondsToCompactTimeString(recovery, "({m}:{s})");
+  //         if (mHiitt.wasValidHiit()) {
+  //           drawHiitIcon(dc, x, y, width, height, Graphics.COLOR_BLUE);
+  //         }
+  //       } else {
+  //         var counter = mHiitt.getCounter();
+  //         if (counter > 0) {
+  //           text = counter.format("%01d");
+  //         } else {
+  //           var hiitElapsed = mHiitt.getElapsedSeconds();
+  //           if (hiitElapsed > 0) {
+  //             showTimerElapsed = false;
+  //             text = secondsToCompactTimeString(hiitElapsed, "({m}:{s})");
+  //             if (mHiitt.wasValidHiit()) {
+  //               drawHiitIcon(dc, x, y, width, height, Graphics.COLOR_GREEN);
+  //             }
+  //             var vo2max = mHiitt.getVo2Max();
+  //             if (vo2max > 30) {
+  //               decimals = vo2max.format("%0.1f");
+  //             }
+  //           }
+  //         }
+  //       }
+  //       var nrHiit = mHiitt.getNumberOfHits();
+  //       if (nrHiit > 0) {
+  //         text_botleft = "H " + nrHiit.format("%0.0d");
+  //       }
+
+  //       var scores = mHiitt.getHitScores();
+  //       if (scores.size() > 0) {
+  //         var sCounter = 0;
+
+  //         for (var sIdx = scores.size() - 1; sIdx >= 0 and sCounter < 4; sIdx--) {
+  //           var score = scores[sIdx] as Float;
+
+  //           text_botright = text_botright + " " + score.format("%0.0f");
+  //           sCounter++;
+  //         }
+  //       }
+  //     }
+
+  //     if (showTimerElapsed) {
+  //       var valueInMMSeconds = 0;
+  //       var elapsedString = "";
+  //       var showTime = false;
+  //       title = $.getShowTimerText($.gShowTimer);
+  //       switch ($.gShowTimer) {
+  //         case 0: // timer
+  //           valueInMMSeconds = mMetrics.getTimerTime();
+  //           break;
+  //         case 1: // elapsed
+  //           valueInMMSeconds = mMetrics.getElapsedTime();
+  //           break;
+  //         case 2: // time
+  //           showTime = true;
+  //           valueInMMSeconds = Time.now().value() * 1000;
+  //           break;
+  //       }
+  //       if (showTime) {
+  //         var today = Gregorian.info(Time.now(), Time.FORMAT_MEDIUM);
+  //         text = Lang.format("$1$:$2$", [today.hour, today.min.format("%02d")]);
+  //         decimals = today.sec.format("%02d");
+  //         units = Lang.format("$1$ $2$ $3$", [today.day_of_week, today.day, today.month]);
+  //       } else {
+  //         var elapsed = millisecondsToShortTimeString(valueInMMSeconds, "{h}.{m}:{s}");
+  //         prefix = stringLeft(elapsed, ".", "");
+  //         if (prefix.equals("0")) {
+  //           prefix = "";
+  //         }
+  //         text = stringRight(elapsed, ".", elapsed);
+  //       }
+  //       drawElapsedTimeIcon(dc, x, y, width, height, mIconColor, valueInMMSeconds);
+  //     }
+  //   }
+
+  //   // small fields, no decimals and units
+  //   System.println([height, width]);
+  //   var font_text_bot = Graphics.FONT_SMALL;
+  //   var fontUnits = Graphics.FONT_SYSTEM_XTINY;
+  //   if (height > 60 and height < 100) {
+  //     text_middleleft = "";
+  //     text_middleright = "";
+  //   }
+  //   if (height < 60) {
+  //     font_text_bot = Graphics.FONT_XTINY;
+  //   }
+  //   if (height < 30) {
+  //     decimals = "";
+  //     units = "";
+  //     text_botright = "";
+  //     text_botleft = "";
+  //   }
+  //   if (width <= 70) {
+  //     text_botright = "";
+  //     text_botleft = "";
+  //     text_middleleft = "";
+  //     text_middleright = "";
+  //   }
+  //   if (decimals.equals("0")) {
+  //     decimals = "";
+  //   }
+  //   var dims_prefix = [0, 0] as Array<Number>;
+  //   var dims_number_or_text = [0, 0] as Array<Number>;
+  //   var dims_decimals = [0, 0] as Array<Number>;
+  //   var dims_units = [0, 0] as Array<Number>;
+
+  //   var fontPrefix = Graphics.FONT_SYSTEM_XTINY;
+  //   if (prefix.length() > 0) {
+  //     dims_prefix = dc.getTextDimensions(prefix, fontPrefix);
+  //   }
+
+  //   if (units.length() > 0) {
+  //     dims_units = dc.getTextDimensions(units, fontUnits);
+  //   } else if (units_side.length() > 0) {
+  //     dims_units = dc.getTextDimensions(units_side, fontUnits);
+  //   }
+
+  //   // @@ when alpha working + show in paused and until 1 minute
+  //   if (mPaused or (mActivityStartCountdown > 0 and title.length() > 0)) {
+  //     dc.setColor(Graphics.COLOR_LT_GRAY, Graphics.COLOR_TRANSPARENT);
+  //     dc.drawText(x + 1, y, Graphics.FONT_SYSTEM_XTINY, title, Graphics.TEXT_JUSTIFY_LEFT);
+  //   }
+
+  //   if (mReverseColor) {
+  //     dc.setColor(Graphics.COLOR_WHITE, Graphics.COLOR_TRANSPARENT);
+  //   } else {
+  //     dc.setColor(mFontColor, Graphics.COLOR_TRANSPARENT);
+  //   }
+
+  //   if (text.length() > 0 or number.length() > 0) {
+  //     var font = Graphics.FONT_NUMBER_HOT;
+  //     var number_or_text = "";
+  //     if (text.length() > 0) {
+  //       number_or_text = text;
+  //       font = getMatchingFont(dc, mFonts, width, height, text) as FontType;
+  //       dims_number_or_text = dc.getTextDimensions(number_or_text, font);
+  //     } else if (number.length() > 0) {
+  //       number_or_text = number;
+  //       font = getMatchingFont(dc, mFontsNumbers, width, height, number) as FontType;
+  //       dims_number_or_text = dc.getTextDimensions(number, font);
+  //     }
+
+  //     var fontDecimals = Graphics.FONT_SYSTEM_MEDIUM;
+  //     if (decimals.length() > 0) {
+  //       if (height < 100) {
+  //         fontDecimals = Graphics.FONT_SYSTEM_SMALL;
+  //       } else if (height < 45) {
+  //         fontDecimals = Graphics.FONT_SYSTEM_TINY;
+  //       }
+  //       if (font == fontDecimals) {
+  //         fontDecimals = Graphics.FONT_XTINY;
+  //       }
+  //       dims_decimals = dc.getTextDimensions(decimals, fontDecimals);
+  //     }
+
+  //     var xSplit = (x + (width - dims_number_or_text[0] - dims_decimals[0]) / 2 + dims_number_or_text[0]).toNumber();
+  //     var yBase = y + (height - dims_number_or_text[1]) / 2;
+  //     dc.drawText(xSplit, yBase + mYoffsetFix, font, number_or_text, Graphics.TEXT_JUSTIFY_RIGHT);
+
+  //     if (decimals.length() > 0) {
+  //       var yDec =
+  //         yBase +
+  //         dims_number_or_text[1] -
+  //         dims_decimals[1] -
+  //         Graphics.getFontDescent(font) +
+  //         Graphics.getFontDescent(fontDecimals);
+
+  //       if (mReverseColor) {
+  //         dc.setColor(Graphics.COLOR_WHITE, Graphics.COLOR_TRANSPARENT);
+  //       } else {
+  //         dc.setColor(mDecimalsColor, Graphics.COLOR_TRANSPARENT);
+  //       }
+  //       dc.drawText(xSplit, yDec, fontDecimals, decimals, Graphics.TEXT_JUSTIFY_LEFT);
+  //     }
+
+  //     if (units.length() > 0) {
+  //       var yUnits =
+  //         yBase +
+  //         dims_number_or_text[1] -
+  //         dims_units[1] -
+  //         Graphics.getFontDescent(font) +
+  //         Graphics.getFontDescent(fontUnits);
+
+  //       if (mReverseColor) {
+  //         dc.setColor(Graphics.COLOR_WHITE, Graphics.COLOR_TRANSPARENT);
+  //       } else {
+  //         dc.setColor(mUnitsColor, Graphics.COLOR_TRANSPARENT);
+  //       }
+  //       var xUnits = xSplit + dims_decimals[0] + 1;
+  //       if (xUnits + dims_units[0] > width) {
+  //         // Units on center bottom when small field (@@ +1 fix for edge 1040
+  //         // display not same as on simulator)
+  //         xUnits = x + width / 2 - dims_units[0] / 2;
+  //         yUnits = yBase + dims_number_or_text[1] - Graphics.getFontDescent(font) + 1; // not needed on device - Graphics.getFontDescent(fontUnits)
+  //       }
+  //       dc.drawText(xUnits, yUnits, fontUnits, units, Graphics.TEXT_JUSTIFY_LEFT);
+  //     } else if (units_side.length() > 0) {
+  //       var yUnits =
+  //         yBase +
+  //         dims_number_or_text[1] -
+  //         dims_units[1] -
+  //         Graphics.getFontDescent(font) +
+  //         Graphics.getFontDescent(fontUnits);
+
+  //       if (mReverseColor) {
+  //         dc.setColor(Graphics.COLOR_WHITE, Graphics.COLOR_TRANSPARENT);
+  //       } else {
+  //         dc.setColor(mUnitsColor, Graphics.COLOR_TRANSPARENT);
+  //       }
+  //       var xUnits = x + width - 1;
+  //       dc.drawText(xUnits, yUnits, fontUnits, units_side, Graphics.TEXT_JUSTIFY_RIGHT);
+  //     }
+
+  //     if (text_botright.length() > 0) {
+  //       dc.setColor(mDecimalsColor, Graphics.COLOR_TRANSPARENT);
+  //       dc.drawText(
+  //         x + width - 1,
+  //         y + height - dc.getFontHeight(font_text_bot),
+  //         font_text_bot,
+  //         text_botright,
+  //         Graphics.TEXT_JUSTIFY_RIGHT
+  //       );
+  //     }
+  //     if (text_botleft.length() > 0) {
+  //       dc.setColor(mDecimalsColor, Graphics.COLOR_TRANSPARENT);
+  //       dc.drawText(
+  //         x + 1,
+  //         y + height - dc.getFontHeight(font_text_bot),
+  //         font_text_bot,
+  //         text_botleft,
+  //         Graphics.TEXT_JUSTIFY_LEFT
+  //       );
+  //     }
+
+  //     if (prefix.length() > 0) {
+  //       var xPrefix = xSplit - dims_number_or_text[0] - dims_prefix[0];
+  //       var yPrefix = y + height / 2 - dims_number_or_text[1] / 2; // - dims_prefix[1] / 2;
+  //       dc.setColor(mUnitsColor, Graphics.COLOR_TRANSPARENT);
+  //       dc.drawText(xPrefix, yPrefix, fontPrefix, prefix, Graphics.TEXT_JUSTIFY_LEFT);
+  //     }
+  //   }
+
+  //   if (text_middleleft.length() > 0) {
+  //     dc.drawText(x + 1, y + height / 4, Graphics.FONT_SYSTEM_TINY, text_middleleft, Graphics.TEXT_JUSTIFY_LEFT);
+  //   }
+  //   if (text_middleright.length() > 0) {
+  //     dc.drawText(
+  //       x + width - 1,
+  //       y + height / 4,
+  //       Graphics.FONT_SYSTEM_TINY,
+  //       text_middleright,
+  //       Graphics.TEXT_JUSTIFY_RIGHT
+  //     );
+  //   }
+  // }
+
+  hidden function getIconColor(value as Numeric, maxValue as Numeric) as Graphics.ColorType {
     mReverseColor = false;
     if (gShowColors and gCreateColors) {
       var perc = percentageOf(value, maxValue);

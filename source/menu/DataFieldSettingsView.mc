@@ -56,7 +56,7 @@ class DataFieldSettingsDelegate extends WatchUi.BehaviorDelegate {
     menu.addItem(mi);
     mi = new WatchUi.MenuItem("Show pressure", null, "pressure", null);
     menu.addItem(mi);
-    
+
     var boolean = false;
 
     boolean = Storage.getValue("show_colors") ? true : false;
@@ -74,13 +74,16 @@ class DataFieldSettingsDelegate extends WatchUi.BehaviorDelegate {
     // mi = new WatchUi.ToggleMenuItem("Timer", null, "show_timer", boolean, null);
     // mi.setSubLabel($.subMenuToggleMenuItem(mi.getId() as String));
     // menu.addItem(mi);
-  
+
     // @@QND
     // boolean = Storage.getValue("wf_toggle_heading") ? true : false;
     // mi = new WatchUi.ToggleMenuItem("Field 2 (small)", null, "wf_toggle_heading", boolean, null);
     // mi.setSubLabel($.subMenuToggleMenuItem(mi.getId() as String));
     // menu.addItem(mi);
-   //  gWideFieldShowDistance = getStorageValue("wf_toggle_heading", gWideFieldShowDistance) as Boolean;
+    //  gWideFieldShowDistance = getStorageValue("wf_toggle_heading", gWideFieldShowDistance) as Boolean;
+
+    boolean = Storage.getValue("resetDefaults") ? true : false;
+    menu.addItem(new WatchUi.ToggleMenuItem("Reset to defaults", null, "resetDefaults", boolean, null));
 
     boolean = Storage.getValue("debug") ? true : false;
     menu.addItem(new WatchUi.ToggleMenuItem("Debug", null, "debug", boolean, null));
@@ -97,9 +100,6 @@ class DataFieldSettingsDelegate extends WatchUi.BehaviorDelegate {
   }
 }
 
-
-
-
 function subMenuToggleMenuItem(key as String) as String {
   // if (key.equals("show_timer")) {
   //   if (Storage.getValue(key) ? true : false) {
@@ -107,7 +107,7 @@ function subMenuToggleMenuItem(key as String) as String {
   //   } else {
   //     return "elapsed time";
   //   }
-  // } 
+  // }
   // else if (key.equals("wf_toggle_heading")) {
   //   if (Storage.getValue(key) ? true : false) {
   //     return "distance (next)";

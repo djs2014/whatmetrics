@@ -4,9 +4,8 @@ import Toybox.WatchUi;
 import Toybox.UserProfile;
 
 class whatmetricsApp extends Application.AppBase {
-  
   function initialize() {
-    AppBase.initialize();   
+    AppBase.initialize();
   }
 
   // onStart() is called on application start up
@@ -29,7 +28,10 @@ class whatmetricsApp extends Application.AppBase {
   function onSettingsChanged() {
     var hiitt = getHiitt();
     hiitt.updateProfile();
-    if (Storage.getValue("hiit_mode") == null) {
+    var reset = Storage.getValue("resetDefaults");
+    if (reset == null || (reset as Boolean)) {
+      Storage.setValue("resetDefaults", false);
+      
       Storage.setValue("hiit_mode", WhatHiitt.HiitDisabled);
       Storage.setValue("hiit_sound", WhatHiitt.StartOnlySound);
       Storage.setValue("hiit_startperc", 150);
@@ -130,7 +132,7 @@ class whatmetricsApp extends Application.AppBase {
     gPowerBattFullyCharched = getStorageValue("metric_pbattfullycharched", gPowerBattFullyCharched) as Boolean;
     gPowerBattSetRemainingHour = getStorageValue("metric_pbattsetremaininghour", 0) as Number;
 
-    if (gShowPowerBalance or gShowPowerBattery or (powerDualSecFallback>0)) {
+    if (gShowPowerBalance or gShowPowerBattery or powerDualSecFallback > 0) {
       metrics.initPowerBalance(powerDualSecFallback);
     }
     metrics.initWeight();
