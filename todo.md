@@ -1,8 +1,92 @@
+field A,B,C/D,E,F/G,H,I
+- props
+fallback 
+  Seconds to detect:
+  HR related: 0 for x sec
+  Power related:  0 for x sec
+fallback when paused:
+
+one field
+: nr fields 3/6/9  
+large field
+wide field
+small field
+
+show timer/elapsed or time
+
+fields:
+grade
+distance
+clock
+timer
+elapsed time
+power
+power/kg
+altitude
+cadence
+speed
+hiit
+vo2max
+heartrate
+hr zone
+
+option: 
+  show averages
+
+
+
+
+
+
+
+
+------
+option
+Dualpower detect 
+60 sec -> r/l = 0/x -> power times 2
+power_dual_sec_fallback
++ underline --check dual power--
++ getHasFailingDualpower() 
+ hiit --> also fix dual power failing
+
+x Combine all menuDelegate to GeneralMenuDelegate
+Show zone info larger z2
+docu
+
+Record time in zones z2 = 3 hour / week
+
+Zone 2 -> 3 hour a week
+3-8 minutes as hard as possible rest 3 - 8  --> do that 4x / week
+
+
+debug
+setting show batt hours j/n
+bars under field / show zones hr and pwer zone
+get power zones -> api?
+gear combi fall back -> for ??
+
+hr target zone
+-> show average zone 1..5  < target >
+
+show time / timer / elapsed / gear
+- enum 
+
+
+x power 0 for 5 seconds -> show distance
+
+-> powermeter batt level / remaining operating time?
+use bluetooth?
+--save operating time when powerlevel = 5 once
+calc diff 
+-> less than x hours -> color
+
+option show time in small field instead of timer
+
+
 ??write ugly code -> less deep nested functions -> else stack overflow errors! max 255 items in stack?
 
 
-bars under field / show zones hr and pwer zone
-get power zones -> api?
+
 
 x show title when stopped and paused
 asc/desc = arrows

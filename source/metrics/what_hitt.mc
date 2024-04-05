@@ -13,7 +13,7 @@ import Toybox.Time;
 // Calc vo2 max approx + add Hiit counter
 
 class WhatHiitt {
-  hidden enum HiitStatus {
+  enum HiitStatus {
     InActive = 0,
     WarmingUp = 1,
     CoolingDown = 2,
@@ -46,8 +46,8 @@ class WhatHiitt {
   hidden var hitElapsedTime as Time.Moment?;
   hidden var hitElapsedRecoveryTime as Time.Moment?;
 
-  hidden var minimalElapsedSeconds as Number = 30; 
-  hidden var minimalRecoverySeconds as Number = 300; 
+  hidden var minimalElapsedSeconds as Number = 30;
+  hidden var minimalRecoverySeconds as Number = 300;
   hidden var mValidHiitPerformed as Boolean = false;
 
   hidden var activityPaused as Boolean = false;
@@ -137,7 +137,7 @@ class WhatHiitt {
     return mValidHiitPerformed;
   }
 
-  function compute(info as Activity.Info, percOfTarget as Numeric) as Void {
+  function compute(info as Activity.Info, percOfTarget as Numeric, power as Number) as Void {
     if (!isEnabled()) {
       hitElapsedRecoveryTime = null;
       hitElapsedTime = null;
@@ -210,14 +210,14 @@ class WhatHiitt {
               hitPerformed = hitPerformed + 1;
               hitElapsedRecoveryTime = Time.now();
               hitScores.add(currentScore);
-              hitDurations.add(currentDuration);             
+              hitDurations.add(currentDuration);
             } else {
               // No proper Hiit (no sound)
               hitStatus = InActive;
               hitCounter = 0;
               hitElapsedRecoveryTime = null;
               currentScore = 0.0f;
-              currentDuration = 0;              
+              currentDuration = 0;
             }
             hitElapsedTime = null;
           }
@@ -236,7 +236,7 @@ class WhatHiitt {
           playTone = soundEnabled && mValidHiitPerformed;
           currentScore = getVo2Max();
         } else {
-          addAveragePower(info);
+          addAveragePower(power);
         }
         break;
     }
@@ -246,8 +246,7 @@ class WhatHiitt {
     powerTicks = 0;
     avgPowerPerSec = 0.0d;
   }
-  hidden function addAveragePower(info as Activity.Info) as Void {
-    var power = getActivityValue(info, :currentPower, 0) as Number;
+  hidden function addAveragePower(power as Number) as Void {    
     // [ avg' * (n-1) + x ] / n
     powerTicks = powerTicks + 1;
     avgPowerPerSec = (avgPowerPerSec * (powerTicks - 1) + power) / powerTicks.toDouble();

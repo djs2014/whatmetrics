@@ -9,14 +9,14 @@ class ABikePowerListener extends AntPlus.BikePowerListener {
   function initialize(instance as Lang.WeakReference, cbOnPedalPowerBalanceUpdate as Symbol, cbOnBatteryStatusUpdate as Symbol) {
     BikePowerListener.initialize();
     _instance = instance;
-    _onPedalPowerBalanceUpdate = new Lang.Method(_instance.get(), cbOnPedalPowerBalanceUpdate);
-    _onBatteryStatusUpdate = new Lang.Method(_instance.get(), cbOnBatteryStatusUpdate);
+    _onPedalPowerBalanceUpdate = new Lang.Method(_instance.get(), cbOnPedalPowerBalanceUpdate) as Method;
+    _onBatteryStatusUpdate = new Lang.Method(_instance.get(), cbOnBatteryStatusUpdate) as Method;
   }
 
   function onPedalPowerBalanceUpdate(data as AntPlus.PedalPowerBalance) as Void {
-    if (data == null) {
-      return;
-    }
+    // if (data == null) {
+    //   return;
+    // }
     if (data.rightPedalIndicator == null) {
       return;
     }
@@ -27,7 +27,7 @@ class ABikePowerListener extends AntPlus.BikePowerListener {
   }
 
   function onBatteryStatusUpdate(data as AntPlus.BatteryStatus) as Void {
-      if (data == null) { return; }
-      _onBatteryStatusUpdate.invoke(data.batteryStatus, data.operatingTime);
+      // if (data == null) { return; }
+      _onBatteryStatusUpdate.invoke(data.batteryStatus, data.operatingTime, data.batteryVoltage);
   }
 }

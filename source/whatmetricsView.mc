@@ -2,6 +2,7 @@ import Toybox.Activity;
 import Toybox.Graphics;
 import Toybox.Lang;
 import Toybox.WatchUi;
+import Toybox.Application.Storage;
 using Toybox.Time;
 using Toybox.Time.Gregorian;
 
@@ -14,10 +15,10 @@ class whatmetricsView extends WatchUi.DataField {
   hidden var mDebug as Boolean = true;
   hidden var mPaused as Boolean = true;
   hidden var mActivityStartCountdown as Number = 0;
+  hidden var mPowerFallbackCountdown as Number = 0;
 
   // [[w,h],[w,h],[w,h]]
-  hidden var mGrid as Array<Array<Array<Number> > > =
-      [] as Array<Array<Array<Number> > >;
+  hidden var mGrid as Array<Array<Array<Number> > > = [] as Array<Array<Array<Number> > >;
   hidden var mFontColor as Graphics.ColorType = Graphics.COLOR_BLACK;
   hidden var mReverseColor as Boolean = false;
   hidden var mDecimalsColor as Graphics.ColorType = Graphics.COLOR_BLACK;
@@ -45,26 +46,34 @@ class whatmetricsView extends WatchUi.DataField {
     Graphics.FONT_SYSTEM_LARGE,
   ];
 
+  hidden var mHiitt as WhatHiitt;
+  hidden var mMetrics as WhatMetrics;
+
   // hidden var mGrade as Double = 0.0d;
   function initialize() {
     DataField.initialize();
     mFieldSize = "?x?";
 
+    mHiitt = $.getHiitt() as WhatHiitt;
+    mMetrics = $.getWhatMetrics() as WhatMetrics;
+
     checkFeatures();
-    mDecimalsColorDay = Graphics.createColor(180, 50, 50, 50);
-    mDecimalsColorNight = Graphics.createColor(180, 150, 150, 150);
+    if ($.gCreateColors) {
+      mDecimalsColorDay = Graphics.createColor(180, 50, 50, 50);
+      mDecimalsColorNight = Graphics.createColor(180, 150, 150, 150);
 
-    mUnitsColorDay = Graphics.createColor(180, 100, 100, 100);
-    mUnitsColorNight = Graphics.createColor(180, 220, 220, 220);
+      mUnitsColorDay = Graphics.createColor(180, 100, 100, 100);
+      mUnitsColorNight = Graphics.createColor(180, 220, 220, 220);
 
-    mIconColorDay = Graphics.createColor(255, 220, 220, 220);
-    mIconColorNight = Graphics.createColor(255, 100, 100, 100);
+      mIconColorDay = Graphics.createColor(255, 220, 220, 220);
+      mIconColorNight = Graphics.createColor(255, 100, 100, 100);
+    }
   }
 
   function onLayout(dc as Dc) as Void {
     var h = dc.getHeight();
     var w = dc.getWidth();
-    mFieldSize = Lang.format("$1$x$2$", [ dc.getHeight(), dc.getWidth() ]);
+    mFieldSize = Lang.format("$1$x$2$", [dc.getHeight(), dc.getWidth()]);
 
     mWideField = w > 200;
     mSmallField = h <= 100;
@@ -82,16 +91,16 @@ class whatmetricsView extends WatchUi.DataField {
     }
     var w_center = w - 2 * w_side;
     var row = [
-      [ w_side, h_1fourth ],
-      [ w_center, h_1fourth ],
-      [ w_side, h_1fourth ],
+      [w_side, h_1fourth],
+      [w_center, h_1fourth],
+      [w_side, h_1fourth],
     ];
 
     mGrid.add(row as Array<Array<Number> >);
 
     var centerRow = [
-      [ w / 2, h_center ],
-      [ w / 2, h_center ],
+      [w / 2, h_center],
+      [w / 2, h_center],
     ];
     mGrid.add(centerRow as Array<Array<Number> >);
 
@@ -99,12 +108,11 @@ class whatmetricsView extends WatchUi.DataField {
   }
 
   function compute(info as Activity.Info) as Void {
-    gMetrics.compute(info);
+    mMetrics.compute(info);
 
     mPaused = false;
-    if (info has : timerState) {
-      mPaused = info.timerState == Activity.TIMER_STATE_PAUSED or
-                info.timerState == Activity.TIMER_STATE_OFF;
+    if (info has :timerState) {
+      mPaused = info.timerState == Activity.TIMER_STATE_PAUSED or info.timerState == Activity.TIMER_STATE_OFF;
     }
 
     if (mPaused) {
@@ -112,12 +120,24 @@ class whatmetricsView extends WatchUi.DataField {
     } else if (mActivityStartCountdown >= 0) {
       mActivityStartCountdown--;
     }
-    var power = gMetrics.getPower();
+    var power = mMetrics.getPower();
     var perc = percentageOf(power, gTargetFtp);
-    gHiitt.compute(info, perc);
+    mHiitt.compute(info, perc, power);
+
+    if (power > 0.0 and mPowerFallbackCountdown < 5) {
+      mPowerFallbackCountdown = $.gPowerCountdownToFallBack;
+    } else if (mPowerFallbackCountdown > 0) {
+      mPowerFallbackCountdown--;
+    }
   }
 
   function onUpdate(dc as Dc) as Void {
+    if ($.gExitedMenu) {
+      // fix for leaving menu, draw complete screen, large field
+      dc.clearClip();
+      $.gExitedMenu = false;
+    }
+
     dc.setColor(getBackgroundColor(), getBackgroundColor());
     dc.clear();
 
@@ -149,13 +169,13 @@ class whatmetricsView extends WatchUi.DataField {
     var f = 0;
     var rowCount = mGrid.size();
     for (var r = 0; r < rowCount; r++) {
-      var row = mGrid[r];  // as Array<Array<Number> >;
+      var row = mGrid[r]; // as Array<Array<Number> >;
       var cellCount = row.size();
       var x = 0;
       var h = 0;
       for (var c = 0; c < cellCount; c++) {
         //  [w,h]
-        var cell = row[c];  // as Array<Number>;
+        var cell = row[c]; // as Array<Number>;
 
         if (gShowGrid) {
           dc.setColor(Graphics.COLOR_LT_GRAY, Graphics.COLOR_TRANSPARENT);
@@ -200,9 +220,14 @@ class whatmetricsView extends WatchUi.DataField {
   //   }
   // }
 
-  hidden function drawField(dc as Dc, fieldIdx as Number, x as Number,
-                            y as Number, width as Number, height as Number)
-      as Void {
+  hidden function drawField(
+    dc as Dc,
+    fieldIdx as Number,
+    x as Number,
+    y as Number,
+    width as Number,
+    height as Number
+  ) as Void {
     var title = "";
     var value = "";
     var prefix = "";
@@ -214,9 +239,12 @@ class whatmetricsView extends WatchUi.DataField {
     var text_botright = "";
     var text_botleft = "";
 
+    var text_middleleft = "";
+    var text_middleright = "";
+
     if (fieldIdx == 0) {
       title = "grade";
-      var grade = gMetrics.getGrade();
+      var grade = mMetrics.getGrade();
 
       value = grade.format("%0.1f");
       if (mSmallField) {
@@ -237,9 +265,9 @@ class whatmetricsView extends WatchUi.DataField {
     } else if (fieldIdx == 1) {
       // @QND
       if (mWideField and mSmallField) {
-        var dist = gMetrics.getDistanceToDestination();
+        var dist = mMetrics.getDistanceToDestination();
         if (dist > 0.0f) {
-          var distNext = gMetrics.getDistanceToNextPoint();
+          var distNext = mMetrics.getDistanceToNextPoint();
           if (dist > distNext and distNext > 0.0f) {
             dist = distNext;
             title = "next";
@@ -250,127 +278,160 @@ class whatmetricsView extends WatchUi.DataField {
           }
         } else {
           title = "distance";
-          dist = gMetrics.getElapsedDistance();
+          dist = mMetrics.getElapsedDistance();
         }
-        text =
-            getDistanceInMeterOrKm(dist).format(getFormatForMeterAndKm(dist));
+        text = getDistanceInMeterOrKm(dist).format(getFormatForMeterAndKm(dist));
         units_side = getUnitsInMeterOrKm(dist);
       } else {
-        text = getCompassDirection(gMetrics.getBearing());
+        text = getCompassDirection(mMetrics.getBearing());
       }
     } else if (fieldIdx == 2) {
-      var heartRate = gMetrics.getHeartRate();
+      var heartRate = mMetrics.getHeartRate();
       if (mPaused or heartRate == 0) {
         title = "time";
         var today = Gregorian.info(Time.now(), Time.FORMAT_MEDIUM);
-        text = Lang.format("$1$:$2$", [ today.hour, today.min.format("%02d") ]);
+        text = Lang.format("$1$:$2$", [today.hour, today.min.format("%02d")]);
         decimals = today.sec.format("%02d");
-        units = Lang.format("$1$ $2$ $3$",
-                            [ today.day_of_week, today.day, today.month ]);
+        units = Lang.format("$1$ $2$ $3$", [today.day_of_week, today.day, today.month]);
       } else {
         title = "heartrate";
         units = "bpm";
         number = heartRate.format("%0d");
         var iconColor = getIconColor(dc, heartRate, gTargetHeartRate);
         checkReverseColor(dc, x, y, width, height);
-        drawHeartIcon(dc, x, y, width, height, iconColor);
-        text_botleft = "zone " + gMetrics.getHeartRateZone().format("%0d");
+        var hrZone = mMetrics.getHeartRateZone();
+        drawHeartIcon(dc, x, y, width, height, iconColor, hrZone);
+        text_botleft = "zone " + hrZone.format("%0d");
       }
     } else if (fieldIdx == 3) {
+      if (mMetrics.getFrontDerailleurSize() > 0) {
+        text_middleright = mMetrics.getFrontDerailleurSize().format("%0d");
+      }
       // @@ option fallback if power = 0; -> show distance
-      var power = gMetrics.getPower();
-      if (power == 0.0 and mSmallField) {
+      var power = mMetrics.getPower();
+      if (power == 0.0 and mSmallField or (mPowerFallbackCountdown == 0 and $.gPowerCountdownToFallBack > 0)) {
         title = "distance";
-        var dist = gMetrics.getElapsedDistance();
-        text =
-            getDistanceInMeterOrKm(dist).format(getFormatForMeterAndKm(dist));
+        var dist = mMetrics.getElapsedDistance();
+        text = getDistanceInMeterOrKm(dist).format(getFormatForMeterAndKm(dist));
         units = getUnitsInMeterOrKm(dist);
       } else {
+        if (mMetrics.getHasFailingDualpower()) {
+          prefix = "!";
+        }
         if (gShowPowerPerWeight) {
-          title = "power (" + gMetrics.getPowerPerSec().format("%0d") +
-                  " sec) / kg";
+          title = "power (" + mMetrics.getPowerPerSec().format("%0d") + " sec) / kg";
           units = "w/kg";
-          value = gMetrics.getPowerPerWeight().format("%0.1f");
+          value = mMetrics.getPowerPerWeight().format("%0.1f");
           number = stringLeft(value, ".", value);
           decimals = stringRight(value, ".", "");
-          text_botleft = gMetrics.getPower().format("%0d") + " w";
+          if (gShowPowerAverage) {
+            text_botleft = "avg " + mMetrics.getAveragePower().format("%0d");
+          } else {
+            text_botleft = mMetrics.getPower().format("%0d") + " w";
+          }
         } else {
-          title = "power (" + gMetrics.getPowerPerSec().format("%0d") + " sec)";
+          title = "power (" + mMetrics.getPowerPerSec().format("%0d") + " sec)";
           units = "w";
-          number = gMetrics.getPower().format("%0d");
-          text_botleft = gMetrics.getPowerPerWeight().format("%0.1f") + "/kg";
+          number = mMetrics.getPower().format("%0d");
+          if (gShowPowerAverage) {
+            text_botleft = "avg " + mMetrics.getAveragePower().format("%0d");
+          } else {
+            text_botleft = mMetrics.getPowerPerWeight().format("%0.1f") + "/kg";
+          }
         }
-        var iconColor = getIconColor(dc, gMetrics.getPower(), gTargetFtp);
+        var iconColor = getIconColor(dc, mMetrics.getPower(), gTargetFtp);
         checkReverseColor(dc, x, y, width, height);
         drawPowerIcon(dc, x, y, width, height, iconColor);
         if (gShowPowerBattery) {
-          var batteryLevel = gMetrics.getPowerBatteryLevel();
-          var operatingTimeInSeconds =
-              gMetrics.getPowerOperatingTimeInSeconds();
+          var batteryLevel = mMetrics.getPowerBatteryLevel();
+          var operatingTimeInSeconds = mMetrics.getPowerOperatingTimeInSeconds();
 
-          // batteryLevel = 2;
-          // operatingTimeInSeconds = 144000; // 40 hour
+          if (operatingTimeInSeconds > 0 and gPowerBattSetRemainingHour > 0) {
+            var spentSeconds = $.gPowerBattMaxSeconds - gPowerBattSetRemainingHour * 60 * 60;
+            if (spentSeconds > 0) {
+              gPowerBattOperTimeCharched = operatingTimeInSeconds - spentSeconds;
+              Storage.setValue("metric_pbattopertimecharched", gPowerBattOperTimeCharched);
+              gPowerBattFullyCharched = true;
+              Storage.setValue("metric_pbattfullycharched", gPowerBattFullyCharched);
+            }
+            gPowerBattSetRemainingHour = 0;
+            Storage.setValue("metric_pbattsetremaininghour", gPowerBattSetRemainingHour);
+          }
+
+          // If fully charched, save operatingtime of powermeter
+          if (batteryLevel == 5 and !gPowerBattFullyCharched) {
+            gPowerBattOperTimeCharched = operatingTimeInSeconds;
+            Storage.setValue("metric_pbattopertimecharched", gPowerBattOperTimeCharched);
+            gPowerBattFullyCharched = true;
+            Storage.setValue("metric_pbattfullycharched", gPowerBattFullyCharched);
+          } else if (batteryLevel == 4 and gPowerBattFullyCharched) {
+            gPowerBattFullyCharched = false;
+            Storage.setValue("metric_pbattfullycharched", gPowerBattFullyCharched);
+          }
+
+          var operatingTimeAfterCharched = operatingTimeInSeconds - gPowerBattOperTimeCharched;
           var powerTimeString = "";
-          //@@ weird bug when secondsToHourMinutes called inside
-          //drawPowerBatteryLevel
-          if (!mSmallField and operatingTimeInSeconds > -1 and
-              (batteryLevel <= 3 or mPaused)) {
+          if (
+            gShowPowerBattTime and
+            !mSmallField and
+            operatingTimeInSeconds > -1 and
+            operatingTimeAfterCharched > 0 and
+            (batteryLevel <= 3 or mPaused)
+          ) {
             if ($.gPowerBattMaxSeconds == 0) {
               // o perating time
-              powerTimeString =               
-                  "o " + secondsToHourMinutes(operatingTimeInSeconds);
+              powerTimeString = "o " + secondsToHourMinutes(operatingTimeAfterCharched);
             } else {
-              // r emaining time 
-              powerTimeString =
-                  "r " + secondsToHourMinutes($.gPowerBattMaxSeconds -
-                                              operatingTimeInSeconds);
+              var remainingSeconds = $.gPowerBattMaxSeconds - operatingTimeAfterCharched;
+              // r emaining time
+              if (remainingSeconds >= 0) {
+                powerTimeString = "rpp " + secondsToHourMinutes(operatingTimeAfterCharched);
+              }
             }
           }
-          drawPowerBatteryLevel(dc, x, y, width, height, batteryLevel,
-                                powerTimeString);
+          drawPowerBatteryLevel(dc, x, y, width, height, batteryLevel, powerTimeString);
         }
         if (gShowPowerBalance) {
-          var powerLeft = gMetrics.getPowerBalanceLeft();
+          var powerLeft = mMetrics.getPowerBalanceLeft();
           if (mPaused) {
-            powerLeft = gMetrics.getAveragePowerBalanceLeft();
+            powerLeft = mMetrics.getAveragePowerBalanceLeft();
           }
           if (powerLeft > 0 and powerLeft < 100) {
             var pwrRight = 100 - (powerLeft as Number);
-            text_botright = Lang.format("$1$|$2$", [
-              (powerLeft as Number).format("%02d"), pwrRight.format("%02d")
-            ]);
+            text_botright = Lang.format("$1$|$2$", [(powerLeft as Number).format("%02d"), pwrRight.format("%02d")]);
           }
         }
       }
     } else if (fieldIdx == 4) {
+      if (mMetrics.getRearDerailleurSize() > 0) {
+        text_middleleft = mMetrics.getRearDerailleurSize().format("%0d");
+      }
       title = "speed";
       units = "km/h";
-      var speed = mpsToKmPerHour(gMetrics.getSpeed());
+      var speed = mpsToKmPerHour(mMetrics.getSpeed());
       value = speed.format("%0.1f");
       number = stringLeft(value, ".", value);
       decimals = stringRight(value, ".", "");
       var iconColor = getIconColor(dc, speed, gTargetSpeed);
       checkReverseColor(dc, x, y, width, height);
       drawSpeedIcon(dc, x, y, width, height, iconColor);
-      text_botleft =
-          "avg " + mpsToKmPerHour(gMetrics.getAverageSpeed()).format("%0.1f");
+      text_botleft = "avg " + mpsToKmPerHour(mMetrics.getAverageSpeed()).format("%0.1f");
     } else if (fieldIdx == 5) {
       title = "altitude";
       units = "m";
-      var altitude = gMetrics.getAltitude();
+      var altitude = mMetrics.getAltitude();
 
       // @@ save every 1 minute -> check diff + / - or ++/--
       // altitude = 0;
 
-      if ((gHideAltitudeMin != gHideAltitudeMax) and
-          (altitude > gHideAltitudeMin) and (altitude < gHideAltitudeMax)) {
+      if (gHideAltitudeMin != gHideAltitudeMax and altitude > gHideAltitudeMin and altitude < gHideAltitudeMax) {
         var pressure;
         if ($.gShowMeanSeaLevel) {
           title = "pressure sealevel";
-          pressure = pascalToMilliBar(gMetrics.getMeanSeaLevelPressure());
+          pressure = pascalToMilliBar(mMetrics.getMeanSeaLevelPressure());
         } else {
           title = "pressure";
-          pressure = pascalToMilliBar(gMetrics.getAmbientPressure());
+          pressure = pascalToMilliBar(mMetrics.getAmbientPressure());
         }
         units = "hPa";
         value = pressure.format("%0.2f");
@@ -382,9 +443,8 @@ class whatmetricsView extends WatchUi.DataField {
           number = stringLeft(value, ".", value);
           decimals = stringRight(value, ".", "");
         }
-
       } else {
-        if (mpsToKmPerHour(gMetrics.getSpeed()) < 15) {
+        if (mpsToKmPerHour(mMetrics.getSpeed()) < 15) {
           value = altitude.format("%0.2f");
         } else {
           value = altitude.format("%0d");
@@ -405,11 +465,11 @@ class whatmetricsView extends WatchUi.DataField {
         checkReverseColor(dc, x, y, width, height);
         drawAltitudeIcon(dc, x, y, width, height, iconColor);
 
-        var totalAsc = gMetrics.getTotalAscent();
+        var totalAsc = mMetrics.getTotalAscent();
         if (totalAsc > 0) {
           text_botleft = "A " + totalAsc.format("%0.0f");
         }
-        var totalDesc = gMetrics.getTotalDescent();
+        var totalDesc = mMetrics.getTotalDescent();
         if (totalDesc > 0) {
           text_botright = "D " + totalDesc.format("%0.0f");
         }
@@ -417,53 +477,51 @@ class whatmetricsView extends WatchUi.DataField {
     } else if (fieldIdx == 6) {
       title = "cadence";
       units = "rpm";
-      number = gMetrics.getCadence().format("%0d");
+      number = mMetrics.getCadence().format("%0d");
       if (mWideField and mSmallField) {
         units_side = "rpm";
       }
-      drawCadenceIcon(dc, x, y, width, height,
-                      getIconColor(dc, gMetrics.getCadence(), gTargetCadence));
+      drawCadenceIcon(dc, x, y, width, height, getIconColor(dc, mMetrics.getCadence(), gTargetCadence));
     } else if (fieldIdx == 7) {
       var showTimerElapsed = true;
-      if (gHiitt.isEnabled()) {
+      if (mHiitt.isEnabled()) {
         title = "hiit";
-        var recovery = gHiitt.getRecoveryElapsedSeconds();
+        var recovery = mHiitt.getRecoveryElapsedSeconds();
         if (recovery > 0) {
           showTimerElapsed = false;
           text = secondsToCompactTimeString(recovery, "({m}:{s})");
-          if (gHiitt.wasValidHiit()) {
-            drawHiitIcon(dc, x, y, width, height, Graphics.COLOR_GREEN);
+          if (mHiitt.wasValidHiit()) {
+            drawHiitIcon(dc, x, y, width, height, Graphics.COLOR_BLUE);
           }
         } else {
-          var counter = gHiitt.getCounter();
+          var counter = mHiitt.getCounter();
           if (counter > 0) {
             text = counter.format("%01d");
           } else {
-            var hiitElapsed = gHiitt.getElapsedSeconds();
+            var hiitElapsed = mHiitt.getElapsedSeconds();
             if (hiitElapsed > 0) {
               showTimerElapsed = false;
               text = secondsToCompactTimeString(hiitElapsed, "({m}:{s})");
-              if (gHiitt.wasValidHiit()) {
+              if (mHiitt.wasValidHiit()) {
                 drawHiitIcon(dc, x, y, width, height, Graphics.COLOR_GREEN);
               }
-              var vo2max = gHiitt.getVo2Max();
+              var vo2max = mHiitt.getVo2Max();
               if (vo2max > 30) {
                 decimals = vo2max.format("%0.1f");
               }
             }
           }
         }
-        var nrHiit = gHiitt.getNumberOfHits();
+        var nrHiit = mHiitt.getNumberOfHits();
         if (nrHiit > 0) {
           text_botleft = "H " + nrHiit.format("%0.0d");
         }
 
-        var scores = gHiitt.getHitScores();
+        var scores = mHiitt.getHitScores();
         if (scores.size() > 0) {
           var sCounter = 0;
 
-          for (var sIdx = scores.size() - 1; sIdx >= 0 and sCounter < 4;
-               sIdx--) {
+          for (var sIdx = scores.size() - 1; sIdx >= 0 and sCounter < 4; sIdx--) {
             var score = scores[sIdx] as Float;
 
             text_botright = text_botright + " " + score.format("%0.0f");
@@ -473,29 +531,47 @@ class whatmetricsView extends WatchUi.DataField {
       }
 
       if (showTimerElapsed) {
-        var valueElapsed = 0;
-        if (gShowTimer) {
-          title = "timer";
-          valueElapsed = gMetrics.getTimerTime();
+        var valueInMMSeconds = 0;
+        var elapsedString = "";
+        var showTime = false;
+        title = $.getShowTimerText($.gShowTimer);
+        switch ($.gShowTimer) {
+          case 0: // timer
+            valueInMMSeconds = mMetrics.getTimerTime();
+            break;
+          case 1: // elapsed
+            valueInMMSeconds = mMetrics.getElapsedTime();
+            break;
+          case 2: // time
+            showTime = true;
+            valueInMMSeconds = Time.now().value() * 1000;
+            break;
+        }
+        if (showTime) {
+          var today = Gregorian.info(Time.now(), Time.FORMAT_MEDIUM);
+          text = Lang.format("$1$:$2$", [today.hour, today.min.format("%02d")]);
+          decimals = today.sec.format("%02d");
+          units = Lang.format("$1$ $2$ $3$", [today.day_of_week, today.day, today.month]);
         } else {
-          title = "elapsed";
-          valueElapsed = gMetrics.getElapsedTime();
+          var elapsed = millisecondsToShortTimeString(valueInMMSeconds, "{h}.{m}:{s}");
+          prefix = stringLeft(elapsed, ".", "");
+          if (prefix.equals("0")) {
+            prefix = "";
+          }
+          text = stringRight(elapsed, ".", elapsed);
         }
-        var elapsed =
-            millisecondsToShortTimeString(valueElapsed, "{h}.{m}:{s}");
-        prefix = stringLeft(elapsed, ".", "");
-        if (prefix.equals("0")) {
-          prefix = "";
-        }
-        text = stringRight(elapsed, ".", elapsed);
-        drawElapsedTimeIcon(dc, x, y, width, height, mIconColor,
-                            gMetrics.getElapsedTime());
+        drawElapsedTimeIcon(dc, x, y, width, height, mIconColor, valueInMMSeconds);
       }
     }
 
     // small fields, no decimals and units
+    System.println([height, width]);
     var font_text_bot = Graphics.FONT_SMALL;
     var fontUnits = Graphics.FONT_SYSTEM_XTINY;
+    if (height > 60 and height < 100) {
+      text_middleleft = "";
+      text_middleright = "";
+    }
     if (height < 60) {
       font_text_bot = Graphics.FONT_XTINY;
     }
@@ -508,14 +584,16 @@ class whatmetricsView extends WatchUi.DataField {
     if (width <= 70) {
       text_botright = "";
       text_botleft = "";
+      text_middleleft = "";
+      text_middleright = "";
     }
     if (decimals.equals("0")) {
       decimals = "";
     }
-    var dims_prefix = [ 0, 0 ] as Array<Number>;
-    var dims_number_or_text = [ 0, 0 ] as Array<Number>;
-    var dims_decimals = [ 0, 0 ] as Array<Number>;
-    var dims_units = [ 0, 0 ] as Array<Number>;
+    var dims_prefix = [0, 0] as Array<Number>;
+    var dims_number_or_text = [0, 0] as Array<Number>;
+    var dims_decimals = [0, 0] as Array<Number>;
+    var dims_units = [0, 0] as Array<Number>;
 
     var fontPrefix = Graphics.FONT_SYSTEM_XTINY;
     if (prefix.length() > 0) {
@@ -531,8 +609,7 @@ class whatmetricsView extends WatchUi.DataField {
     // @@ when alpha working + show in paused and until 1 minute
     if (mPaused or (mActivityStartCountdown > 0 and title.length() > 0)) {
       dc.setColor(Graphics.COLOR_LT_GRAY, Graphics.COLOR_TRANSPARENT);
-      dc.drawText(x + 1, y, Graphics.FONT_SYSTEM_XTINY, title,
-                  Graphics.TEXT_JUSTIFY_LEFT);
+      dc.drawText(x + 1, y, Graphics.FONT_SYSTEM_XTINY, title, Graphics.TEXT_JUSTIFY_LEFT);
     }
 
     if (mReverseColor) {
@@ -550,8 +627,7 @@ class whatmetricsView extends WatchUi.DataField {
         dims_number_or_text = dc.getTextDimensions(number_or_text, font);
       } else if (number.length() > 0) {
         number_or_text = number;
-        font = getMatchingFont(dc, mFontsNumbers, width, height, number)
-            as FontType;
+        font = getMatchingFont(dc, mFontsNumbers, width, height, number) as FontType;
         dims_number_or_text = dc.getTextDimensions(number, font);
       }
 
@@ -568,32 +644,33 @@ class whatmetricsView extends WatchUi.DataField {
         dims_decimals = dc.getTextDimensions(decimals, fontDecimals);
       }
 
-      var xSplit =
-          (x + (width - dims_number_or_text[0] - dims_decimals[0]) / 2 +
-           dims_number_or_text[0])
-              .toNumber();
+      var xSplit = (x + (width - dims_number_or_text[0] - dims_decimals[0]) / 2 + dims_number_or_text[0]).toNumber();
       var yBase = y + (height - dims_number_or_text[1]) / 2;
-      dc.drawText(xSplit, yBase + mYoffsetFix, font, number_or_text,
-                  Graphics.TEXT_JUSTIFY_RIGHT);
+      dc.drawText(xSplit, yBase + mYoffsetFix, font, number_or_text, Graphics.TEXT_JUSTIFY_RIGHT);
 
       if (decimals.length() > 0) {
-        var yDec = yBase + dims_number_or_text[1] - dims_decimals[1] -
-                   Graphics.getFontDescent(font) +
-                   Graphics.getFontDescent(fontDecimals);
+        var yDec =
+          yBase +
+          dims_number_or_text[1] -
+          dims_decimals[1] -
+          Graphics.getFontDescent(font) +
+          Graphics.getFontDescent(fontDecimals);
 
         if (mReverseColor) {
           dc.setColor(Graphics.COLOR_WHITE, Graphics.COLOR_TRANSPARENT);
         } else {
           dc.setColor(mDecimalsColor, Graphics.COLOR_TRANSPARENT);
         }
-        dc.drawText(xSplit, yDec, fontDecimals, decimals,
-                    Graphics.TEXT_JUSTIFY_LEFT);
+        dc.drawText(xSplit, yDec, fontDecimals, decimals, Graphics.TEXT_JUSTIFY_LEFT);
       }
 
       if (units.length() > 0) {
-        var yUnits = yBase + dims_number_or_text[1] - dims_units[1] -
-                     Graphics.getFontDescent(font) +
-                     Graphics.getFontDescent(fontUnits);
+        var yUnits =
+          yBase +
+          dims_number_or_text[1] -
+          dims_units[1] -
+          Graphics.getFontDescent(font) +
+          Graphics.getFontDescent(fontUnits);
 
         if (mReverseColor) {
           dc.setColor(Graphics.COLOR_WHITE, Graphics.COLOR_TRANSPARENT);
@@ -605,16 +682,16 @@ class whatmetricsView extends WatchUi.DataField {
           // Units on center bottom when small field (@@ +1 fix for edge 1040
           // display not same as on simulator)
           xUnits = x + width / 2 - dims_units[0] / 2;
-          yUnits =
-              yBase + dims_number_or_text[1] - Graphics.getFontDescent(font) +
-              1;  // not needed on device - Graphics.getFontDescent(fontUnits)
+          yUnits = yBase + dims_number_or_text[1] - Graphics.getFontDescent(font) + 1; // not needed on device - Graphics.getFontDescent(fontUnits)
         }
-        dc.drawText(xUnits, yUnits, fontUnits, units,
-                    Graphics.TEXT_JUSTIFY_LEFT);
+        dc.drawText(xUnits, yUnits, fontUnits, units, Graphics.TEXT_JUSTIFY_LEFT);
       } else if (units_side.length() > 0) {
-        var yUnits = yBase + dims_number_or_text[1] - dims_units[1] -
-                     Graphics.getFontDescent(font) +
-                     Graphics.getFontDescent(fontUnits);
+        var yUnits =
+          yBase +
+          dims_number_or_text[1] -
+          dims_units[1] -
+          Graphics.getFontDescent(font) +
+          Graphics.getFontDescent(fontUnits);
 
         if (mReverseColor) {
           dc.setColor(Graphics.COLOR_WHITE, Graphics.COLOR_TRANSPARENT);
@@ -622,34 +699,53 @@ class whatmetricsView extends WatchUi.DataField {
           dc.setColor(mUnitsColor, Graphics.COLOR_TRANSPARENT);
         }
         var xUnits = x + width - 1;
-        dc.drawText(xUnits, yUnits, fontUnits, units_side,
-                    Graphics.TEXT_JUSTIFY_RIGHT);
+        dc.drawText(xUnits, yUnits, fontUnits, units_side, Graphics.TEXT_JUSTIFY_RIGHT);
       }
 
       if (text_botright.length() > 0) {
         dc.setColor(mDecimalsColor, Graphics.COLOR_TRANSPARENT);
-        dc.drawText(x + width - 1, y + height - dc.getFontHeight(font_text_bot),
-                    font_text_bot, text_botright, Graphics.TEXT_JUSTIFY_RIGHT);
+        dc.drawText(
+          x + width - 1,
+          y + height - dc.getFontHeight(font_text_bot),
+          font_text_bot,
+          text_botright,
+          Graphics.TEXT_JUSTIFY_RIGHT
+        );
       }
       if (text_botleft.length() > 0) {
         dc.setColor(mDecimalsColor, Graphics.COLOR_TRANSPARENT);
-        dc.drawText(x + 1, y + height - dc.getFontHeight(font_text_bot),
-                    font_text_bot, text_botleft, Graphics.TEXT_JUSTIFY_LEFT);
+        dc.drawText(
+          x + 1,
+          y + height - dc.getFontHeight(font_text_bot),
+          font_text_bot,
+          text_botleft,
+          Graphics.TEXT_JUSTIFY_LEFT
+        );
       }
 
       if (prefix.length() > 0) {
         var xPrefix = xSplit - dims_number_or_text[0] - dims_prefix[0];
-        var yPrefix = y + height / 2 -
-                      dims_number_or_text[1] / 2;  // - dims_prefix[1] / 2;
+        var yPrefix = y + height / 2 - dims_number_or_text[1] / 2; // - dims_prefix[1] / 2;
         dc.setColor(mUnitsColor, Graphics.COLOR_TRANSPARENT);
-        dc.drawText(xPrefix, yPrefix, fontPrefix, prefix,
-                    Graphics.TEXT_JUSTIFY_LEFT);
+        dc.drawText(xPrefix, yPrefix, fontPrefix, prefix, Graphics.TEXT_JUSTIFY_LEFT);
       }
+    }
+
+    if (text_middleleft.length() > 0) {
+      dc.drawText(x + 1, y + height / 4, Graphics.FONT_SYSTEM_TINY, text_middleleft, Graphics.TEXT_JUSTIFY_LEFT);
+    }
+    if (text_middleright.length() > 0) {
+      dc.drawText(
+        x + width - 1,
+        y + height / 4,
+        Graphics.FONT_SYSTEM_TINY,
+        text_middleright,
+        Graphics.TEXT_JUSTIFY_RIGHT
+      );
     }
   }
 
-  hidden function getIconColor(dc as Dc, value as Numeric, maxValue as Numeric)
-      as Graphics.ColorType {
+  hidden function getIconColor(dc as Dc, value as Numeric, maxValue as Numeric) as Graphics.ColorType {
     mReverseColor = false;
     if (gShowColors and gCreateColors) {
       var perc = percentageOf(value, maxValue);
@@ -665,17 +761,22 @@ class whatmetricsView extends WatchUi.DataField {
     }
   }
 
-  hidden function checkReverseColor(dc as Dc, x as Number, y as Number,
-                                    width as Number, height as Number) as Void {
+  hidden function checkReverseColor(dc as Dc, x as Number, y as Number, width as Number, height as Number) as Void {
     if (mReverseColor) {
       dc.setColor(Graphics.COLOR_LT_GRAY, Graphics.COLOR_TRANSPARENT);
       dc.fillRectangle(x, y, width, height);
     }
   }
 
-  hidden function drawHeartIcon(dc as Dc, x as Number, y as Number,
-                                width as Number, height as Number,
-                                color as ColorType) as Void {
+  hidden function drawHeartIcon(
+    dc as Dc,
+    x as Number,
+    y as Number,
+    width as Number,
+    height as Number,
+    color as ColorType,
+    hrZone as Number
+  ) as Void {
     var r = (height / 3.85).toNumber();
     var x0 = (x + width / 2).toNumber();
     var y1 = (y + 1.5 * r).toNumber();
@@ -686,21 +787,44 @@ class whatmetricsView extends WatchUi.DataField {
     var yc1 = pointOnCircle_y(x1, y1, r, 135);
     var xc2 = pointOnCircle_x(x2, y1, r, 45);
     var yc2 = pointOnCircle_y(x2, y1, r, 45);
-    var y3 = y + height - 0.5 * r;
+    var y3 = (y + height - 0.5 * r).toNumber();
 
     setColorFillStroke(dc, color);
+
+    var hrzFont = Graphics.FONT_SYSTEM_NUMBER_MILD;
+    var fh = dc.getFontHeight(hrzFont);
+    if (fh > height) {
+      hrzFont = Graphics.FONT_SMALL;
+    }
+
+    dc.drawText(
+      x + 2,
+      y + height / 2 - 1,
+      hrzFont,
+      hrZone.format("%0d"),
+      Graphics.TEXT_JUSTIFY_LEFT | Graphics.TEXT_JUSTIFY_VCENTER
+    );
+
     dc.fillCircle(x1, y1, r);
     dc.fillCircle(x2, y1, r);
-    dc.fillPolygon([
-      [ xc1, yc1 ],
-      [ x0, y3 ],
-      [ xc2, yc2 ],
-      [ x0, y1 ],
-    ] as Array<Array<Number> >);
+    dc.fillPolygon(
+      [
+        [xc1, yc1],
+        [x0, y3],
+        [xc2, yc2],
+        [x0, y1],
+      ] as Array<Array<Number> >
+    );
   }
-  hidden function drawGradeIcon(dc as Dc, x as Number, y as Number,
-                                width as Number, height as Number,
-                                color as ColorType, grade as Double) as Void {
+  hidden function drawGradeIcon(
+    dc as Dc,
+    x as Number,
+    y as Number,
+    width as Number,
+    height as Number,
+    color as ColorType,
+    grade as Double
+  ) as Void {
     var m = height / 8;
     x = x + m;
     y = y + m;
@@ -729,46 +853,59 @@ class whatmetricsView extends WatchUi.DataField {
     }
     if (grade > 0) {
       if (yp == h) {
-        dc.fillPolygon([
-          [ xc + xp, yc - yp ],
-          [ x + width, y ],
-          [ x + width, y + height ],
-          [ xc - xp, y + height ],
-        ] as Array<Array<Number> >);
+        dc.fillPolygon(
+          [
+            [xc + xp, yc - yp],
+            [x + width, y],
+            [x + width, y + height],
+            [xc - xp, y + height],
+          ] as Array<Array<Number> >
+        );
       } else {
-        dc.fillPolygon([
-          [ xc + xp, yc - yp ],
-          [ x + width, y + height ],
-          [ x, y + height ],
-          [ x, yc + yp ],
-        ] as Array<Array<Number> >);
+        dc.fillPolygon(
+          [
+            [xc + xp, yc - yp],
+            [x + width, y + height],
+            [x, y + height],
+            [x, yc + yp],
+          ] as Array<Array<Number> >
+        );
       }
       // dc.setColor(Graphics.COLOR_BLACK, Graphics.COLOR_TRANSPARENT);
       // dc.drawLine(xc, yc, xc + xp, yc - yp);
     } else {
       if (yp == h) {
-        dc.fillPolygon([
-          [ xc + xp, yc + yp ],
-          [ x, y + height ],
-          [ x, y ],
-          [ xc - xp, y ],
-        ] as Array<Array<Number> >);
+        dc.fillPolygon(
+          [
+            [xc + xp, yc + yp],
+            [x, y + height],
+            [x, y],
+            [xc - xp, y],
+          ] as Array<Array<Number> >
+        );
       } else {
-        dc.fillPolygon([
-          [ xc + xp, yc + yp ],
-          [ x + width, y + height ],
-          [ x, y + height ],
-          [ x, yc - yp ],
-        ] as Array<Array<Number> >);
+        dc.fillPolygon(
+          [
+            [xc + xp, yc + yp],
+            [x + width, y + height],
+            [x, y + height],
+            [x, yc - yp],
+          ] as Array<Array<Number> >
+        );
       }
       // dc.setColor(Graphics.COLOR_BLACK, Graphics.COLOR_TRANSPARENT);
       // dc.drawLine(xc, yc, xc + xp, yc + yp);
     }
   }
 
-  hidden function drawSpeedIcon(dc as Dc, x as Number, y as Number,
-                                width as Number, height as Number,
-                                color as ColorType) as Void {
+  hidden function drawSpeedIcon(
+    dc as Dc,
+    x as Number,
+    y as Number,
+    width as Number,
+    height as Number,
+    color as ColorType
+  ) as Void {
     var my = height / 5;
     var mx = width / 8;
 
@@ -780,15 +917,22 @@ class whatmetricsView extends WatchUi.DataField {
     var y3 = y + height / 2;
 
     setColorFillStroke(dc, color);
-    dc.fillPolygon([
-      [ x1, y1 ],
-      [ x2, y2 ],
-      [ x3, y3 ],
-    ] as Array<Array<Number> >);
+    dc.fillPolygon(
+      [
+        [x1, y1],
+        [x2, y2],
+        [x3, y3],
+      ] as Array<Array<Number> >
+    );
   }
-  hidden function drawNextIcon(dc as Dc, x as Number, y as Number,
-                               width as Number, height as Number,
-                               color as ColorType) as Void {
+  hidden function drawNextIcon(
+    dc as Dc,
+    x as Number,
+    y as Number,
+    width as Number,
+    height as Number,
+    color as ColorType
+  ) as Void {
     var my = height / 8;
     var mx = width / 4;
 
@@ -801,20 +945,29 @@ class whatmetricsView extends WatchUi.DataField {
     var x3 = x + 3 * mx;
 
     setColorFillStroke(dc, color);
-    dc.fillPolygon([
-      [ x1, y1 ],
-      [ x1, y2 ],
-      [ x2, yc ],
-    ] as Array<Array<Number> >);
-    dc.fillPolygon([
-      [ x2, y1 ],
-      [ x2, y2 ],
-      [ x3, yc ],
-    ] as Array<Array<Number> >);
+    dc.fillPolygon(
+      [
+        [x1, y1],
+        [x1, y2],
+        [x2, yc],
+      ] as Array<Array<Number> >
+    );
+    dc.fillPolygon(
+      [
+        [x2, y1],
+        [x2, y2],
+        [x3, yc],
+      ] as Array<Array<Number> >
+    );
   }
-  hidden function drawDestinationIcon(dc as Dc, x as Number, y as Number,
-                                      width as Number, height as Number,
-                                      color as ColorType) as Void {
+  hidden function drawDestinationIcon(
+    dc as Dc,
+    x as Number,
+    y as Number,
+    width as Number,
+    height as Number,
+    color as ColorType
+  ) as Void {
     var my = height / 8;
     var mx = width / 4;
 
@@ -827,58 +980,79 @@ class whatmetricsView extends WatchUi.DataField {
     var x3 = x + 3 * mx;
 
     setColorFillStroke(dc, color);
-    dc.fillPolygon([
-      [ x1, y1 ],
-      [ x1, y2 ],
-      [ x2, yc ],
-    ] as Array<Array<Number> >);
-    dc.fillPolygon([
-      [ x2, y1 ],
-      [ x2, y2 ],
-      [ x3, yc ],
-    ] as Array<Array<Number> >);
+    dc.fillPolygon(
+      [
+        [x1, y1],
+        [x1, y2],
+        [x2, yc],
+      ] as Array<Array<Number> >
+    );
+    dc.fillPolygon(
+      [
+        [x2, y1],
+        [x2, y2],
+        [x3, yc],
+      ] as Array<Array<Number> >
+    );
 
     dc.fillRectangle(x3, y1, mx / 2, y2 - y1);
   }
 
-  hidden function drawPowerIcon(dc as Dc, x as Number, y as Number,
-                                width as Number, height as Number,
-                                color as ColorType) as Void {
-    var my = height / 5;
-    var mx = width / 6;
+  hidden function drawPowerIcon(
+    dc as Dc,
+    x as Number,
+    y as Number,
+    width as Number,
+    height as Number,
+    color as ColorType
+  ) as Void {
+    var my = (height / 5).toNumber();
+    var mx = (width / 6).toNumber();
 
-    var x1 = x + width / 2 + mx;
+    var halfWidth = (width / 2).toNumber();
+    var halfHeight = (height / 2).toNumber();
+    var mx13 = (mx * 1.3).toNumber();
+
+    var x1 = x + halfWidth + mx;
     var y1 = y + my;
 
-    var x2 = x + width / 2 - 1.3 * mx;
-    var y2 = y + height / 2 + 2;
+    var x2 = x + halfWidth - mx13;
+    var y2 = y + halfHeight + 2;
 
     var x3 = x2 + mx;
     var y3 = y2;
 
-    var x4 = x + width / 2 - mx;
+    var x4 = x + halfWidth - mx;
     var y4 = y + height - my;
 
-    var x5 = x + width / 2 + 1.3 * mx;
-    var y5 = y + height / 2 - 2;
+    var x5 = x + halfWidth + mx13;
+    var y5 = y + halfHeight - 2;
 
-    var x6 = x + width / 2;
+    var x6 = x + halfWidth;
     var y6 = y5;
 
     setColorFillStroke(dc, color);
-    dc.fillPolygon([
-      [ x1, y1 ],
-      [ x2, y2 ],
-      [ x3, y3 ],
-      [ x4, y4 ],
-      [ x5, y5 ],
-      [ x6, y6 ],
-    ] as Array<Array<Number> >);
+    dc.fillPolygon(
+      [
+        [x1, y1],
+        [x2, y2],
+        [x3, y3],
+        [x4, y4],
+        [x5, y5],
+        [x6, y6],
+      ] as Array<Array<Number> >
+    );
   }
 
   hidden function drawPowerBatteryLevel(
-      dc as Dc, x as Number, y as Number, width as Number, height as Number,
-      batteryLevel as Number, remainingTimeString as String) as Void {
+    dc as Dc,
+    x as Number,
+    y as Number,
+    width as Number,
+    height as Number,
+    batteryLevel as Number,
+    remainingTimeString as String
+  ) as Void {
     if (batteryLevel < 0) {
       return;
     }
@@ -903,20 +1077,29 @@ class whatmetricsView extends WatchUi.DataField {
     }
 
     if (remainingTimeString.length() > 0) {
-      dc.drawText(x1 - 2, y, Graphics.FONT_TINY, remainingTimeString,
-                  Graphics.TEXT_JUSTIFY_RIGHT);
+      dc.drawText(x1 - 2, y, Graphics.FONT_TINY, remainingTimeString, Graphics.TEXT_JUSTIFY_RIGHT);
     }
   }
-  hidden function drawHiitIcon(dc as Dc, x as Number, y as Number,
-                               width as Number, height as Number,
-                               color as ColorType) as Void {
+  hidden function drawHiitIcon(
+    dc as Dc,
+    x as Number,
+    y as Number,
+    width as Number,
+    height as Number,
+    color as ColorType
+  ) as Void {
     dc.setColor(color, Graphics.COLOR_TRANSPARENT);
     dc.fillRectangle(x, y, width, height);
   }
 
-  hidden function drawCadenceIcon(dc as Dc, x as Number, y as Number,
-                                  width as Number, height as Number,
-                                  color as ColorType) as Void {
+  hidden function drawCadenceIcon(
+    dc as Dc,
+    x as Number,
+    y as Number,
+    width as Number,
+    height as Number,
+    color as ColorType
+  ) as Void {
     var r = height / 3;
     if (width < height) {
       r = width / 3;
@@ -930,8 +1113,14 @@ class whatmetricsView extends WatchUi.DataField {
     dc.setPenWidth(1);
   }
   hidden function drawElapsedTimeIcon(
-      dc as Dc, x as Number, y as Number, width as Number, height as Number,
-      color as ColorType, milliSeconds as Number) as Void {
+    dc as Dc,
+    x as Number,
+    y as Number,
+    width as Number,
+    height as Number,
+    color as ColorType,
+    milliSeconds as Number
+  ) as Void {
     var r = height / 3;
     if (width < height) {
       r = width / 3;
@@ -961,103 +1150,220 @@ class whatmetricsView extends WatchUi.DataField {
     dc.setPenWidth(1);
   }
 
-  hidden function drawAltitudeIcon(dc as Dc, x as Number, y as Number,
-                                   width as Number, height as Number,
-                                   color as ColorType) as Void {
-    var m = height / 5;
-    var d = width / 6;
+  hidden function drawAltitudeIcon(
+    dc as Dc,
+    x as Number,
+    y as Number,
+    width as Number,
+    height as Number,
+    color as ColorType
+  ) as Void {
+    var m = (height / 5).toNumber();
+    var d = (width / 6).toNumber();
     var x1 = x + d;
     var y1 = y + height - m;
-    var x2 = x1 + 1.5 * d;
+    var x2 = (x1 + 1.5 * d).toNumber();
     var y2 = y + m;
-    var x3 = x2 + 0.5 * d;
-    var y3 = y + 3 * m;
+    var x3 = (x2 + 0.5 * d).toNumber();
+    var y3 = (y + 3 * m).toNumber();
     var x4 = x3 + d;
-    var y4 = y + 2 * m;
+    var y4 = (y + 2 * m).toNumber();
     var x5 = x4 + d;
     var y5 = y1;
 
     setColorFillStroke(dc, color);
-    dc.fillPolygon([
-      [ x1, y1 ],
-      [ x2, y2 ],
-      [ x3, y3 ],
-      [ x4, y4 ],
-      [ x5, y5 ],
-    ] as Array<Array<Number> >);
+    dc.fillPolygon(
+      [
+        [x1, y1],
+        [x2, y2],
+        [x3, y3],
+        [x4, y4],
+        [x5, y5],
+      ] as Array<Array<Number> >
+    );
   }
 
   hidden function showDebugValues(dc as Dc) as Void {
-    var font = Graphics.FONT_MEDIUM;
+    var font = Graphics.FONT_SMALL;
     var x = 1;
     var y = 1;
     var l = dc.getFontHeight(font);
 
     y = y + l;
-    dc.drawText(x, y, font, Lang.format("Alt: $1$", [gMetrics.getAltitude()]),
-                Graphics.TEXT_JUSTIFY_LEFT);
+    dc.drawText(x, y, font, Lang.format("Alt: $1$", [mMetrics.getAltitude()]), Graphics.TEXT_JUSTIFY_LEFT);
     y = y + l;
     dc.drawText(
-        x, y, font,
-        Lang.format("Grade: $1$", [gMetrics.getGrade().format("%0.1f")]),
-        Graphics.TEXT_JUSTIFY_LEFT);
+      x,
+      y,
+      font,
+      Lang.format("Grade: $1$", [mMetrics.getGrade().format("%0.1f")]),
+      Graphics.TEXT_JUSTIFY_LEFT
+    );
 
     y = y + l;
     var grades = "";
-    for (var i = 0; i < gMetrics.getGradeArray().size(); i++) {
-      grades = grades + gMetrics.getGradeArray()[i].format("%0.2f") + " ";
+    for (var i = 0; i < mMetrics.getGradeArray().size(); i++) {
+      grades = grades + mMetrics.getGradeArray()[i].format("%0.2f") + " ";
     }
-    dc.drawText(x, y, Graphics.FONT_SMALL, Lang.format("Grade: $1$", [grades]),
-                Graphics.TEXT_JUSTIFY_LEFT);
-    y = y + l;
-    dc.drawText(x, y, font,
-                Lang.format("Bearing: $1$",
-                            [getCompassDirection(gMetrics.getBearing())]),
-                Graphics.TEXT_JUSTIFY_LEFT);
+    dc.drawText(x, y, Graphics.FONT_SMALL, Lang.format("Grade: $1$", [grades]), Graphics.TEXT_JUSTIFY_LEFT);
+    // y = y + l;
+    // dc.drawText(
+    //   x,
+    //   y,
+    //   font,
+    //   Lang.format("Bearing: $1$", [getCompassDirection(mMetrics.getBearing())]),
+    //   Graphics.TEXT_JUSTIFY_LEFT
+    // );
     y = y + l;
     dc.drawText(
-        x, y, font,
-        Lang.format("Power: $1$", [gMetrics.getPower().format("%0.0d")]),
-        Graphics.TEXT_JUSTIFY_LEFT);
+      x,
+      y,
+      font,
+      Lang.format("Power: $1$", [mMetrics.getPower().format("%0.0d")]),
+      Graphics.TEXT_JUSTIFY_LEFT
+    );
 
-    var HiitElapsed = gHiitt.getElapsedSeconds();
-    var vo2max = gHiitt.getVo2Max();
     y = y + l;
-    dc.drawText(x, y, font,
-                Lang.format("Hiit: #$1$ $2$ $3$",
-                            [
-                              gHiitt.getNumberOfHits().format("%0.0d"),
-                              HiitElapsed.format("%0.0d"),
-                              vo2max.format("%0.1f"),
-                            ]),
-                Graphics.TEXT_JUSTIFY_LEFT);
+    dc.drawText(
+      x,
+      y,
+      font,
+      Lang.format(".. Battery level: $1$", [mMetrics.getPowerBatteryLevel().format("%0d")]),
+      Graphics.TEXT_JUSTIFY_LEFT
+    );
+    y = y + l;
+    dc.drawText(
+      x,
+      y,
+      font,
+      Lang.format(".. Battery voltage: $1$", [mMetrics.getPowerBatteryVoltage().format("%0.0f")]),
+      Graphics.TEXT_JUSTIFY_LEFT
+    );
+
+    var operatingTimeInSeconds = mMetrics.getPowerOperatingTimeInSeconds();
+    y = y + l;
+    dc.drawText(
+      x,
+      y,
+      font,
+      Lang.format(".. Oper seconds: $1$", [operatingTimeInSeconds.format("%0d")]),
+      Graphics.TEXT_JUSTIFY_LEFT
+    );
+
+    y = y + l;
+    dc.drawText(
+      x,
+      y,
+      font,
+      Lang.format(".. Set remaining HH: $1$", [gPowerBattSetRemainingHour.format("%0d")]),
+      Graphics.TEXT_JUSTIFY_LEFT
+    );
+
+    var batteryLevel = mMetrics.getPowerBatteryLevel();
+    if (operatingTimeInSeconds > 0 and gPowerBattSetRemainingHour > 0) {
+      var spentSeconds = $.gPowerBattMaxSeconds - gPowerBattSetRemainingHour * 60 * 60;
+      if (spentSeconds > 0) {
+        gPowerBattOperTimeCharched = operatingTimeInSeconds - spentSeconds;
+        Storage.setValue("metric_pbattopertimecharched", gPowerBattOperTimeCharched);
+        gPowerBattFullyCharched = true;
+        Storage.setValue("metric_pbattfullycharched", gPowerBattFullyCharched);
+      }
+      gPowerBattSetRemainingHour = 0;
+      Storage.setValue("metric_pbattsetremaininghour", gPowerBattSetRemainingHour);
+    }
+
+    // If fully charched, save operatingtime of powermeter
+    if (batteryLevel == 5 and !gPowerBattFullyCharched) {
+      gPowerBattOperTimeCharched = operatingTimeInSeconds;
+      Storage.setValue("metric_pbattopertimecharched", gPowerBattOperTimeCharched);
+      gPowerBattFullyCharched = true;
+      Storage.setValue("metric_pbattfullycharched", gPowerBattFullyCharched);
+    } else if (batteryLevel == 4 and gPowerBattFullyCharched) {
+      gPowerBattFullyCharched = false;
+      Storage.setValue("metric_pbattfullycharched", gPowerBattFullyCharched);
+    }
+
+    var operatingTimeAfterCharched = operatingTimeInSeconds - gPowerBattOperTimeCharched;
+
+    y = y + l;
+    dc.drawText(
+      x,
+      y,
+      font,
+      Lang.format(".. charged[$1$] Seconds after: $2$", [gPowerBattFullyCharched, operatingTimeAfterCharched]),
+      Graphics.TEXT_JUSTIFY_LEFT
+    );
+
+    y = y + l;
+    dc.drawText(
+      x,
+      y,
+      font,
+      Lang.format(".. Max (HH:MM): $1$", [secondsToHourMinutes($.gPowerBattMaxSeconds)]),
+      Graphics.TEXT_JUSTIFY_LEFT
+    );
+    y = y + l;
+    dc.drawText(
+      x,
+      y,
+      font,
+      Lang.format(".. Oper after charged (HH:MM): $1$", [secondsToHourMinutes(operatingTimeAfterCharched)]),
+      Graphics.TEXT_JUSTIFY_LEFT
+    );
+
+    y = y + l;
+    var remainingSeconds = $.gPowerBattMaxSeconds - operatingTimeAfterCharched;
+    dc.drawText(
+      x,
+      y,
+      font,
+      Lang.format(".. Remain afer charged (HH:MM): $1$", [secondsToHourMinutes(remainingSeconds)]),
+      Graphics.TEXT_JUSTIFY_LEFT
+    );
+
+    var HiitElapsed = mHiitt.getElapsedSeconds();
+    var vo2max = mHiitt.getVo2Max();
+    y = y + l;
+    dc.drawText(
+      x,
+      y,
+      font,
+      Lang.format("Hiit: #$1$ $2$ $3$", [
+        mHiitt.getNumberOfHits().format("%0.0d"),
+        HiitElapsed.format("%0.0d"),
+        vo2max.format("%0.1f"),
+      ]),
+      Graphics.TEXT_JUSTIFY_LEFT
+    );
   }
 
-  function drawArrowUp(dc as Dc, x as Number, y as Number, width as Number,
-                       height as Number) as Void {
+  function drawArrowUp(dc as Dc, x as Number, y as Number, width as Number, height as Number) as Void {
     var xm = x + width / 2;
     var yd = height / 3;
     var ym = y + yd;
 
-    dc.fillPolygon([
-      [ xm, y ],
-      [ x, ym ],
-      [ x + width, ym ],
-    ] as Array<Array<Number> >);
+    dc.fillPolygon(
+      [
+        [xm, y],
+        [x, ym],
+        [x + width, ym],
+      ] as Array<Array<Number> >
+    );
     dc.fillRectangle(xm - 1, ym, 3, height - yd);
   }
 
-  function drawArrowDown(dc as Dc, x as Number, y as Number, width as Number,
-                         height as Number) as Void {
+  function drawArrowDown(dc as Dc, x as Number, y as Number, width as Number, height as Number) as Void {
     var xm = x + width / 2;
     var yd = height / 3;
     var ym = y + height - yd;
 
     dc.fillRectangle(xm - 1, y, 3, height - yd);
-    dc.fillPolygon([
-      [ x, ym ],
-      [ x + width, ym ],
-      [ xm, y + height ],
-    ] as Array<Array<Number> >);
+    dc.fillPolygon(
+      [
+        [x, ym],
+        [x + width, ym],
+        [xm, y + height],
+      ] as Array<Array<Number> >
+    );
   }
 }
