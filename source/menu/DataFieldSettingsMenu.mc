@@ -149,20 +149,25 @@ class DataFieldSettingsMenuDelegate extends WatchUi.Menu2InputDelegate {
       WatchUi.pushView(powerMenu, new $.GeneralMenuDelegate(self, powerMenu), WatchUi.SLIDE_LEFT);
       return;
     }
-   
+
     if (id instanceof String && (id.equals("large_field") || id.equals("wide_field") || id.equals("small_field"))) {
       var label = item.getLabel();
       var prefix = id.toString();
       var fieldMenu = new WatchUi.Menu2({ :title => label + " items" });
-      for (var i = 0; i < 8; i++) {
-        var mi = new WatchUi.MenuItem("Field " + (i + 1), null, prefix + "|" + i.format("%d"), null);
+
+      // Layout
+      var mi = new WatchUi.MenuItem("Layout", null, prefix + "|0", null);
+      mi.setSubLabel($.getFieldByIndex(prefix, 0));
+      fieldMenu.addItem(mi);
+      // Fields
+      for (var i = 1; i < 9; i++) {
+        mi = new WatchUi.MenuItem("Field " + i, null, prefix + "|" + i.format("%d"), null);
         mi.setSubLabel($.getFieldByIndex(prefix, i));
         fieldMenu.addItem(mi);
       }
-
       // Zenmode
       var idzen = prefix + "_zen";
-      var mi = new WatchUi.MenuItem("Zen mode", null, idzen, null);
+      mi = new WatchUi.MenuItem("Zen mode", null, idzen, null);
       var zm = $.getStorageValue(idzen, ZMOff) as ZenMode;
       mi.setSubLabel($.getZenModeAsString(zm));
       fieldMenu.addItem(mi);
@@ -176,67 +181,67 @@ class DataFieldSettingsMenuDelegate extends WatchUi.Menu2InputDelegate {
 
       var mi = new WatchUi.MenuItem("Power", null, "fb_power", null);
       var value = $.getStorageValue(mi.getId() as String, FTUnknown) as FieldType;
-      mi.setSubLabel($.getFieldIdAsString(value));
+      mi.setSubLabel($.getFieldTypeAsString(value));
       fbMenu.addItem(mi);
 
       mi = new WatchUi.MenuItem("Power per weight", null, "fb_power_per_weight", null);
       value = $.getStorageValue(mi.getId() as String, FTUnknown) as FieldType;
-      mi.setSubLabel($.getFieldIdAsString(value));
+      mi.setSubLabel($.getFieldTypeAsString(value));
       fbMenu.addItem(mi);
 
       mi = new WatchUi.MenuItem("Power balance", null, "fb_power_balance", null);
       value = $.getStorageValue(mi.getId() as String, FTUnknown) as FieldType;
-      mi.setSubLabel($.getFieldIdAsString(value));
+      mi.setSubLabel($.getFieldTypeAsString(value));
       fbMenu.addItem(mi);
 
       mi = new WatchUi.MenuItem("Heartrate", null, "fb_heart_rate", null);
       value = $.getStorageValue(mi.getId() as String, FTUnknown) as FieldType;
-      mi.setSubLabel($.getFieldIdAsString(value));
+      mi.setSubLabel($.getFieldTypeAsString(value));
       fbMenu.addItem(mi);
 
       mi = new WatchUi.MenuItem("Heartrate zone", null, "fb_heart_rate_zone", null);
       value = $.getStorageValue(mi.getId() as String, FTUnknown) as FieldType;
-      mi.setSubLabel($.getFieldIdAsString(value));
+      mi.setSubLabel($.getFieldTypeAsString(value));
       fbMenu.addItem(mi);
 
       mi = new WatchUi.MenuItem("Distance next", null, "fb_distance_next", null);
       value = $.getStorageValue(mi.getId() as String, FTUnknown) as FieldType;
-      mi.setSubLabel($.getFieldIdAsString(value));
+      mi.setSubLabel($.getFieldTypeAsString(value));
       fbMenu.addItem(mi);
 
       mi = new WatchUi.MenuItem("Distance dest", null, "fb_distance_dest", null);
       value = $.getStorageValue(mi.getId() as String, FTUnknown) as FieldType;
-      mi.setSubLabel($.getFieldIdAsString(value));
+      mi.setSubLabel($.getFieldTypeAsString(value));
       fbMenu.addItem(mi);
 
       mi = new WatchUi.MenuItem("Hiit", null, "fb_hiit", null);
       value = $.getStorageValue(mi.getId() as String, FTUnknown) as FieldType;
-      mi.setSubLabel($.getFieldIdAsString(value));
+      mi.setSubLabel($.getFieldTypeAsString(value));
       fbMenu.addItem(mi);
 
       mi = new WatchUi.MenuItem("Altitude", null, "fb_altitude", null);
       value = $.getStorageValue(mi.getId() as String, FTUnknown) as FieldType;
-      mi.setSubLabel($.getFieldIdAsString(value));
+      mi.setSubLabel($.getFieldTypeAsString(value));
       fbMenu.addItem(mi);
 
       mi = new WatchUi.MenuItem("Grade", null, "fb_grade", null);
       value = $.getStorageValue(mi.getId() as String, FTUnknown) as FieldType;
-      mi.setSubLabel($.getFieldIdAsString(value));
+      mi.setSubLabel($.getFieldTypeAsString(value));
       fbMenu.addItem(mi);
 
       mi = new WatchUi.MenuItem("Cadence", null, "fb_cadence", null);
       value = $.getStorageValue(mi.getId() as String, FTUnknown) as FieldType;
-      mi.setSubLabel($.getFieldIdAsString(value));
+      mi.setSubLabel($.getFieldTypeAsString(value));
       fbMenu.addItem(mi);
 
       mi = new WatchUi.MenuItem("Gear combo", null, "fb_gear_combo", null);
       value = $.getStorageValue(mi.getId() as String, FTUnknown) as FieldType;
-      mi.setSubLabel($.getFieldIdAsString(value));
+      mi.setSubLabel($.getFieldTypeAsString(value));
       fbMenu.addItem(mi);
 
       mi = new WatchUi.MenuItem("Gear index", null, "fb_gear_index", null);
       value = $.getStorageValue(mi.getId() as String, FTUnknown) as FieldType;
-      mi.setSubLabel($.getFieldIdAsString(value));
+      mi.setSubLabel($.getFieldTypeAsString(value));
       fbMenu.addItem(mi);
 
       WatchUi.pushView(fbMenu, new $.GeneralMenuDelegate(self, fbMenu), WatchUi.SLIDE_UP);
@@ -271,7 +276,7 @@ class DataFieldSettingsMenuDelegate extends WatchUi.Menu2InputDelegate {
       WatchUi.pushView(fbtMenu, new $.GeneralMenuDelegate(self, fbtMenu), WatchUi.SLIDE_UP);
       return;
     }
-   
+
     if (id instanceof String && item instanceof ToggleMenuItem) {
       Storage.setValue(id as String, item.isEnabled());
       item.setSubLabel($.subMenuToggleMenuItem(id as String));
@@ -352,6 +357,22 @@ class GeneralMenuDelegate extends WatchUi.Menu2InputDelegate {
       return;
     }
 
+    // Fields: key starts with large_field|Layout, wide_field|Layout, small_field|Layout
+    // if (id.find("|0") != null) { //
+    //   var prefix = stringLeft(id, "|", "");
+    //   var index = stringRight(id, "|", "").toNumber();
+    //   if (prefix == "" || index == null) {
+    //     return;
+    //   }
+    //   var sp = new selectionMenuPicker("Field layout", id as String);
+    //   for (var i = 0; i < $.FieldLayoutCount; i++) {
+    //     sp.add($.getFieldLayoutAsString(i as FieldLayout, null, i);
+    //   }
+    //   sp.setOnSelected(self, :onSelectedFieldLayout, item);
+    //   sp.show();
+    //   return;
+    // }
+
     // Fields: key starts with large_field|, wide_field|, small_field|
     if (id.find("|") != null) {
       var prefix = stringLeft(id, "|", "");
@@ -360,9 +381,19 @@ class GeneralMenuDelegate extends WatchUi.Menu2InputDelegate {
         return;
       }
       var idx = index as Number;
-      var sp = new selectionMenuPicker("Field " + (idx + 1), id as String);
+      if (idx == 0) {
+        var sp = new selectionMenuPicker("Field layout", id as String);
+        for (var i = 0; i < $.FieldLayoutCount; i++) {
+          sp.add($.getFieldLayoutAsString(i as FieldLayout), null, i);
+        }
+        sp.setOnSelected(self, :onSelectedField, item);
+        sp.show();
+        return;
+      }
+
+      var sp = new selectionMenuPicker("Field " + idx, id as String);
       for (var i = 0; i < $.FieldTypeCount; i++) {
-        sp.add($.getFieldIdAsString(i as FieldType), null, i);
+        sp.add($.getFieldTypeAsString(i as FieldType), null, i);
       }
       sp.setOnSelected(self, :onSelectedField, item);
       sp.show();
@@ -373,7 +404,7 @@ class GeneralMenuDelegate extends WatchUi.Menu2InputDelegate {
     if (id.find("fb_") != null) {
       var sp = new selectionMenuPicker("Fallback for " + item.getLabel(), id as String);
       for (var i = 0; i < $.FieldTypeCount; i++) {
-        sp.add($.getFieldIdAsString(i as FieldType), null, i);
+        sp.add($.getFieldTypeAsString(i as FieldType), null, i);
       }
       sp.setOnSelected(self, :onSelectedSelection, item);
       sp.show();
@@ -453,6 +484,19 @@ class GeneralMenuDelegate extends WatchUi.Menu2InputDelegate {
   function onSelectedSelection(value as Object, storageKey as String) as Void {
     Storage.setValue(storageKey, value as Number);
   }
+  function onSelectedFieldLayout(value as Object, storageKey as String) as Void {
+    // storageKey large_field|0  (key and field index) value = 1 (field type)
+    var key = stringLeft(storageKey, "|", "");
+    var index = 0;
+    if (key == "" || index == null) {
+      return;
+    }
+    var idx = index as Number;
+    var fields = getStorageValue(key, [0, 0, 0, 0, 0, 0, 0, 0, 0]) as Array<Number>;
+    fields[idx] = value as Number;
+    Storage.setValue(key, fields);
+  }
+
   function onSelectedField(value as Object, storageKey as String) as Void {
     // storageKey large_field|0  (key and field index) value = 1 (field type)
     var key = stringLeft(storageKey, "|", "");
@@ -461,7 +505,7 @@ class GeneralMenuDelegate extends WatchUi.Menu2InputDelegate {
       return;
     }
     var idx = index as Number;
-    var fields = getStorageValue(key, [0, 0, 0, 0, 0, 0, 0, 0]) as Array<Number>;
+    var fields = getStorageValue(key, [0, 0, 0, 0, 0, 0, 0, 0, 0]) as Array<Number>;
     fields[idx] = value as Number;
     Storage.setValue(key, fields);
   }
@@ -506,13 +550,18 @@ function getHiittSoundText(value as WhatHiitt.HiitSound) as String {
   }
 }
 
+// Content array: [layout, field 1 .. field 8 ]
 function getFieldByIndex(key as String, index as Number) as String {
-  var fields = getStorageValue(key, [0, 0, 0, 0, 0, 0, 0, 0]) as Array<Number>;
+  var fields = getStorageValue(key, [0, 0, 0, 0, 0, 0, 0, 0, 0]) as Array<Number>;
   if (index < 0 || index >= fields.size()) {
     return "--";
   }
+  if (index == 0) {
+    return $.getFieldLayoutAsString(fields[0] as FieldLayout);
+  }
+
   var field = fields[index] as FieldType;
-  return $.getFieldIdAsString(field);
+  return $.getFieldTypeAsString(field);
 }
 
 function getZenModeAsString(zenMode as ZenMode) as String {
@@ -528,7 +577,19 @@ function getZenModeAsString(zenMode as ZenMode) as String {
   }
 }
 
-function getFieldIdAsString(fieldType as FieldType) as String {
+function getFieldLayoutAsString(fieldLayout as FieldLayout) as String {
+  switch (fieldLayout) {
+    case FL8Fields:
+      return "8 fields";
+    case FL6Fields:
+      return "6 fields";
+    case FL4Fields:
+      return "4 fields";
+    default:
+      return "unknown";
+  }
+}
+function getFieldTypeAsString(fieldType as FieldType) as String {
   switch (fieldType) {
     case FTUnknown:
       return "unknown";

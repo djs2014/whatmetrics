@@ -22,6 +22,13 @@ class FieldInfo {
     var iconValue as Numeric = 0;
 }
 
+const FieldLayoutCount = 3;
+enum FieldLayout {
+    FL8Fields = 0,
+    FL6Fields = 1,
+    FL4Fields = 2
+}
+
 const FieldTypeCount = 22;
 enum FieldType {
     FTUnknown = 0,

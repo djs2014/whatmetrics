@@ -13,8 +13,13 @@
 // @@ TODO, keep bottom information / stats field
         // available  = mHiitt.isHiitInProgress
 
-        
-draw icons
+
+layout
+8 fields
+6 fields
+4 fields
+
+
 
 gShowPowerBalance
 -> wanneer veld aanwezig is?
@@ -24,30 +29,7 @@ settings
 -  8 fields / 6 fields
  - define field in middle like gearcombo now
  - 
-- fallback 
-  - defaults: 
-    - distance: off, dist to next, dist to destination
-    - hiit: another field 
-    - power: another field  
-    - hr: another field 
-    - Altitude: 
-    - Slope:
-    - 
-    Seconds to detect:
-    HR related: 0 for x sec 
-    Power related:  0 for x sec mPowerFallbackCountdown
-    Cadence 
-    Altitude range
-    Slope range
 
-pause
-  show average when paused
-x - zen mode
-    - hide units
-    - hide bottom details
-  - icon larger
-    - enable
-  
   
 
 fields:

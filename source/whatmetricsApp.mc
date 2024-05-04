@@ -29,7 +29,7 @@ class whatmetricsApp extends Application.AppBase {
     var hiitt = getHiitt();
     hiitt.updateProfile();
 
-    var version = getStorageValue("version", "") as String;      
+    var version = getStorageValue("version", "") as String;
     if (!version.equals("1.0.0")) {
       Storage.setValue("version", "1.0.0");
       Storage.setValue("resetDefaults", true);
@@ -80,11 +80,11 @@ class whatmetricsApp extends Application.AppBase {
       Storage.setValue("grade_end_fb", gGradeFallbackEnd);
 
       $.gLargeField =
-        [FTGrade, FTBearing, FTHeartRate, FTPower, FTSpeed, FTAltitude, FTCadence, FTHiit] as Array<Number>;
+        [FL8Fields, FTGrade, FTBearing, FTHeartRate, FTPower, FTSpeed, FTAltitude, FTCadence, FTHiit] as Array<Number>;
       $.gWideField =
-        [FTGrade, FTDistanceNext, FTHeartRate, FTPower, FTSpeed, FTAltitude, FTCadence, FTHiit] as Array<Number>;
+        [FL6Fields, FTGrade, FTDistanceNext, FTHeartRate, FTPower, FTSpeed, FTAltitude, FTCadence, FTHiit] as Array<Number>;
       $.gSmallField =
-        [FTGrade, FTBearing, FTHeartRate, FTPower, FTSpeed, FTAltitude, FTCadence, FTHiit] as Array<Number>;
+        [FL4Fields, FTGrade, FTBearing, FTHeartRate, FTPower, FTSpeed, FTAltitude, FTCadence, FTHiit] as Array<Number>;
       Storage.setValue("large_field", $.gLargeField);
       Storage.setValue("wide_field", $.gWideField);
       Storage.setValue("small_field", $.gSmallField);
@@ -105,7 +105,7 @@ class whatmetricsApp extends Application.AppBase {
       Storage.setValue("fb_grade", FTUnknown);
       Storage.setValue("fb_cadence", FTUnknown);
       Storage.setValue("fb_gear_combo", FTUnknown);
-      Storage.setValue("fb_gear_index", FTUnknown);    
+      Storage.setValue("fb_gear_index", FTUnknown);
     }
 
     hiitt.setMode(getStorageValue("hiit_mode", WhatHiitt.HiitDisabled) as WhatHiitt.HiitMode);
@@ -115,7 +115,7 @@ class whatmetricsApp extends Application.AppBase {
     var percs = hiitt.checkPerc();
     if (percs.size() == 2) {
       Storage.setValue("hiit_startperc", percs[0]);
-      Storage.setValue("hiit_stopperc", percs[1]);  
+      Storage.setValue("hiit_stopperc", percs[1]);
     }
     hiitt.setStartCountDownSeconds(getStorageValue("hiit_countdown", 3) as Number);
     hiitt.setStopCountDownSeconds(getStorageValue("hiit_inactivity", 10) as Number);
@@ -178,17 +178,17 @@ class whatmetricsApp extends Application.AppBase {
     gGradeFallbackStart = getStorageValue("grade_start_fb", 0) as Number;
     gGradeFallbackEnd = getStorageValue("grade_end_fb", 0) as Number;
 
-    
     gShowPowerBalance = getStorageValue("show_powerbalance", gShowPowerBalance) as Boolean;
     gShowPowerBattery = getStorageValue("show_powerbattery", gShowPowerBattery) as Boolean;
     gShowPowerBattTime = getStorageValue("show_powerbatterytime", gShowPowerBattTime) as Boolean;
     gShowPowerPerWeight = getStorageValue("show_powerperweight", gShowPowerPerWeight) as Boolean;
-    
+
     // @@ TODO
     var powerDualSecFallback = getStorageValue("power_dual_sec_fallback", 0) as Number;
     var powerTimesTwo = getStorageValue("power_times_two", false) as Boolean;
     $.gPowerCountdownToFallBack = getStorageValue("power_countdowntofallback", gPowerCountdownToFallBack) as Number;
-    $.gCadenceCountdownToFallBack = getStorageValue("cadence_countdowntofallback", gCadenceCountdownToFallBack) as Number;
+    $.gCadenceCountdownToFallBack =
+      getStorageValue("cadence_countdowntofallback", gCadenceCountdownToFallBack) as Number;
 
     var hours = getStorageValue("metric_pbattmaxhour", gPowerBattMaxSeconds / 3600) as Number;
     if (hours > 0 and hours < 1000) {
@@ -234,7 +234,7 @@ var gDebug as Boolean = false;
 
 var gShowColors as Boolean = false;
 var gShowGrid as Boolean = true;
-var gShowAverageWhenPaused as Boolean = false; 
+var gShowAverageWhenPaused as Boolean = false;
 
 // @@ refactor
 var gShowPowerBalance as Boolean = true;
@@ -256,15 +256,15 @@ var gAltitudeFallbackEnd as Number = 10;
 var gGradeFallbackStart as Number = -2;
 var gGradeFallbackEnd as Number = 2;
 
-var gLargeField as Array<Number> = [0, 0, 0, 0, 0, 0, 0, 0] as Array<Number>;
-var gWideField as Array<Number> = [0, 0, 0, 0, 0, 0, 0, 0] as Array<Number>;
-var gSmallField as Array<Number> = [0, 0, 0, 0, 0, 0, 0, 0] as Array<Number>;
+var gLargeField as Array<Number> = [0, 0, 0, 0, 0, 0, 0, 0, 0] as Array<Number>;
+var gWideField as Array<Number> = [0, 0, 0, 0, 0, 0, 0, 0, 0] as Array<Number>;
+var gSmallField as Array<Number> = [0, 0, 0, 0, 0, 0, 0, 0, 0] as Array<Number>;
 
 var gLargeFieldZen as ZenMode = ZMOff;
 var gWideFieldZen as ZenMode = ZMOff;
 var gSmallFieldZen as ZenMode = ZMOff;
 
-// @@ Refactor: Can be one array 
+// @@ Refactor: Can be one array
 var gFBPower as FieldType = FTUnknown;
 var gFBPowerPerWeight as FieldType = FTUnknown;
 var gFBPowerBalance as FieldType = FTUnknown;

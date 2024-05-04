@@ -48,6 +48,7 @@ class whatmetricsView extends WatchUi.DataField {
   hidden var mHiitt as WhatHiitt;
   hidden var mMetrics as WhatMetrics;
   hidden var mFields as Array<Number> = [] as Array<Number>;
+  hidden var mFieldLayout as FieldLayout = FL8Fields;
   hidden var mZenMode as ZenMode = ZMOff;
   hidden var mDisplaySize as String = "s";
 
@@ -88,11 +89,13 @@ class whatmetricsView extends WatchUi.DataField {
       mFields = $.gLargeField as Array<Number>;
       mZenMode = $.gLargeFieldZen;
     }
+    mFieldLayout = mFields[0] as FieldLayout;
 
     mGrid = [] as Array<Array<Array<Number> > >;
 
     var h_1fourth = h / 4;
     var h_center = h - 2 * h_1fourth;
+    var h_halve = h / 2;
 
     mYoffsetFix = 0;
     var w_side = (w * 2) / 5;
@@ -101,21 +104,48 @@ class whatmetricsView extends WatchUi.DataField {
       mYoffsetFix = 1;
     }
     var w_center = w - 2 * w_side;
-    var row = [
-      [w_side, h_1fourth],
-      [w_center, h_1fourth],
-      [w_side, h_1fourth],
-    ];
 
-    mGrid.add(row as Array<Array<Number> >);
+    var row;
 
-    var centerRow = [
-      [w / 2, h_center],
-      [w / 2, h_center],
-    ];
-    mGrid.add(centerRow as Array<Array<Number> >);
+    if (mFieldLayout == FL8Fields) {
+      // top left, middle, right
+      // centerleft, right
+      // bottom left, middle, right
 
-    mGrid.add(row as Array<Array<Number> >);
+      row = [
+        [w_side, h_1fourth],
+        [w_center, h_1fourth],
+        [w_side, h_1fourth],
+      ];
+      var centerRow = [
+        [w / 2, h_center],
+        [w / 2, h_center],
+      ];
+
+      mGrid.add(row as Array<Array<Number> >);
+      mGrid.add(centerRow as Array<Array<Number> >);
+      mGrid.add(row as Array<Array<Number> >);
+    } else if (mFieldLayout == FL6Fields) {
+      // top left, middle, right
+      // bottom left, middle, right
+      row = [
+        [w_side, h_halve],
+        [w_center, h_halve],
+        [w_side, h_halve],
+      ];
+      mGrid.add(row as Array<Array<Number> >);
+      mGrid.add(row as Array<Array<Number> >);
+    } else if (mFieldLayout == FL4Fields) {
+      // top left, right
+      // bottem left, right
+      var w_halve = w / 2;
+      row = [
+        [w_halve, h_halve],
+        [w_halve, h_halve],
+      ];
+      mGrid.add(row as Array<Array<Number> >);
+      mGrid.add(row as Array<Array<Number> >);
+    }
   }
 
   function compute(info as Activity.Info) as Void {
@@ -177,7 +207,8 @@ class whatmetricsView extends WatchUi.DataField {
     // showGrid(dc);
 
     var y = 0;
-    var f = 0;
+    // Index 0 is field layout
+    var f = 1;
     var rowCount = mGrid.size();
     for (var r = 0; r < rowCount; r++) {
       var row = mGrid[r]; // as Array<Array<Number> >;
@@ -199,9 +230,9 @@ class whatmetricsView extends WatchUi.DataField {
           ft = mFields[f] as FieldType;
         }
         var fi = getFieldInfo(ft, f);
-        
+
         // If field not available, get fallback field
-        var fbProcessed = [] as Array<FieldType>;        
+        var fbProcessed = [] as Array<FieldType>;
         while (!fi.available) {
           System.println("Check fallback for " + fi.type);
           var fb = getFallbackField(fi.type);
@@ -1199,8 +1230,8 @@ class whatmetricsView extends WatchUi.DataField {
       ] as Array<Point2D>
     );
 
-    dc.fillRectangle(x2, yc - (my / 2), x3 - x2, my);
-    
+    dc.fillRectangle(x2, yc - my / 2, x3 - x2, my);
+
     dc.fillPolygon(
       [
         [x3, y1],
