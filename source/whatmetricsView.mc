@@ -14,6 +14,7 @@ class whatmetricsView extends WatchUi.DataField {
   hidden var mPaused as Boolean = true;
   hidden var mActivityStartCountdown as Number = 0;
   hidden var mPowerFallbackCountdown as Number = 0;
+  hidden var mCadenceFallbackCountdown as Number = 0;
 
   // [[w,h],[w,h],[w,h]]
   hidden var mGrid as Array<Array<Array<Number> > > = [] as Array<Array<Array<Number> > >;
@@ -139,6 +140,12 @@ class whatmetricsView extends WatchUi.DataField {
     } else if (mPowerFallbackCountdown > 0) {
       mPowerFallbackCountdown--;
     }
+    var cadence = mMetrics.getCadence();
+    if (cadence > 0.0 and mCadenceFallbackCountdown < 5) {
+      mCadenceFallbackCountdown = $.gCadenceCountdownToFallBack;
+    } else if (mCadenceFallbackCountdown > 0) {
+      mCadenceFallbackCountdown--;
+    }
   }
 
   function onUpdate(dc as Dc) as Void {
@@ -192,6 +199,22 @@ class whatmetricsView extends WatchUi.DataField {
           ft = mFields[f] as FieldType;
         }
         var fi = getFieldInfo(ft, f);
+        
+        // If field not available, get fallback field
+        var fbProcessed = [] as Array<FieldType>;        
+        while (!fi.available) {
+          System.println("Check fallback for " + fi.type);
+          var fb = getFallbackField(fi.type);
+          if (fb == FTUnknown || fbProcessed.indexOf(fb) > -1) {
+            fi.available = true;
+          } else {
+            fbProcessed.add(fb);
+            var old = fi.type;
+            fi = getFieldInfo(fb, f);
+            System.println("Fallback from " + old + " to " + fi.type);
+          }
+        }
+
         drawFieldBackground(dc, fi, x, y, cell[0], cell[1]);
         drawFieldInfo(dc, fi, x, y, cell[0], cell[1]);
 
@@ -216,7 +239,40 @@ class whatmetricsView extends WatchUi.DataField {
     }
   }
 
+  function getFallbackField(fieldType as FieldType) as FieldType {
+    switch (fieldType) {
+      case FTPower:
+        return $.gFBPower;
+      case FTPowerPerWeight:
+        return $.gFBPowerPerWeight;
+      case FTPowerBalance:
+        return $.gFBPowerBalance;
+      case FTHeartRate:
+        return $.gFBHeartRate;
+      case FTHeartRateZone:
+        return $.gFBHeartRateZone;
+      case FTDistanceNext:
+        return $.gFBDistanceNext;
+      case FTDistanceDest:
+        return $.gFBDistanceDest;
+      case FTHiit:
+        return $.gFBHiit;
+      case FTAltitude:
+        return $.gFBAltitude;
+      case FTGrade:
+        return $.gFBGrade;
+      case FTCadence:
+        return $.gFBCadence;
+      case FTGearCombo:
+        return $.gFBGearCombo;
+      case FTGearIndex:
+        return $.gFBGearIndex;
+      default:
+        return FTUnknown;
+    }
+  }
   function getFieldInfo(fieldType as FieldType, fieldIdx as Number) as FieldInfo {
+    var available = true;
     var title = "";
     var value = "";
     var prefix = "";
@@ -233,35 +289,38 @@ class whatmetricsView extends WatchUi.DataField {
     var iconColor = -1;
     var iconValue = 0;
 
-    // @@
-    var dist, distDest, distNext, today, mms, elapsed;
-
     switch (fieldType) {
       case FTDistance:
         title = "distance";
-        dist = mMetrics.getElapsedDistance();
+        var dist = mMetrics.getElapsedDistance();
         text = getDistanceInMeterOrKm(dist).format(getFormatForMeterAndKm(dist));
         units_side = getUnitsInMeterOrKm(dist);
         break;
       case FTDistanceNext:
         title = "next";
-        distNext = mMetrics.getDistanceToNextPoint();
+        var distNext = mMetrics.getDistanceToNextPoint();
+        available = distNext > 0;
         text = getDistanceInMeterOrKm(distNext).format(getFormatForMeterAndKm(distNext));
         units_side = getUnitsInMeterOrKm(distNext);
         break;
       case FTDistanceDest:
         title = "dest";
-        distDest = mMetrics.getDistanceToDestination();
+        var distDest = mMetrics.getDistanceToDestination();
+        available = distDest > 0;
         text = getDistanceInMeterOrKm(distDest).format(getFormatForMeterAndKm(distDest));
         units_side = getUnitsInMeterOrKm(distDest);
+        break;
       case FTGrade:
         title = "grade";
         fieldType = FTGrade;
         var grade = mMetrics.getGrade();
 
+        if (gGradeFallbackStart < gGradeFallbackEnd) {
+          available = grade <= gGradeFallbackStart or grade >= gGradeFallbackEnd;
+        }
+
         value = grade.format("%0.1f");
         if (mDisplaySize.equals("s")) {
-          //mSmallField) {
           text = value;
           units_side = "%";
         } else {
@@ -279,7 +338,7 @@ class whatmetricsView extends WatchUi.DataField {
       case FTClock:
         title = "clock";
         fieldType = FTClock;
-        today = Gregorian.info(Time.now(), Time.FORMAT_MEDIUM);
+        var today = Gregorian.info(Time.now(), Time.FORMAT_MEDIUM);
         text = Lang.format("$1$:$2$", [today.hour, today.min.format("%02d")]);
         decimals = today.sec.format("%02d");
         units = Lang.format("$1$ $2$ $3$", [today.day_of_week, today.day, today.month]);
@@ -287,201 +346,156 @@ class whatmetricsView extends WatchUi.DataField {
 
       case FTHeartRate:
         var heartRate = mMetrics.getHeartRate();
-        if (mPaused or heartRate == 0) {
-          title = "clock";
-          fieldType = FTClock;
-          today = Gregorian.info(Time.now(), Time.FORMAT_MEDIUM);
-          text = Lang.format("$1$:$2$", [today.hour, today.min.format("%02d")]);
-          decimals = today.sec.format("%02d");
-          units = Lang.format("$1$ $2$ $3$", [today.day_of_week, today.day, today.month]);
+        available = heartRate > 0;
+        title = "heartrate";
+        fieldType = FTHeartRate;
+        units = "bpm";
+
+        if (gShowAverageWhenPaused && mPaused) {
+          heartRate = mMetrics.getAverageHeartRate();
+          iconValue = mMetrics.getHeartRateZone(true);
+          units = "~bpm";
         } else {
-          title = "heartrate";
-          fieldType = FTHeartRate;
-          units = "bpm";
-          number = heartRate.format("%0d");
-          iconColor = getIconColor(heartRate, gTargetHeartRate);
           iconValue = mMetrics.getHeartRateZone(false);
-          text_botleft = "zone " + iconValue.format("%0d");
         }
+        number = heartRate.format("%0d");
+
+        iconColor = getIconColor(heartRate, gTargetHeartRate);
+        text_botleft = "zone " + iconValue.format("%0d");
         break;
 
       case FTPower:
-        if (mMetrics.getFrontDerailleurSize() > 0) {
-          text_middleright = mMetrics.getFrontDerailleurSize().format("%0d");
-        }
-        // @@ option fallback if power = 0; -> show distance
-        var power = mMetrics.getPower();
-        if (
-          power == 0.0 and
-          mDisplaySize.equals("s") or
-          (mPowerFallbackCountdown == 0 and $.gPowerCountdownToFallBack > 0)
-        ) {
-          title = "distance";
-          fieldType = FTDistance;
-          dist = mMetrics.getElapsedDistance();
-          text = getDistanceInMeterOrKm(dist).format(getFormatForMeterAndKm(dist));
-          units = getUnitsInMeterOrKm(dist);
-        } else {
-          if (mMetrics.getHasFailingDualpower()) {
-            prefix = "2*";
-          }
-          if (gShowPowerPerWeight) {
-            title = "power (" + mMetrics.getPowerPerSec().format("%0d") + " sec) / kg";
-            fieldType = FTPower;
-            units = "w/kg";
-            value = mMetrics.getPowerPerWeight().format("%0.1f");
-            number = stringLeft(value, ".", value);
-            decimals = stringRight(value, ".", "");
-            if (gShowPowerAverage) {
-              text_botleft = "avg " + mMetrics.getAveragePower().format("%0d");
-            } else {
-              text_botleft = mMetrics.getPower().format("%0d") + " w";
-            }
-          } else {
-            title = "power (" + mMetrics.getPowerPerSec().format("%0d") + " sec)";
-            fieldType = FTPower;
-            units = "w";
-            number = mMetrics.getPower().format("%0d");
-            if (gShowPowerAverage) {
-              text_botleft = "avg " + mMetrics.getAveragePower().format("%0d");
-            } else {
-              text_botleft = mMetrics.getPowerPerWeight().format("%0.1f") + "/kg";
-            }
-          }
-          iconColor = getIconColor(mMetrics.getPower(), gTargetFtp);
+        // @@ TODO special field by index
+        // if (mMetrics.getFrontDerailleurSize() > 0) {
+        //   text_middleright = mMetrics.getFrontDerailleurSize().format("%0d");
+        // }
 
-          if (gShowPowerBalance) {
-            var powerLeft = mMetrics.getPowerBalanceLeft();
-            if (mPaused) {
-              powerLeft = mMetrics.getAveragePowerBalanceLeft();
-            }
-            if (powerLeft > 0 and powerLeft < 100) {
-              var pwrRight = 100 - (powerLeft as Number);
-              text_botright = Lang.format("$1$|$2$", [(powerLeft as Number).format("%02d"), pwrRight.format("%02d")]);
-            }
-          }
+        var power = mMetrics.getPower();
+        available = power > 0 and (mPowerFallbackCountdown > 0 or $.gPowerCountdownToFallBack == 0);
+
+        if (mMetrics.getHasFailingDualpower()) {
+          prefix = "2*";
         }
-        break;
-      case FTBearing:
-        // @QND TODO fallback
-        if (mDisplaySize.equals("w")) {
-          dist = mMetrics.getDistanceToDestination();
-          if (dist > 0.0f) {
-            distNext = mMetrics.getDistanceToNextPoint();
-            if (dist > distNext and distNext > 0.0f) {
-              dist = distNext;
-              title = "next";
-              fieldType = FTDistanceNext;
-            } else {
-              title = "dest";
-              fieldType = FTDistanceDest;
-            }
-          } else {
-            title = "distance";
-            fieldType = FTDistance;
-            dist = mMetrics.getElapsedDistance();
-          }
-          text = getDistanceInMeterOrKm(dist).format(getFormatForMeterAndKm(dist));
-          units_side = getUnitsInMeterOrKm(dist);
+        title = "power (" + mMetrics.getPowerPerSec().format("%0d") + " sec)";
+        fieldType = FTPower;
+        units = "w";
+        if (gShowAverageWhenPaused && mPaused) {
+          number = mMetrics.getAveragePower().format("%0d");
+          units = "~w";
         } else {
-          text = getCompassDirection(mMetrics.getBearing());
-          fieldType = FTBearing;
+          number = mMetrics.getPower().format("%0d");
         }
+        // @@ extra details in field .. option antizen mode
+        // if (gShowPowerAverage) {
+        //   text_botleft = "avg " + mMetrics.getAveragePower().format("%0d");
+        // } else {
+        //   text_botleft = mMetrics.getPowerPerWeight().format("%0.1f") + "/kg";
+        // }
+        iconColor = getIconColor(mMetrics.getPower(), gTargetFtp);
+        break;
+
+      case FTBearing:
+        text = getCompassDirection(mMetrics.getBearing());
+        fieldType = FTBearing;
+
         break;
       case FTSpeed:
-        if (mMetrics.getRearDerailleurSize() > 0) {
-          text_middleleft = mMetrics.getRearDerailleurSize().format("%0d");
-        }
+        // if (mMetrics.getRearDerailleurSize() > 0) {
+        //   text_middleleft = mMetrics.getRearDerailleurSize().format("%0d");
+        // }
         title = "speed";
         fieldType = FTSpeed;
         units = "km/h";
-        var speed = mpsToKmPerHour(mMetrics.getSpeed());
+        var speed;
+        if (gShowAverageWhenPaused && mPaused) {
+          speed = mpsToKmPerHour(mMetrics.getAverageSpeed());
+          units = "~km/h";
+        } else {
+          speed = mpsToKmPerHour(mMetrics.getSpeed());
+        }
         value = speed.format("%0.1f");
         number = stringLeft(value, ".", value);
         decimals = stringRight(value, ".", "");
         iconColor = getIconColor(speed, gTargetSpeed);
-        text_botleft = "avg " + mpsToKmPerHour(mMetrics.getAverageSpeed()).format("%0.1f");
+        // text_botleft = "avg " + mpsToKmPerHour(mMetrics.getAverageSpeed()).format("%0.1f");
         break;
+
       case FTAltitude:
         title = "altitude";
         fieldType = FTAltitude;
         units = "m";
         var altitude = mMetrics.getAltitude();
 
-        // @@ save every 1 minute -> check diff + / - or ++/--
-        // altitude = 0;
-
-        if (gHideAltitudeMin != gHideAltitudeMax and altitude > gHideAltitudeMin and altitude < gHideAltitudeMax) {
-          var pressure;
-          if ($.gShowMeanSeaLevel) {
-            title = "pressure sealevel";
-            fieldType = FTPressureAtSea;
-            pressure = pascalToMilliBar(mMetrics.getMeanSeaLevelPressure());
-          } else {
-            title = "pressure";
-            fieldType = FTPressure;
-            pressure = pascalToMilliBar(mMetrics.getAmbientPressure());
-          }
-          units = "hPa";
-          value = pressure.format("%0.2f");
-
-          if (mDisplaySize.equals("w")) {
-            number = value;
-            units_side = "hPa";
-          } else {
-            number = stringLeft(value, ".", value);
-            decimals = stringRight(value, ".", "");
-          }
-        } else {
-          if (mpsToKmPerHour(mMetrics.getSpeed()) < 15) {
-            value = altitude.format("%0.2f");
-          } else {
-            value = altitude.format("%0d");
-          }
-
-          if (mDisplaySize.equals("w")) {
-            number = value;
-            units_side = "m";
-          } else {
-            number = stringLeft(value, ".", value);
-            decimals = stringRight(value, ".", "");
-          }
-
-          if (altitude < 0) {
-            altitude = altitude * -1;
-          }
-          iconColor = getIconColor(altitude, gTargetAltitude);
-
-          var totalAsc = mMetrics.getTotalAscent();
-          if (totalAsc > 0) {
-            text_botleft = "A " + totalAsc.format("%0.0f");
-          }
-          var totalDesc = mMetrics.getTotalDescent();
-          if (totalDesc > 0) {
-            text_botright = "D " + totalDesc.format("%0.0f");
-          }
+        if (gAltitudeFallbackStart < gAltitudeFallbackEnd) {
+          available = altitude <= gAltitudeFallbackStart or altitude >= gAltitudeFallbackEnd;
         }
+
+        if (mpsToKmPerHour(mMetrics.getSpeed()) < 15) {
+          value = altitude.format("%0.2f");
+        } else {
+          value = altitude.format("%0d");
+        }
+
+        if (mDisplaySize.equals("w")) {
+          number = value;
+          units_side = "m";
+        } else {
+          number = stringLeft(value, ".", value);
+          decimals = stringRight(value, ".", "");
+        }
+
+        if (altitude < 0) {
+          altitude = altitude * -1;
+        }
+        iconColor = getIconColor(altitude, gTargetAltitude);
+
+        var totalAsc = mMetrics.getTotalAscent();
+        if (totalAsc > 0) {
+          text_botleft = "A " + totalAsc.format("%0.0f");
+        }
+        var totalDesc = mMetrics.getTotalDescent();
+        if (totalDesc > 0) {
+          text_botright = "D " + totalDesc.format("%0.0f");
+        }
+
         break;
+
       case FTCadence:
         title = "cadence";
         fieldType = FTCadence;
         units = "rpm";
-        number = mMetrics.getCadence().format("%0d");
+        available = mMetrics.getCadence() > 0 and (mCadenceFallbackCountdown > 0 or $.gCadenceCountdownToFallBack == 0);
+
+        var cadence;
+        if (gShowAverageWhenPaused && mPaused) {
+          cadence = mMetrics.getAverageCadence();
+          units = "~rpm";
+        } else {
+          cadence = mMetrics.getCadence();
+        }
+        number = cadence.format("%0d");
         if (mDisplaySize.equals("w")) {
-          //mWideField and mSmallField) {
           units_side = "rpm";
         }
-        iconColor = getIconColor(mMetrics.getCadence(), gTargetCadence);
+        iconColor = getIconColor(cadence, gTargetCadence);
         break;
 
       case FTHiit:
-        var showTimerElapsed = true;
+        // @@ TODO, keep bottom information / stats field
+        // available  = mHiitt.isHiitInProgress
+        available = false;
         if (mHiitt.isEnabled()) {
+          available = true;
           title = "hiit";
           fieldType = FTHiit;
+
+          var vo2max = mHiitt.getVo2Max();
+          if (vo2max > 30) {
+            text = vo2max.format("%0.1f");
+          }
+
           var recovery = mHiitt.getRecoveryElapsedSeconds();
           if (recovery > 0) {
-            showTimerElapsed = false;
             text = secondsToCompactTimeString(recovery, "({m}:{s})");
             if (mHiitt.wasValidHiit()) {
               iconColor = Graphics.COLOR_BLUE;
@@ -493,12 +507,11 @@ class whatmetricsView extends WatchUi.DataField {
             } else {
               var hiitElapsed = mHiitt.getElapsedSeconds();
               if (hiitElapsed > 0) {
-                showTimerElapsed = false;
                 text = secondsToCompactTimeString(hiitElapsed, "({m}:{s})");
                 if (mHiitt.wasValidHiit()) {
                   iconColor = Graphics.COLOR_GREEN;
                 }
-                var vo2max = mHiitt.getVo2Max();
+                vo2max = mHiitt.getVo2Max();
                 if (vo2max > 30) {
                   decimals = vo2max.format("%0.1f");
                 }
@@ -508,6 +521,9 @@ class whatmetricsView extends WatchUi.DataField {
           var nrHiit = mHiitt.getNumberOfHits();
           if (nrHiit > 0) {
             text_botleft = "H " + nrHiit.format("%0.0d");
+            text_botleft += " " + mHiitt.getHistStatusAsString();
+          } else {
+            text_botleft = mHiitt.getHistStatusAsString();
           }
 
           var scores = mHiitt.getHitScores();
@@ -523,83 +539,57 @@ class whatmetricsView extends WatchUi.DataField {
           }
         }
 
-        if (showTimerElapsed) {
-          var valueInMMSeconds = 0;
-          var elapsedString = "";
-          var showTime = false;
-          title = $.getShowTimerText($.gShowTimer);
-          switch ($.gShowTimer) {
-            case 0: // timer
-              valueInMMSeconds = mMetrics.getTimerTime();
-              fieldType = FTTimer;
-              break;
-            case 1: // elapsed
-              valueInMMSeconds = mMetrics.getElapsedTime();
-              fieldType = FTTimeElapsed;
-              break;
-            case 2: // time
-              showTime = true;
-              valueInMMSeconds = Time.now().value() * 1000;
-              break;
-          }
-          if (showTime) {
-            fieldType = FTClock;
-            today = Gregorian.info(Time.now(), Time.FORMAT_MEDIUM);
-            text = Lang.format("$1$:$2$", [today.hour, today.min.format("%02d")]);
-            decimals = today.sec.format("%02d");
-            units = Lang.format("$1$ $2$ $3$", [today.day_of_week, today.day, today.month]);
-          } else {
-            elapsed = millisecondsToShortTimeString(valueInMMSeconds, "{h}.{m}:{s}");
-            prefix = stringLeft(elapsed, ".", "");
-            if (prefix.equals("0")) {
-              prefix = "";
-            }
-            text = stringRight(elapsed, ".", elapsed);
-          }
-          iconValue = valueInMMSeconds;
-        }
         break;
       case FTTimer:
         title = "timer";
-        mms = mMetrics.getTimerTime();
-        elapsed = millisecondsToShortTimeString(mMetrics.getTimerTime(), "{h}.{m}:{s}");
-        prefix = stringLeft(elapsed, ".", "");
+        var timerTime = millisecondsToShortTimeString(mMetrics.getTimerTime(), "{h}.{m}:{s}");
+        prefix = stringLeft(timerTime, ".", "");
         if (prefix.equals("0")) {
           prefix = "";
         }
-        text = stringRight(elapsed, ".", elapsed);
+        text = stringRight(timerTime, ".", timerTime);
         break;
       case FTTimeElapsed:
         title = "elapsed";
-        mms = mMetrics.getElapsedTime();
-        elapsed = millisecondsToShortTimeString(mMetrics.getTimerTime(), "{h}.{m}:{s}");
-        prefix = stringLeft(elapsed, ".", "");
+        var elapsedTime = millisecondsToShortTimeString(mMetrics.getElapsedTime(), "{h}.{m}:{s}");
+        prefix = stringLeft(elapsedTime, ".", "");
         if (prefix.equals("0")) {
           prefix = "";
         }
-        text = stringRight(elapsed, ".", elapsed);
+        text = stringRight(elapsedTime, ".", elapsedTime);
         break;
       case FTGearCombo:
         title = "gear combo";
+        available = mMetrics.getFrontDerailleurSize() > 0;
         text = mMetrics.getFrontDerailleurSize().format("%0d") + ":" + mMetrics.getRearDerailleurSize().format("%0d");
 
         break;
       case FTPowerPerWeight:
-        title = "power / weight";
+        title = "power (" + mMetrics.getPowerPerSec().format("%0d") + " sec) / kg";
+        var powerpw = mMetrics.getPowerPerWeight();
+        available = powerpw > 0 and (mPowerFallbackCountdown > 0 or $.gPowerCountdownToFallBack == 0);
         units = "w/kg";
-        if (mPaused) {
+
+        if (mMetrics.getHasFailingDualpower()) {
+          prefix = "2*";
+        }
+
+        if (gShowAverageWhenPaused && mPaused) {
           value = mMetrics.getAveragePowerPerWeight().format("%0.1f");
+          units = "~w/kg";
         } else {
-          value = mMetrics.getPowerPerWeight().format("%0.1f");
+          value = powerpw.format("%0.1f");
         }
         number = $.stringLeft(value, ".", value);
         decimals = $.stringRight(value, ".", "");
         break;
+
       case FTPowerBalance:
         title = "power balance";
+        available = mMetrics.getPower() > 0 and (mPowerFallbackCountdown > 0 or $.gPowerCountdownToFallBack == 0);
 
         var pLeft = mMetrics.getPowerBalanceLeft();
-        if (mPaused) {
+        if (gShowAverageWhenPaused && mPaused) {
           pLeft = mMetrics.getAveragePowerBalanceLeft();
         }
         if (pLeft > 0 and pLeft < 100) {
@@ -609,15 +599,18 @@ class whatmetricsView extends WatchUi.DataField {
         break;
       case FTHeartRateZone:
         title = "heartrate zone";
-        text = mMetrics.getHeartRateZone(mPaused).format("%d");
+        available = mMetrics.getHeartRate() > 0;
+        text = mMetrics.getHeartRateZone(gShowAverageWhenPaused && mPaused).format("%d");
         break;
       case FTGearIndex:
         title = "gear index";
+        available = mMetrics.getFrontDerailleurSize() > 0;
         text = mMetrics.getFrontDerailleurIndex().format("%0d") + ":" + mMetrics.getRearDerailleurIndex().format("%0d");
         break;
     }
 
     var fi = new FieldInfo();
+    fi.available = available;
     fi.index = fieldIdx;
     fi.type = fieldType as FieldType;
     fi.title = title;
@@ -654,7 +647,7 @@ class whatmetricsView extends WatchUi.DataField {
       return;
     }
     if (fi.type == FTDistance) {
-      // @@ drawDistanceIcon(dc, x, y, width, height, mIconColor);
+      drawDistanceIcon(dc, x, y, width, height, mIconColor);
       return;
     }
     if (fi.type == FTDistanceNext) {
@@ -815,7 +808,7 @@ class whatmetricsView extends WatchUi.DataField {
     }
 
     // small fields, no decimals and units
-    System.println([height, width]);
+    // System.println([height, width]);
     var font_text_bot = Graphics.FONT_SMALL;
     var fontUnits = Graphics.FONT_SYSTEM_XTINY;
     if (height > 60 and height < 100) {
@@ -1173,6 +1166,46 @@ class whatmetricsView extends WatchUi.DataField {
         [x1, y1],
         [x2, y2],
         [x3, y3],
+      ] as Array<Point2D>
+    );
+  }
+  hidden function drawDistanceIcon(
+    dc as Dc,
+    x as Number,
+    y as Number,
+    width as Number,
+    height as Number,
+    color as ColorType
+  ) as Void {
+    var my = height / 8;
+    var mx = width / 5;
+
+    var x1 = x + mx;
+    var y1 = y + my;
+    var y2 = y + height - my;
+
+    var x2 = x + 2 * mx;
+
+    var x3 = x + 3 * mx;
+    var yc = y + height / 2;
+    var x4 = x + 4 * mx;
+
+    setColorFillStroke(dc, color);
+    dc.fillPolygon(
+      [
+        [x2, y1],
+        [x2, y2],
+        [x1, yc],
+      ] as Array<Point2D>
+    );
+
+    dc.fillRectangle(x2, yc - (my / 2), x3 - x2, my);
+    
+    dc.fillPolygon(
+      [
+        [x3, y1],
+        [x3, y2],
+        [x4, yc],
       ] as Array<Point2D>
     );
   }

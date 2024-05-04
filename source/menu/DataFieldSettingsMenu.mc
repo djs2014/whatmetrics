@@ -122,10 +122,6 @@ class DataFieldSettingsMenuDelegate extends WatchUi.Menu2InputDelegate {
       boolean = Storage.getValue("show_powerbattery") ? true : false;
       powerMenu.addItem(new WatchUi.ToggleMenuItem("Power batt. level", null, "show_powerbattery", boolean, null));
 
-      mi = new WatchUi.MenuItem("Sec. to fallback distance", null, "power_countdowntofallback", null);
-      mi.setSubLabel($.getStorageNumberAsString(mi.getId() as String));
-      powerMenu.addItem(mi);
-
       boolean = Storage.getValue("show_powerbatterytime") ? true : false;
       powerMenu.addItem(new WatchUi.ToggleMenuItem("Power batt. time", null, "show_powerbatterytime", boolean, null));
 
@@ -153,23 +149,7 @@ class DataFieldSettingsMenuDelegate extends WatchUi.Menu2InputDelegate {
       WatchUi.pushView(powerMenu, new $.GeneralMenuDelegate(self, powerMenu), WatchUi.SLIDE_LEFT);
       return;
     }
-    if (id instanceof String && id.equals("pressure")) {
-      var pressMenu = new WatchUi.Menu2({ :title => "Pressure or altitude" });
-
-      var mi = new WatchUi.MenuItem("Min altitude", null, "pressure_altmin", null);
-      mi.setSubLabel($.getStorageNumberAsString(mi.getId() as String));
-      pressMenu.addItem(mi);
-      mi = new WatchUi.MenuItem("Max altitude", null, "pressure_altmax", null);
-      mi.setSubLabel($.getStorageNumberAsString(mi.getId() as String));
-      pressMenu.addItem(mi);
-
-      var boolean = Storage.getValue("pressure_show_meansealevel") ? true : false;
-      pressMenu.addItem(new WatchUi.ToggleMenuItem("Mean sealevel", null, "pressure_show_meansealevel", boolean, null));
-
-      WatchUi.pushView(pressMenu, new $.GeneralMenuDelegate(self, pressMenu), WatchUi.SLIDE_LEFT);
-      return;
-    }
-
+   
     if (id instanceof String && (id.equals("large_field") || id.equals("wide_field") || id.equals("small_field"))) {
       var label = item.getLabel();
       var prefix = id.toString();
@@ -191,16 +171,107 @@ class DataFieldSettingsMenuDelegate extends WatchUi.Menu2InputDelegate {
       return;
     }
 
-    if (id instanceof String && id.equals("show_timer")) {
-      var sp = new selectionMenuPicker("Show time(r)", id as String);
-      for (var i = 0; i <= 2; i++) {
-        sp.add($.getShowTimerText(i), null, i);
-      }
-      sp.setOnSelected(self, :onSelectedSelection, item);
-      sp.show();
+    if (id instanceof String && id.equals("fallbacks")) {
+      var fbMenu = new WatchUi.Menu2({ :title => "Fallback for field" });
+
+      var mi = new WatchUi.MenuItem("Power", null, "fb_power", null);
+      var value = $.getStorageValue(mi.getId() as String, FTUnknown) as FieldType;
+      mi.setSubLabel($.getFieldIdAsString(value));
+      fbMenu.addItem(mi);
+
+      mi = new WatchUi.MenuItem("Power per weight", null, "fb_power_per_weight", null);
+      value = $.getStorageValue(mi.getId() as String, FTUnknown) as FieldType;
+      mi.setSubLabel($.getFieldIdAsString(value));
+      fbMenu.addItem(mi);
+
+      mi = new WatchUi.MenuItem("Power balance", null, "fb_power_balance", null);
+      value = $.getStorageValue(mi.getId() as String, FTUnknown) as FieldType;
+      mi.setSubLabel($.getFieldIdAsString(value));
+      fbMenu.addItem(mi);
+
+      mi = new WatchUi.MenuItem("Heartrate", null, "fb_heart_rate", null);
+      value = $.getStorageValue(mi.getId() as String, FTUnknown) as FieldType;
+      mi.setSubLabel($.getFieldIdAsString(value));
+      fbMenu.addItem(mi);
+
+      mi = new WatchUi.MenuItem("Heartrate zone", null, "fb_heart_rate_zone", null);
+      value = $.getStorageValue(mi.getId() as String, FTUnknown) as FieldType;
+      mi.setSubLabel($.getFieldIdAsString(value));
+      fbMenu.addItem(mi);
+
+      mi = new WatchUi.MenuItem("Distance next", null, "fb_distance_next", null);
+      value = $.getStorageValue(mi.getId() as String, FTUnknown) as FieldType;
+      mi.setSubLabel($.getFieldIdAsString(value));
+      fbMenu.addItem(mi);
+
+      mi = new WatchUi.MenuItem("Distance dest", null, "fb_distance_dest", null);
+      value = $.getStorageValue(mi.getId() as String, FTUnknown) as FieldType;
+      mi.setSubLabel($.getFieldIdAsString(value));
+      fbMenu.addItem(mi);
+
+      mi = new WatchUi.MenuItem("Hiit", null, "fb_hiit", null);
+      value = $.getStorageValue(mi.getId() as String, FTUnknown) as FieldType;
+      mi.setSubLabel($.getFieldIdAsString(value));
+      fbMenu.addItem(mi);
+
+      mi = new WatchUi.MenuItem("Altitude", null, "fb_altitude", null);
+      value = $.getStorageValue(mi.getId() as String, FTUnknown) as FieldType;
+      mi.setSubLabel($.getFieldIdAsString(value));
+      fbMenu.addItem(mi);
+
+      mi = new WatchUi.MenuItem("Grade", null, "fb_grade", null);
+      value = $.getStorageValue(mi.getId() as String, FTUnknown) as FieldType;
+      mi.setSubLabel($.getFieldIdAsString(value));
+      fbMenu.addItem(mi);
+
+      mi = new WatchUi.MenuItem("Cadence", null, "fb_cadence", null);
+      value = $.getStorageValue(mi.getId() as String, FTUnknown) as FieldType;
+      mi.setSubLabel($.getFieldIdAsString(value));
+      fbMenu.addItem(mi);
+
+      mi = new WatchUi.MenuItem("Gear combo", null, "fb_gear_combo", null);
+      value = $.getStorageValue(mi.getId() as String, FTUnknown) as FieldType;
+      mi.setSubLabel($.getFieldIdAsString(value));
+      fbMenu.addItem(mi);
+
+      mi = new WatchUi.MenuItem("Gear index", null, "fb_gear_index", null);
+      value = $.getStorageValue(mi.getId() as String, FTUnknown) as FieldType;
+      mi.setSubLabel($.getFieldIdAsString(value));
+      fbMenu.addItem(mi);
+
+      WatchUi.pushView(fbMenu, new $.GeneralMenuDelegate(self, fbMenu), WatchUi.SLIDE_UP);
       return;
     }
 
+    if (id instanceof String && id.equals("fallbackstriggers")) {
+      var fbtMenu = new WatchUi.Menu2({ :title => "Fallback triggers" });
+
+      var mi = new WatchUi.MenuItem("Sec. 0 power", null, "power_countdowntofallback", null);
+      mi.setSubLabel($.getStorageNumberAsString(mi.getId() as String));
+      fbtMenu.addItem(mi);
+      mi = new WatchUi.MenuItem("Sec. 0 cadence", null, "cadence_countdowntofallback", null);
+      mi.setSubLabel($.getStorageNumberAsString(mi.getId() as String));
+      fbtMenu.addItem(mi);
+
+      // !! fb_ in key already used
+      mi = new WatchUi.MenuItem("Altitude start", null, "altitude_start_fb", null);
+      mi.setSubLabel($.getStorageNumberAsString(mi.getId() as String));
+      fbtMenu.addItem(mi);
+      mi = new WatchUi.MenuItem("Altitude end", null, "altitude_end_fb", null);
+      mi.setSubLabel($.getStorageNumberAsString(mi.getId() as String));
+      fbtMenu.addItem(mi);
+
+      mi = new WatchUi.MenuItem("Grade start", null, "grade_start_fb", null);
+      mi.setSubLabel($.getStorageNumberAsString(mi.getId() as String));
+      fbtMenu.addItem(mi);
+      mi = new WatchUi.MenuItem("Grade end", null, "grade_end_fb", null);
+      mi.setSubLabel($.getStorageNumberAsString(mi.getId() as String));
+      fbtMenu.addItem(mi);
+
+      WatchUi.pushView(fbtMenu, new $.GeneralMenuDelegate(self, fbtMenu), WatchUi.SLIDE_UP);
+      return;
+    }
+   
     if (id instanceof String && item instanceof ToggleMenuItem) {
       Storage.setValue(id as String, item.isEnabled());
       item.setSubLabel($.subMenuToggleMenuItem(id as String));
@@ -281,9 +352,7 @@ class GeneralMenuDelegate extends WatchUi.Menu2InputDelegate {
       return;
     }
 
-    // key starts with large_field|, wide_field|, small_field|
-    // selection menu picker fields
-    // setonselected -> update storage array field index
+    // Fields: key starts with large_field|, wide_field|, small_field|
     if (id.find("|") != null) {
       var prefix = stringLeft(id, "|", "");
       var index = stringRight(id, "|", "").toNumber();
@@ -296,6 +365,17 @@ class GeneralMenuDelegate extends WatchUi.Menu2InputDelegate {
         sp.add($.getFieldIdAsString(i as FieldType), null, i);
       }
       sp.setOnSelected(self, :onSelectedField, item);
+      sp.show();
+      return;
+    }
+
+    // Fallback fields
+    if (id.find("fb_") != null) {
+      var sp = new selectionMenuPicker("Fallback for " + item.getLabel(), id as String);
+      for (var i = 0; i < $.FieldTypeCount; i++) {
+        sp.add($.getFieldIdAsString(i as FieldType), null, i);
+      }
+      sp.setOnSelected(self, :onSelectedSelection, item);
       sp.show();
       return;
     }
@@ -386,8 +466,6 @@ class GeneralMenuDelegate extends WatchUi.Menu2InputDelegate {
     Storage.setValue(key, fields);
   }
 }
-
-
 
 // global
 

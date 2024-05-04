@@ -7,9 +7,7 @@ import Toybox.AntPlus;
 
 class WhatMetrics {
   hidden var a_info as Activity.Info?;
-  // @@ hidden var cadence_target as Number = 30;
-  // @@ targets ?? in view
-
+  
   // grade
   hidden var mCurrentGrade as Double = 0.0d;
   hidden var gradeWindowSize as Number = 4;

@@ -106,6 +106,15 @@ class WhatHiitt {
     self.minimalRecoverySeconds = minimalRecoverySeconds;
   }
 
+  function checkPerc() as Array<Number> {
+    if (hitStartOnPerc <= hitStopOnPerc) {
+      hitStartOnPerc = 150;
+      hitStopOnPerc = 100;
+      return [hitStartOnPerc, hitStopOnPerc] as Array<Number>;
+    }
+    return [];
+  }
+
   function isEnabled() as Boolean {
     return (self.hitMode as HiitMode) != HiitDisabled;
   }
@@ -137,6 +146,24 @@ class WhatHiitt {
     return mValidHiitPerformed;
   }
 
+  function isHiitInProgress() as Boolean {
+    return hitStatus != InActive;
+  }
+
+  function getHistStatusAsString() as String {
+    switch (hitStatus) {
+      case InActive:
+        return "--";
+      case WarmingUp:
+        return "warming up";
+      case CoolingDown:
+        return "cooling down";
+      case Active:
+        return "active";
+      default:
+        return "";
+    }
+  }
   function compute(info as Activity.Info, percOfTarget as Numeric, power as Number) as Void {
     if (!isEnabled()) {
       hitElapsedRecoveryTime = null;
@@ -246,7 +273,7 @@ class WhatHiitt {
     powerTicks = 0;
     avgPowerPerSec = 0.0d;
   }
-  hidden function addAveragePower(power as Number) as Void {    
+  hidden function addAveragePower(power as Number) as Void {
     // [ avg' * (n-1) + x ] / n
     powerTicks = powerTicks + 1;
     avgPowerPerSec = (avgPowerPerSec * (powerTicks - 1) + power) / powerTicks.toDouble();

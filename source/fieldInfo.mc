@@ -2,6 +2,7 @@ import Toybox.Lang;
 import Toybox.System;
 
 class FieldInfo {
+    var available as Boolean = true;
     var index as Number = 0;
     var type as FieldType = FTDistance;
     var title as String = "";

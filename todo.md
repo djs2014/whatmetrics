@@ -1,23 +1,47 @@
+  // @@ TODO special field by index
+        // if (mMetrics.getFrontDerailleurSize() > 0) {
+        //   text_middleright = mMetrics.getFrontDerailleurSize().format("%0d");
+        // }
+
+ // @@ extra details in field .. option antizen mode
+        // if (gShowPowerAverage) {
+        //   text_botleft = "avg " + mMetrics.getAveragePower().format("%0d");
+        // } else {
+        //   text_botleft = mMetrics.getPowerPerWeight().format("%0.1f") + "/kg";
+        // }
+
+// @@ TODO, keep bottom information / stats field
+        // available  = mHiitt.isHiitInProgress
+
+        
+draw icons
+
+gShowPowerBalance
+-> wanneer veld aanwezig is?
+of include in power field?
+
 settings
 -  8 fields / 6 fields
- 
+ - define field in middle like gearcombo now
+ - 
 - fallback 
   - defaults: 
     - distance: off, dist to next, dist to destination
     - hiit: another field 
-    - power: another field 
+    - power: another field  
     - hr: another field 
     - Altitude: 
     - Slope:
     - 
     Seconds to detect:
-    HR related: 0 for x sec
-    Power related:  0 for x sec
+    HR related: 0 for x sec 
+    Power related:  0 for x sec mPowerFallbackCountdown
+    Cadence 
     Altitude range
     Slope range
 
 pause
-  show average if available
+  show average when paused
 x - zen mode
     - hide units
     - hide bottom details
@@ -121,13 +145,6 @@ wide field under map:
 option heading -> distance or distance to next (when not null).
 option timer -> - distance to destination (ipv timer)
 
-------------------
-winter:
-- config field per cel 1.1, 1.2, etc..
-- define grid per: large / medium / wide / small field
-- fallback for hr related fields (easy to left at home)
-- fallback for powermeter -> @@ 
-- 
 
 
 -------------------
