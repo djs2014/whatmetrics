@@ -147,6 +147,9 @@ class DataFieldSettingsMenuDelegate extends WatchUi.Menu2InputDelegate {
       mi.setSubLabel($.getStorageNumberAsString(mi.getId() as String));
       powerMenu.addItem(mi);
 
+      boolean = Storage.getValue("power_times_two") ? true : false;
+      powerMenu.addItem(new WatchUi.ToggleMenuItem("Power*2 (pedal fail)", null, "power_times_two", boolean, null));
+
       WatchUi.pushView(powerMenu, new $.GeneralMenuDelegate(self, powerMenu), WatchUi.SLIDE_LEFT);
       return;
     }
@@ -164,6 +167,27 @@ class DataFieldSettingsMenuDelegate extends WatchUi.Menu2InputDelegate {
       pressMenu.addItem(new WatchUi.ToggleMenuItem("Mean sealevel", null, "pressure_show_meansealevel", boolean, null));
 
       WatchUi.pushView(pressMenu, new $.GeneralMenuDelegate(self, pressMenu), WatchUi.SLIDE_LEFT);
+      return;
+    }
+
+    if (id instanceof String && (id.equals("large_field") || id.equals("wide_field") || id.equals("small_field"))) {
+      var label = item.getLabel();
+      var prefix = id.toString();
+      var fieldMenu = new WatchUi.Menu2({ :title => label + " items" });
+      for (var i = 0; i < 8; i++) {
+        var mi = new WatchUi.MenuItem("Field " + (i + 1), null, prefix + "|" + i.format("%d"), null);
+        mi.setSubLabel($.getFieldByIndex(prefix, i));
+        fieldMenu.addItem(mi);
+      }
+
+      // Zenmode
+      var idzen = prefix + "_zen";
+      var mi = new WatchUi.MenuItem("Zen mode", null, idzen, null);
+      var zm = $.getStorageValue(idzen, ZMOff) as ZenMode;
+      mi.setSubLabel($.getZenModeAsString(zm));
+      fieldMenu.addItem(mi);
+
+      WatchUi.pushView(fieldMenu, new $.GeneralMenuDelegate(self, fieldMenu), WatchUi.SLIDE_UP);
       return;
     }
 
@@ -208,7 +232,8 @@ class GeneralMenuDelegate extends WatchUi.Menu2InputDelegate {
       Storage.setValue(id as String, item.isEnabled());
       item.setSubLabel($.subMenuToggleMenuItem(id as String));
       return;
-    } else if (id instanceof String && id.equals("hiit_mode")) {
+    }
+    if (id instanceof String && id.equals("hiit_mode")) {
       var sp = new selectionMenuPicker("Hiit mode", id as String);
       sp.add("Disabled", "hiit is not active", WhatHiitt.HiitDisabled);
       sp.add("Minimal", "hiit minimized", WhatHiitt.HiitMinimal);
@@ -218,7 +243,8 @@ class GeneralMenuDelegate extends WatchUi.Menu2InputDelegate {
       sp.setOnSelected(self, :onSelectedSelection, item);
       sp.show();
       return;
-    } else if (id instanceof String && id.equals("hiit_sound")) {
+    }
+    if (id instanceof String && id.equals("hiit_sound")) {
       var sp = new selectionMenuPicker("Hiit sound", id as String);
       sp.add("No sound", null, WhatHiitt.NoSound);
       sp.add("Start only", null, WhatHiitt.StartOnlySound);
@@ -229,7 +255,8 @@ class GeneralMenuDelegate extends WatchUi.Menu2InputDelegate {
       sp.setOnSelected(self, :onSelectedSelection, item);
       sp.show();
       return;
-    } else if (id.equals("target_hrzone")) {
+    }
+    if (id.equals("target_hrzone")) {
       var sp = new selectionMenuPicker("Target heartrate zone", id as String);
       sp.add("Zone 1", null, 1);
       sp.add("Zone 2", null, 2);
@@ -243,8 +270,38 @@ class GeneralMenuDelegate extends WatchUi.Menu2InputDelegate {
       return;
     }
 
+    if (id.equals("large_field_zen") || id.equals("wide_field_zen") || id.equals("small_field_zen")) {
+      var sp = new selectionMenuPicker("Zen mode", id as String);
+      sp.add("Off", null, ZMOff);
+      sp.add("On", null, ZMOn);
+      sp.add("When moving", null, ZMWhenMoving);
+
+      sp.setOnSelected(self, :onSelectedSelection, item);
+      sp.show();
+      return;
+    }
+
+    // key starts with large_field|, wide_field|, small_field|
+    // selection menu picker fields
+    // setonselected -> update storage array field index
+    if (id.find("|") != null) {
+      var prefix = stringLeft(id, "|", "");
+      var index = stringRight(id, "|", "").toNumber();
+      if (prefix == "" || index == null) {
+        return;
+      }
+      var idx = index as Number;
+      var sp = new selectionMenuPicker("Field " + (idx + 1), id as String);
+      for (var i = 0; i < $.FieldTypeCount; i++) {
+        sp.add($.getFieldIdAsString(i as FieldType), null, i);
+      }
+      sp.setOnSelected(self, :onSelectedField, item);
+      sp.show();
+      return;
+    }
+
     _currentPrompt = item.getLabel();
-    var numericOptions = parseLabelToOptions(_currentPrompt);
+    var numericOptions = $.parseLabelToOptions(_currentPrompt);
 
     var currentValue = $.getStorageValue(id as String, 0) as Numeric;
     if (numericOptions.isFloat) {
@@ -316,31 +373,21 @@ class GeneralMenuDelegate extends WatchUi.Menu2InputDelegate {
   function onSelectedSelection(value as Object, storageKey as String) as Void {
     Storage.setValue(storageKey, value as Number);
   }
-
-  // function onSelectedHiitMode(value as Object, storageKey as String) as Void {
-  //   var HiitMode = value as WhatHiitt.HiitMode;
-  //   Storage.setValue(storageKey, HiitMode);
-  //   if (_item != null) {
-  //     (_item as MenuItem).setSubLabel($.getHiittModeText(HiitMode));
-  //   }
-  // }
-
-  // function onSelectedHiitSound(value as Object, storageKey as String) as Void {
-  //   var HiitSound = value as WhatHiitt.HiitSound;
-  //   Storage.setValue(storageKey, HiitSound);
-  //   if (_item != null) {
-  //     (_item as MenuItem).setSubLabel($.getHiittSoundText(HiitSound));
-  //   }
-  // }
-
-  // function onSelectedHrZone(value as Object, storageKey as String) as Void {
-  //   var zone = value as Number;
-  //   Storage.setValue(storageKey, zone);
-  //   if (_item != null) {
-  //     (_item as MenuItem).setSubLabel("zone " + zone.format("%0d"));
-  //   }
-  // }
+  function onSelectedField(value as Object, storageKey as String) as Void {
+    // storageKey large_field|0  (key and field index) value = 1 (field type)
+    var key = stringLeft(storageKey, "|", "");
+    var index = stringRight(storageKey, "|", "").toNumber();
+    if (key == "" || index == null) {
+      return;
+    }
+    var idx = index as Number;
+    var fields = getStorageValue(key, [0, 0, 0, 0, 0, 0, 0, 0]) as Array<Number>;
+    fields[idx] = value as Number;
+    Storage.setValue(key, fields);
+  }
 }
+
+
 
 // global
 
@@ -378,6 +425,79 @@ function getHiittSoundText(value as WhatHiitt.HiitSound) as String {
       return "loud noise";
     default:
       return "no sound";
+  }
+}
+
+function getFieldByIndex(key as String, index as Number) as String {
+  var fields = getStorageValue(key, [0, 0, 0, 0, 0, 0, 0, 0]) as Array<Number>;
+  if (index < 0 || index >= fields.size()) {
+    return "--";
+  }
+  var field = fields[index] as FieldType;
+  return $.getFieldIdAsString(field);
+}
+
+function getZenModeAsString(zenMode as ZenMode) as String {
+  switch (zenMode) {
+    case ZMOff:
+      return "off";
+    case ZMOn:
+      return "on";
+    case ZMWhenMoving:
+      return "when moving";
+    default:
+      return "--";
+  }
+}
+
+function getFieldIdAsString(fieldType as FieldType) as String {
+  switch (fieldType) {
+    case FTUnknown:
+      return "unknown";
+    case FTDistance:
+      return "distance";
+    case FTDistanceNext:
+      return "distance next";
+    case FTDistanceDest:
+      return "distance dest";
+    case FTGrade:
+      return "grade";
+    case FTClock:
+      return "clock";
+    case FTHeartRate:
+      return "heartrate";
+    case FTPower:
+      return "power";
+    case FTBearing:
+      return "bearing";
+    case FTSpeed:
+      return "speed";
+    case FTAltitude:
+      return "altitude";
+    case FTPressureAtSea:
+      return "pressure at sea";
+    case FTPressure:
+      return "pressure";
+    case FTCadence:
+      return "cadence";
+    case FTHiit:
+      return "hiit";
+    case FTTimer:
+      return "timer";
+    case FTTimeElapsed:
+      return "time elapsed";
+    case FTGearCombo:
+      return "gear combo";
+    case FTPowerPerWeight:
+      return "power per weight";
+    case FTPowerBalance:
+      return "power balance";
+    case FTHeartRateZone:
+      return "heartrate zone";
+    case FTGearIndex:
+      return "gear index";
+    default:
+      return "unknown";
   }
 }
 

@@ -57,6 +57,14 @@ class DataFieldSettingsDelegate extends WatchUi.BehaviorDelegate {
     mi = new WatchUi.MenuItem("Show pressure", null, "pressure", null);
     menu.addItem(mi);
 
+    mi = new WatchUi.MenuItem("Large field", null, "large_field", null);
+    menu.addItem(mi);
+    mi = new WatchUi.MenuItem("Wide field", null, "wide_field", null);
+    menu.addItem(mi);
+    mi = new WatchUi.MenuItem("Small field", null, "small_field", null);
+    menu.addItem(mi);
+
+
     var boolean = false;
 
     boolean = Storage.getValue("show_colors") ? true : false;

@@ -1,46 +1,68 @@
-custom draw -> power batt level in background
+settings
+-  8 fields / 6 fields
+ 
+- fallback 
+  - defaults: 
+    - distance: off, dist to next, dist to destination
+    - hiit: another field 
+    - power: another field 
+    - hr: another field 
+    - Altitude: 
+    - Slope:
+    - 
+    Seconds to detect:
+    HR related: 0 for x sec
+    Power related:  0 for x sec
+    Altitude range
+    Slope range
 
-field 1,2,3/4,5/6,7,8
-- props
-fallback 
-  Seconds to detect:
-  HR related: 0 for x sec
-  Power related:  0 for x sec
-fallback when paused:
-
-one field
-: nr fields 3/6/9  
-large field
-wide field
-small field
-
-show timer/elapsed or time
+pause
+  show average if available
+x - zen mode
+    - hide units
+    - hide bottom details
+  - icon larger
+    - enable
+  
+  
 
 fields:
-grade
 distance
+distance next
+distance destination
+grade
 clock
-timer
-elapsed time
-power
-power/kg
-altitude
-cadence
-speed
-hiit
-vo2max
 heartrate
+power
+heading / bearing
+speed
+altitude
+pressureAtSee
+pressure
+hiit
+timer
+time elapsed
+gear combo
+gear index (if max front =1 -> only rear)
+power/kg
+power balance
+cadence
+vo2max
 hr zone
 
 option: 
   show averages
+  show battery heartrate
+  x show battery powermeter
+
+Fallback large field
+Fallback wide field
 
 
 
 
-
-
-
+key large_field|0 value = 1
+-> [1, ..]
 
 ------
 option

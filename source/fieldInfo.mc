@@ -21,6 +21,7 @@ class FieldInfo {
     var iconValue as Numeric = 0;
 }
 
+const FieldTypeCount = 22;
 enum FieldType {
     FTUnknown = 0,
     FTDistance = 1,
@@ -38,5 +39,16 @@ enum FieldType {
     FTCadence = 13,
     FTHiit = 14,
     FTTimer = 15,
-    FTTimeElapsed = 16
+    FTTimeElapsed = 16,
+    FTGearCombo = 17,
+    FTPowerPerWeight = 18,
+    FTPowerBalance = 19,    
+    FTHeartRateZone = 20,
+    FTGearIndex = 21
   }
+
+enum ZenMode {
+    ZMOff = 0,
+    ZMOn = 2,
+    ZMWhenMoving = 3 // on when moving
+}

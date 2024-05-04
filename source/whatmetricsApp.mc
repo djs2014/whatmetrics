@@ -15,23 +15,30 @@ class whatmetricsApp extends Application.AppBase {
   function onStop(state as Dictionary?) as Void {}
 
   //! Return the initial view of your application here
-  function getInitialView() as Array<Views or InputDelegates>? {
+  function getInitialView() as [WatchUi.Views] or [WatchUi.Views, WatchUi.InputDelegates] {
     onSettingsChanged();
-    return [new whatmetricsView()] as Array<Views or InputDelegates>;
+    return [new whatmetricsView()];
   }
 
   //! Return the settings view and delegate for the app
   //! @return Array Pair [View, Delegate]
-  function getSettingsView() as Array<Views or InputDelegates>? {
-    return [new $.DataFieldSettingsView(), new $.DataFieldSettingsDelegate()] as Array<Views or InputDelegates>;
+  function getSettingsView() as [WatchUi.Views] or [WatchUi.Views, WatchUi.InputDelegates] or Null {
+    return [new $.DataFieldSettingsView(), new $.DataFieldSettingsDelegate()];
   }
   function onSettingsChanged() {
     var hiitt = getHiitt();
     hiitt.updateProfile();
+
+    var version = getStorageValue("version", "") as String;      
+    if (!version.equals("1.0.0")) {
+      Storage.setValue("version", "1.0.0");
+      Storage.setValue("resetDefaults", true);
+    }
+
     var reset = Storage.getValue("resetDefaults");
     if (reset == null || (reset as Boolean)) {
       Storage.setValue("resetDefaults", false);
-      
+
       Storage.setValue("hiit_mode", WhatHiitt.HiitDisabled);
       Storage.setValue("hiit_sound", WhatHiitt.StartOnlySound);
       Storage.setValue("hiit_startperc", 150);
@@ -64,11 +71,26 @@ class whatmetricsApp extends Application.AppBase {
       Storage.setValue("show_powerperweight", gShowPowerPerWeight);
       Storage.setValue("show_poweraverage", gShowPowerAverage);
       Storage.setValue("power_dual_sec_fallback", 0);
+      Storage.setValue("power_times_two", false);
 
       Storage.setValue("metric_pbattmaxhour", gPowerBattMaxSeconds);
 
       Storage.setValue("pressure_altmin", gHideAltitudeMin);
       Storage.setValue("pressure_altmax", gHideAltitudeMax);
+
+      $.gLargeField =
+        [FTGrade, FTBearing, FTHeartRate, FTPower, FTSpeed, FTAltitude, FTCadence, FTHiit] as Array<Number>;
+      $.gWideField =
+        [FTGrade, FTDistanceNext, FTHeartRate, FTPower, FTSpeed, FTAltitude, FTCadence, FTHiit] as Array<Number>;
+      $.gSmallField =
+        [FTGrade, FTBearing, FTHeartRate, FTPower, FTSpeed, FTAltitude, FTCadence, FTHiit] as Array<Number>;
+      Storage.setValue("large_field", $.gLargeField);
+      Storage.setValue("wide_field", $.gWideField);
+      Storage.setValue("small_field", $.gSmallField);
+
+      Storage.setValue("large_field_zen", ZMWhenMoving);
+      Storage.setValue("wide_field_zen", ZMWhenMoving);
+      Storage.setValue("small_field_zen", ZMOn);
     }
 
     hiitt.setMode(getStorageValue("hiit_mode", WhatHiitt.HiitDisabled) as WhatHiitt.HiitMode);
@@ -104,6 +126,14 @@ class whatmetricsApp extends Application.AppBase {
       metrics.initHrZones(heartRateZones);
     }
 
+    $.gLargeField = getStorageValue("large_field", $.gLargeField) as Array<Number>;
+    $.gWideField = getStorageValue("wide_field", $.gWideField) as Array<Number>;
+    $.gSmallField = getStorageValue("small_field", $.gSmallField) as Array<Number>;
+
+    $.gLargeFieldZen = getStorageValue("large_field_zen", $.gLargeFieldZen) as ZenMode;
+    $.gWideFieldZen = getStorageValue("wide_field_zen", $.gWideFieldZen) as ZenMode;
+    $.gSmallFieldZen = getStorageValue("small_field_zen", $.gSmallFieldZen) as ZenMode;
+
     gDebug = getStorageValue("debug", gDebug) as Boolean;
     gShowColors = getStorageValue("show_colors", gShowColors) as Boolean;
     gShowGrid = getStorageValue("show_grid", gShowGrid) as Boolean;
@@ -121,7 +151,9 @@ class whatmetricsApp extends Application.AppBase {
     gShowPowerPerWeight = getStorageValue("show_powerperweight", gShowPowerPerWeight) as Boolean;
     gShowPowerAverage = getStorageValue("show_poweraverage", gShowPowerAverage) as Boolean;
 
+    // @@ TODO
     var powerDualSecFallback = getStorageValue("power_dual_sec_fallback", 0) as Number;
+    var powerTimesTwo = getStorageValue("power_times_two", false) as Boolean;
     gPowerCountdownToFallBack = getStorageValue("power_countdowntofallback", gPowerCountdownToFallBack) as Number;
 
     var hours = getStorageValue("metric_pbattmaxhour", gPowerBattMaxSeconds / 3600) as Number;
@@ -133,7 +165,7 @@ class whatmetricsApp extends Application.AppBase {
     gPowerBattSetRemainingHour = getStorageValue("metric_pbattsetremaininghour", 0) as Number;
 
     if (gShowPowerBalance or gShowPowerBattery or powerDualSecFallback > 0) {
-      metrics.initPowerBalance(powerDualSecFallback);
+      metrics.initPowerBalance(powerDualSecFallback, powerTimesTwo);
     }
     metrics.initWeight();
   }
@@ -165,23 +197,36 @@ var gTargetGrade as Number = 8;
 var gTargetAltitude as Number = 1000;
 var gTargetHeartRate as Number = 200;
 var gDebug as Boolean = false;
+
 var gShowColors as Boolean = false;
 var gShowGrid as Boolean = true;
+
+// @@ refactor
 var gShowTimer as Number = 0; // 0  = timer, 1 = elapsed time, 2 = clock
 var gShowPowerBalance as Boolean = true;
 var gShowPowerBattery as Boolean = true;
 var gShowPowerPerWeight as Boolean = false;
 var gShowPowerAverage as Boolean = false;
+var gShowMeanSeaLevel as Boolean = true;
 
+// @@ to figure out
 var gShowPowerBattTime as Boolean = false;
 var gPowerBattMaxSeconds as Number = 0;
 var gPowerBattOperTimeCharched as Number = 0;
 var gPowerBattFullyCharched as Boolean = false;
 var gPowerBattSetRemainingHour as Number = 0;
 
-// var gWideFieldShowDistance as Boolean = false;
-// var gWideFieldShowDistanceDestination as Boolean = false;
+var gPowerCountdownToFallBack as Number = 10;
+
+// @@ fallback settings
 var gHideAltitudeMin as Number = -10;
 var gHideAltitudeMax as Number = 10;
-var gShowMeanSeaLevel as Boolean = true;
-var gPowerCountdownToFallBack as Number = 10;
+
+var gLargeField as Array<Number> = [0, 0, 0, 0, 0, 0, 0, 0] as Array<Number>;
+var gWideField as Array<Number> = [0, 0, 0, 0, 0, 0, 0, 0] as Array<Number>;
+var gSmallField as Array<Number> = [0, 0, 0, 0, 0, 0, 0, 0] as Array<Number>;
+
+//
+var gLargeFieldZen as ZenMode = ZMOff;
+var gWideFieldZen as ZenMode = ZMOff;
+var gSmallFieldZen as ZenMode = ZMOff;

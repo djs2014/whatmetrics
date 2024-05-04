@@ -473,3 +473,19 @@ function pointOnCircle_y(x as Number, y as Number, radius as Number, angleInDegr
   // Convert from degrees to radians
   return (radius * Math.sin(deg2rad(angleInDegrees)) + y).toNumber();
 }
+
+// o (one), l (large), w (wide), s (small)
+function getDisplaySize(width as Number, height as Number) as String {
+  var display = "s";
+
+  if (width >= 246) {
+    display = "w";
+    if (height >= 322) {
+      display = "o";
+    } else if (height >= 100) {
+      display = "l";
+    }
+  }
+
+  return display;
+}

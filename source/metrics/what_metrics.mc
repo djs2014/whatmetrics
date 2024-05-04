@@ -32,6 +32,7 @@ class WhatMetrics {
 
   // detect if l/r power is not 0 for x seconds
   hidden var mPowerDualSecFallback as Number = 0;
+  hidden var mPowerTimesTwo as Boolean = false;
   hidden var mFailingPowerPedalsCounter as Number = 0;
   hidden var mHasFailingDualpower as Boolean = false;
 
@@ -39,12 +40,13 @@ class WhatMetrics {
   hidden var mHrZones as Lang.Array<Lang.Number> = [] as Lang.Array<Lang.Number>;
   function initialize() {}
 
-  function initPowerBalance(powerDualSecFallback as Number) as Void {
+  function initPowerBalance(powerDualSecFallback as Number, powerTimesTwo as Boolean) as Void {
     if (mPowerBalance == null) {
       mPowerBalance = new PowerBalance();
     }
     mPowerDualSecFallback = powerDualSecFallback;
     mHasFailingDualpower = false;
+    mPowerTimesTwo = powerTimesTwo;
   }
 
   function initWeight() as Void {
@@ -123,11 +125,16 @@ class WhatMetrics {
   function getMaxHeartRate() as Number {
     return getActivityValue(a_info, :maxHeartRate, 0) as Number;
   }
-  function getHeartRateZone() as Number {
+  function getHeartRateZone(showAverage as Boolean) as Number {
     if (mHrZones.size() == 0) {
       return 0;
     }
-    var heartRate = getHeartRate();
+    var heartRate = 0;
+    if (showAverage) {
+      heartRate = getAverageHeartRate();
+    } else {
+      heartRate = getHeartRate();
+    }
     if (heartRate < mHrZones[0]) {
       return 0;
     }
@@ -150,14 +157,17 @@ class WhatMetrics {
     return getActivityValue(a_info, :distanceToDestination, 0.0f) as Float;
   }
 
-  // gear /Index, Max and Size -> calc ratio Index values range from from 1 to the rearDerailleurMax. @@ 2/7 == 50:17
   function getFrontDerailleurSize() as Number {
-    // return getActivityValue(a_info, :frontDerailleurIndex, 0) as Number;
     return getActivityValue(a_info, :frontDerailleurSize, 0) as Number;
   }
   function getRearDerailleurSize() as Number {
-    // return getActivityValue(a_info, :rearDerailleurIndex, 0) as Number;
     return getActivityValue(a_info, :rearDerailleurSize, 0) as Number;
+  }
+  function getFrontDerailleurIndex() as Number {
+    return getActivityValue(a_info, :frontDerailleurIndex, 0) as Number;
+  }
+  function getRearDerailleurIndex() as Number {
+    return getActivityValue(a_info, :rearDerailleurIndex, 0) as Number;
   }
 
   function getGrade() as Double {
@@ -198,7 +208,7 @@ class WhatMetrics {
   }
   // power watts / x seconds
   function getPower() as Number {
-    if (mHasFailingDualpower) {
+    if (mHasFailingDualpower || mPowerTimesTwo) {
       // Compensate for 1 failing pedal
       return mCurrentPowerPerX * 2;
     }
@@ -215,6 +225,12 @@ class WhatMetrics {
       return 0.0f;
     }
     return getPower() / userWeightKg.toFloat();
+  }
+  function getAveragePowerPerWeight() as Float {
+    if (userWeightKg == 0) {
+      return 0.0f;
+    }
+    return getAveragePower() / userWeightKg.toFloat();
   }
 
   function getPowerBalanceLeft() as Number {
@@ -295,9 +311,7 @@ class WhatMetrics {
   hidden function calculatePower() as Number {
     var power = getActivityValue(a_info, :currentPower, 0) as Number;
 
-    if (mPowerDualSecFallback > 0 && mPowerBalance != null) {
-      checkForFalingDualPower();
-    }
+    checkForFalingDualPower();
 
     if (mPowerDataPerSec.size() >= mPowerPerSec) {
       mPowerDataPerSec = mPowerDataPerSec.slice(1, mPowerPerSec);
@@ -311,12 +325,16 @@ class WhatMetrics {
   }
 
   hidden function checkForFalingDualPower() as Void {
-    if (mPowerBalance != null) {
+    if (mPowerBalance == null) {
       return;
     }
+    if (mPowerDualSecFallback == 0) {
+      return;
+    }
+
     var pedal = (mPowerBalance as PowerBalance).getActivePowerPedals();
 
-    if (pedal == "L" || pedal == "R") {
+    if (pedal == "L" || pedal == "R" || pedal == "") {
       mFailingPowerPedalsCounter = mFailingPowerPedalsCounter + 1;
     } else {
       mFailingPowerPedalsCounter = 0;
