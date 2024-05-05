@@ -37,30 +37,25 @@ settings
  - 
 - Power battery time (o = operating time when max battery time is not configured, r = remaining time), format hh:mm
   
+hiit 
+TODO disabled when no power
 
 fields:
-distance
-distance next
-distance destination
-grade
-clock
-heartrate
-power
-heading / bearing
-speed
-altitude
-pressureAtSee
-pressure
-hiit
-timer
-time elapsed
-gear combo
-gear index (if max front =1 -> only rear)
-power/kg
-power balance
-cadence
 vo2max
-hr zone
+calories
+energyExpenditure
+total ascent
+total descent
+trainingeffect
+
+---
+average fields
+  cadence
+  heartrate
+  power
+  speed
+  
+
 
 option: 
   show averages
@@ -195,5 +190,5 @@ menu:
   - x enabled, minimal, normal
   - x sound:
   - x hit start perc / stop perc
-  - x hitt countdown start, cooldown
+  - x hiit countdown start, cooldown
 

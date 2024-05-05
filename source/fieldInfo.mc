@@ -19,7 +19,8 @@ class FieldInfo {
     var text_middleright as String = "";
 
     var iconColor as Number = 0;
-    var iconValue as Numeric = 0;
+    var iconParam as Numeric = 0;
+    var iconParam2 as Numeric = 0;
 }
 
 const FieldLayoutCount = 3;
