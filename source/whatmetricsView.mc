@@ -52,8 +52,11 @@ class whatmetricsView extends WatchUi.DataField {
   hidden var mFieldLayout as FieldLayout = FL8Fields;
   hidden var mZenMode as ZenMode = ZMOff;
   hidden var mDisplaySize as String = "s";
-  hidden var mDemoFields_FieldIndex as Number = $.FieldTypeCount;
 
+  hidden var mDemoFields_FieldIndex as Number = $.FieldTypeCount;
+  hidden var mDemoFt as FieldType = FTUnknown;
+  hidden var mDemoFields_Counter as Number = -1;
+  hidden var mBackgroundColor as Graphics.ColorType = 0xFFFFFF;
   // hidden var mGrade as Double = 0.0d;
   function initialize() {
     DataField.initialize();
@@ -187,14 +190,15 @@ class whatmetricsView extends WatchUi.DataField {
       $.gExitedMenu = false;
     }
 
-    dc.setColor(getBackgroundColor(), getBackgroundColor());
+    mBackgroundColor = getBackgroundColor();
+    dc.setColor(mBackgroundColor, mBackgroundColor);
     dc.clear();
 
     mFontColor = Graphics.COLOR_BLACK;
     mDecimalsColor = mDecimalsColorDay;
     mUnitsColor = mUnitsColorDay;
     mIconColor = mIconColorDay;
-    if (getBackgroundColor() == Graphics.COLOR_BLACK) {
+    if (mBackgroundColor == Graphics.COLOR_BLACK) {
       mFontColor = Graphics.COLOR_WHITE;
       mDecimalsColor = mDecimalsColorNight;
       mUnitsColor = mUnitsColorNight;
@@ -208,10 +212,9 @@ class whatmetricsView extends WatchUi.DataField {
     // !! Less nested function, less stack -> no stack overflow crash :-(
     // showGrid(dc);
     var showDemoField = $.gDemoFieldsRoundTrip > 0;
-    var demoFt = FTUnknown;
     if (showDemoField)     {
-       demoFt = getNextDemoFieldType(demoFt);
-       showDemoField = demoFt != FTUnknown;       
+       mDemoFt = getNextDemoFieldType(mDemoFt);
+       showDemoField = mDemoFt != FTUnknown;       
     } else {
       mDemoFields_FieldIndex = $.FieldTypeCount;
     }
@@ -237,7 +240,7 @@ class whatmetricsView extends WatchUi.DataField {
         var ft = FTUnknown;
         if (f < mFields.size()) {
           if (showDemoField) {
-            ft = demoFt as FieldType;
+            ft = mDemoFt as FieldType;
           } else {
             ft = mFields[f] as FieldType;    
           }
@@ -284,7 +287,13 @@ class whatmetricsView extends WatchUi.DataField {
   }
 
   hidden function getNextDemoFieldType(ftCurrent as FieldType) as FieldType {
-    // @@ for now wait per field is 1 sec, so ignore this value
+    // show this field x seconds
+    if (mDemoFields_Counter == -1) {
+      mDemoFields_Counter = $.gDemoFieldsWait;
+    } else if (ftCurrent as Number == mDemoFields_FieldIndex) {
+      mDemoFields_Counter = mDemoFields_Counter - 1;
+      return ftCurrent;
+    }
 
     // next ft
     mDemoFields_FieldIndex = mDemoFields_FieldIndex - 1;
@@ -564,7 +573,6 @@ class whatmetricsView extends WatchUi.DataField {
           available = true;
           title = "hiit";
           fieldType = FTHiit;
-          text = "HIIT";
           var vo2max = mHiitt.getVo2Max();
           if (vo2max > 30) {
             text = vo2max.format("%0.1f");
@@ -779,7 +787,7 @@ class whatmetricsView extends WatchUi.DataField {
       drawCadenceIcon(dc, x, y, width, height, fi.iconColor);
       return;
     }
-    if (fi.type == FTHiit && fi.iconColor != -1) {
+    if (fi.type == FTHiit ) { // && fi.iconColor != -1
       drawHiitIcon(dc, x, y, width, height, fi.iconColor);
       return;
     }
@@ -1398,8 +1406,20 @@ class whatmetricsView extends WatchUi.DataField {
     height as Number,
     color as ColorType
   ) as Void {
+    var x1 = x + width / 2;
+    var y1 = y + height / 2;
+
     dc.setColor(color, Graphics.COLOR_TRANSPARENT);
     dc.fillRectangle(x, y, width, height);
+
+    if (color == Graphics.COLOR_TRANSPARENT || color == mBackgroundColor) {
+      dc.setColor(Graphics.COLOR_LT_GRAY, Graphics.COLOR_TRANSPARENT);
+    } else {
+      dc.setColor(mBackgroundColor, Graphics.COLOR_TRANSPARENT);      
+    }
+    var text = "HITT";
+    var font = getMatchingFont(dc, mFonts, width, height, text) as FontType;
+    dc.drawText(x1, y1, font, text, Graphics.TEXT_JUSTIFY_CENTER|Graphics.TEXT_JUSTIFY_VCENTER);
   }
 
   hidden function drawCadenceIcon(
@@ -1420,8 +1440,9 @@ class whatmetricsView extends WatchUi.DataField {
     dc.setPenWidth(5);
     setColorFillStroke(dc, color);
     dc.drawCircle(x1, y1, r);
-    dc.setPenWidth(1);
+    dc.setPenWidth(1);    
   }
+
   hidden function drawElapsedTimeIcon(
     dc as Dc,
     x as Number,
