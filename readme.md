@@ -1,4 +1,4 @@
-# Simple connect IQ datafield with:
+# `Simple` connect IQ datafield with:
 
 - Grade
 - Bearing
@@ -9,7 +9,7 @@
 - Cadence
 - Timer elapsed/timer
 - Power battery level 
-- Power battery time (o = operating time when max battery time is not configured, r = remaining time), format hh:mm
+
 
 
 Configuration can be done using on-device settings.

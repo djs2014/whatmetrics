@@ -105,12 +105,12 @@ class WhatMetrics {
     return getActivityValue(a_info, :totalDescent, 0.0f) as Float;
   }
 
-  // pressure
+  // pressure hPa
   function getAmbientPressure() as Float {
-    return getActivityValue(a_info, :ambientPressure, 0.0f) as Float;
+    return (getActivityValue(a_info, :ambientPressure, 0.0f)  as Float) / 100.0;
   }
   function getMeanSeaLevelPressure() as Float {
-    return getActivityValue(a_info, :meanSeaLevelPressure, 0.0f) as Float;
+    return (getActivityValue(a_info, :meanSeaLevelPressure, 0.0f) as Float) / 100.0;
   }
 
   // heartrate, bpm
@@ -155,12 +155,14 @@ class WhatMetrics {
     return getActivityValue(a_info, :distanceToDestination, 0.0f) as Float;
   }
 
+  // size of chainring
   function getFrontDerailleurSize() as Number {
     return getActivityValue(a_info, :frontDerailleurSize, 0) as Number;
   }
   function getRearDerailleurSize() as Number {
     return getActivityValue(a_info, :rearDerailleurSize, 0) as Number;
   }
+  // index of chainring
   function getFrontDerailleurIndex() as Number {
     return getActivityValue(a_info, :frontDerailleurIndex, 0) as Number;
   }
@@ -168,6 +170,7 @@ class WhatMetrics {
     return getActivityValue(a_info, :rearDerailleurIndex, 0) as Number;
   }
 
+  // % grade
   function getGrade() as Double {
     return mCurrentGrade;
   }
@@ -231,6 +234,7 @@ class WhatMetrics {
     return getAveragePower() / userWeightKg.toFloat();
   }
 
+  // % power balance left
   function getPowerBalanceLeft() as Number {
     if (mPowerBalance != null) {
       return (mPowerBalance as PowerBalance).getLeft();
@@ -244,6 +248,7 @@ class WhatMetrics {
     return 0.0d;
   }
 
+  // one of the power pedals is not working .. @@ experimental
   function getHasFailingDualpower() as Boolean {
     return mHasFailingDualpower;
   }

@@ -1,3 +1,20 @@
+fallback altitude -> decimals in klein veld
+fallback hiit / indien geen -- 
+
+demo
+cycle through all fields per x seconds
+x times
+
+icon for pressure
+readme
+gShowPowerBalance
+-> wanneer veld aanwezig is?
+of include in power field?
++ check powerpedal fix 
+
+build optimized niet ok
+
+
   // @@ TODO special field by index
         // if (mMetrics.getFrontDerailleurSize() > 0) {
         //   text_middleright = mMetrics.getFrontDerailleurSize().format("%0d");
@@ -14,22 +31,11 @@
         // available  = mHiitt.isHiitInProgress
 
 
-layout
-8 fields
-6 fields
-4 fields
-
-
-
-gShowPowerBalance
--> wanneer veld aanwezig is?
-of include in power field?
 
 settings
--  8 fields / 6 fields
  - define field in middle like gearcombo now
  - 
-
+- Power battery time (o = operating time when max battery time is not configured, r = remaining time), format hh:mm
   
 
 fields:

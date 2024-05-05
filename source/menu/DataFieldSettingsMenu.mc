@@ -122,17 +122,6 @@ class DataFieldSettingsMenuDelegate extends WatchUi.Menu2InputDelegate {
       boolean = Storage.getValue("show_powerbattery") ? true : false;
       powerMenu.addItem(new WatchUi.ToggleMenuItem("Power batt. level", null, "show_powerbattery", boolean, null));
 
-      boolean = Storage.getValue("show_powerbatterytime") ? true : false;
-      powerMenu.addItem(new WatchUi.ToggleMenuItem("Power batt. time", null, "show_powerbatterytime", boolean, null));
-
-      mi = new WatchUi.MenuItem("Power battery max hour", null, "metric_pbattmaxhour", null);
-      mi.setSubLabel($.getStorageNumberAsString(mi.getId() as String));
-      powerMenu.addItem(mi);
-
-      mi = new WatchUi.MenuItem("Power set remain hour", null, "metric_pbattsetremaininghour", null);
-      mi.setSubLabel($.getStorageNumberAsString(mi.getId() as String));
-      powerMenu.addItem(mi);
-
       boolean = Storage.getValue("show_powerperweight") ? true : false;
       powerMenu.addItem(new WatchUi.ToggleMenuItem("Power per weight", null, "show_powerperweight", boolean, null));
 
@@ -176,6 +165,25 @@ class DataFieldSettingsMenuDelegate extends WatchUi.Menu2InputDelegate {
       return;
     }
 
+    if (id instanceof String && id.equals("demofieldsmenu")) {
+      var demMenu = new WatchUi.Menu2({ :title => "Cycle through fields" });
+
+      var boolean = Storage.getValue("demofields") ? true : false;
+      demMenu.addItem(new WatchUi.ToggleMenuItem("Show demo", null, "demofields", boolean, null));
+
+      var mi = new WatchUi.MenuItem("Wait seconds|0~60", null, "demofields_wait", null);
+      var value = $.getStorageValue(mi.getId() as String, FTUnknown) as FieldType;
+      mi.setSubLabel($.getStorageNumberAsString(mi.getId() as String));
+      demMenu.addItem(mi);
+
+      mi = new WatchUi.MenuItem("Roundtrips|0~60", null, "demofields_roundtrip", null);
+      value = $.getStorageValue(mi.getId() as String, FTUnknown) as FieldType;
+      mi.setSubLabel($.getStorageNumberAsString(mi.getId() as String));
+      demMenu.addItem(mi);
+
+      WatchUi.pushView(demMenu, new $.GeneralMenuDelegate(self, demMenu), WatchUi.SLIDE_UP);
+      return;
+    }
     if (id instanceof String && id.equals("fallbacks")) {
       var fbMenu = new WatchUi.Menu2({ :title => "Fallback for field" });
 
@@ -228,7 +236,7 @@ class DataFieldSettingsMenuDelegate extends WatchUi.Menu2InputDelegate {
       value = $.getStorageValue(mi.getId() as String, FTUnknown) as FieldType;
       mi.setSubLabel($.getFieldTypeAsString(value));
       fbMenu.addItem(mi);
-
+    
       mi = new WatchUi.MenuItem("Cadence", null, "fb_cadence", null);
       value = $.getStorageValue(mi.getId() as String, FTUnknown) as FieldType;
       mi.setSubLabel($.getFieldTypeAsString(value));
