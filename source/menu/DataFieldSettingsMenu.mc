@@ -236,7 +236,7 @@ class DataFieldSettingsMenuDelegate extends WatchUi.Menu2InputDelegate {
       value = $.getStorageValue(mi.getId() as String, FTUnknown) as FieldType;
       mi.setSubLabel($.getFieldTypeAsString(value));
       fbMenu.addItem(mi);
-    
+
       mi = new WatchUi.MenuItem("Cadence", null, "fb_cadence", null);
       value = $.getStorageValue(mi.getId() as String, FTUnknown) as FieldType;
       mi.setSubLabel($.getFieldTypeAsString(value));
@@ -248,6 +248,21 @@ class DataFieldSettingsMenuDelegate extends WatchUi.Menu2InputDelegate {
       fbMenu.addItem(mi);
 
       mi = new WatchUi.MenuItem("Gear index", null, "fb_gear_index", null);
+      value = $.getStorageValue(mi.getId() as String, FTUnknown) as FieldType;
+      mi.setSubLabel($.getFieldTypeAsString(value));
+      fbMenu.addItem(mi);
+
+      mi = new WatchUi.MenuItem("Avg heartrate", null, "fb_average_heart_rate", null);
+      value = $.getStorageValue(mi.getId() as String, FTUnknown) as FieldType;
+      mi.setSubLabel($.getFieldTypeAsString(value));
+      fbMenu.addItem(mi);
+
+      mi = new WatchUi.MenuItem("Avg power", null, "fb_average_power", null);
+      value = $.getStorageValue(mi.getId() as String, FTUnknown) as FieldType;
+      mi.setSubLabel($.getFieldTypeAsString(value));
+      fbMenu.addItem(mi);
+
+      mi = new WatchUi.MenuItem("Avg cadence", null, "fb_average_cadence", null);
       value = $.getStorageValue(mi.getId() as String, FTUnknown) as FieldType;
       mi.setSubLabel($.getFieldTypeAsString(value));
       fbMenu.addItem(mi);
@@ -643,6 +658,14 @@ function getFieldTypeAsString(fieldType as FieldType) as String {
       return "heartrate zone";
     case FTGearIndex:
       return "gear index";
+    case FTAverageSpeed:
+      return "avg speed";
+    case FTAverageHeartRate:
+      return "avg heartrate";
+    case FTAveragePower:
+      return "avg power";
+    case FTAverageCadence:
+      return "avg cadence";
     default:
       return "unknown";
   }

@@ -30,7 +30,7 @@ enum FieldLayout {
     FL4Fields = 2
 }
 
-const FieldTypeCount = 22;
+const FieldTypeCount = 26; // incl the 0
 enum FieldType {
     FTUnknown = 0,
     FTDistance = 1,
@@ -53,7 +53,20 @@ enum FieldType {
     FTPowerPerWeight = 18,
     FTPowerBalance = 19,    
     FTHeartRateZone = 20,
-    FTGearIndex = 21
+    FTGearIndex = 21,
+    FTAverageSpeed = 22,
+    FTAverageHeartRate = 23,    
+    FTAveragePower = 24,
+    FTAverageCadence = 25,
+
+    // @@ TODO
+    // FTVo2Max = 22,
+    // FTCalories = 23,
+    // FTEnergyExpenditure = 24,
+    // FTTrainingEffect = 25,
+    // FTTotalAscent = 26,
+    // FTTotalDescent = 27,
+    // FTAverage ..
   }
 
 enum ZenMode {

@@ -91,6 +91,7 @@ class whatmetricsApp extends Application.AppBase {
       Storage.setValue("wide_field_zen", ZMWhenMoving);
       Storage.setValue("small_field_zen", ZMOn);
 
+      // @@TODO Array
       Storage.setValue("fb_power", FTDistance);
       Storage.setValue("fb_power_per_weight", FTDistance);
       Storage.setValue("fb_power_balance", FTDistance);
@@ -104,7 +105,10 @@ class whatmetricsApp extends Application.AppBase {
       Storage.setValue("fb_cadence", FTUnknown);
       Storage.setValue("fb_gear_combo", FTUnknown);
       Storage.setValue("fb_gear_index", FTUnknown);
-
+      Storage.setValue("fb_average_heart_rate", FTUnknown);
+      Storage.setValue("fb_average_power", FTUnknown);
+      Storage.setValue("fb_average_cadence", FTUnknown);
+      
       Storage.setValue("demofields", false);
       Storage.setValue("demofields_wait", 2);
       Storage.setValue("demofields_roundtrip", 1);
@@ -156,6 +160,7 @@ class whatmetricsApp extends Application.AppBase {
     $.gWideFieldZen = getStorageValue("wide_field_zen", $.gWideFieldZen) as ZenMode;
     $.gSmallFieldZen = getStorageValue("small_field_zen", $.gSmallFieldZen) as ZenMode;
 
+    // TODO make it one array
     $.gFBPower = getStorageValue("fb_power", $.gFBPower) as FieldType;
     $.gFBPowerPerWeight = getStorageValue("fb_power_per_weight", $.gFBPowerPerWeight) as FieldType;
     $.gFBPowerBalance = getStorageValue("fb_power_balance", $.gFBPowerBalance) as FieldType;
@@ -169,6 +174,11 @@ class whatmetricsApp extends Application.AppBase {
     $.gFBCadence = getStorageValue("fb_cadence", $.gFBCadence) as FieldType;
     $.gFBGearCombo = getStorageValue("fb_gear_combo", $.gFBGearCombo) as FieldType;
     $.gFBGearIndex = getStorageValue("fb_gear_index", $.gFBGearIndex) as FieldType;
+
+    $.gFBAverageHeartRate = getStorageValue("fb_average_heart_rate", $.gFBAverageHeartRate) as FieldType;
+    $.gFBAveragePower = getStorageValue("fb_average_power", $.gFBAveragePower) as FieldType;
+    $.gFBAverageCadence = getStorageValue("fb_average_cadence", $.gFBAverageCadence) as FieldType;
+
 
     $.gDebug = getStorageValue("debug", $.gDebug) as Boolean;
     $.gShowColors = getStorageValue("show_colors", $.gShowColors) as Boolean;
@@ -275,6 +285,11 @@ var gFBGrade as FieldType = FTUnknown;
 var gFBCadence as FieldType = FTUnknown;
 var gFBGearCombo as FieldType = FTUnknown;
 var gFBGearIndex as FieldType = FTUnknown;
+
+var gFBAverageHeartRate as FieldType = FTUnknown;
+var gFBAveragePower as FieldType = FTUnknown;
+var gFBAverageCadence as FieldType = FTUnknown;
+
 
 var gDemoFieldsWait as Number = 2;
 var gDemoFieldsRoundTrip as Number = 0;

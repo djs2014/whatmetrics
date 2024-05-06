@@ -1,12 +1,7 @@
-fallback altitude -> decimals in klein veld
-fallback hiit / indien geen -- 
-
-demo
-cycle through all fields per x seconds
-x times
-
-icon for pressure
 readme
+fallback hiit / indien geen -- 
+fi.textisnumber = true -> bigger font possible
+
 gShowPowerBalance
 -> wanneer veld aanwezig is?
 of include in power field?

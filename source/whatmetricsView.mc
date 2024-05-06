@@ -340,6 +340,12 @@ class whatmetricsView extends WatchUi.DataField {
         return $.gFBGearCombo;
       case FTGearIndex:
         return $.gFBGearIndex;
+      case FTAverageHeartRate:
+        return $.gFBAverageHeartRate;
+      case FTAveragePower:
+        return $.gFBAveragePower;
+      case FTAverageCadence:
+        return $.gFBAverageCadence;
       default:
         return FTUnknown;
     }
@@ -367,26 +373,46 @@ class whatmetricsView extends WatchUi.DataField {
       case FTDistance:
         title = "distance";
         var dist = mMetrics.getElapsedDistance();
-        text = getDistanceInMeterOrKm(dist).format(getFormatForMeterAndKm(dist));
-        units_side = getUnitsInMeterOrKm(dist);
+        value = getDistanceInMeterOrKm(dist).format(getFormatForMeterAndKm(dist));
+        if (mDisplaySize.equals("s")) {
+          text = value;
+          units_side = getUnitsInMeterOrKm(dist);
+        } else {
+          number = stringLeft(value, ".", value);
+          decimals = stringRight(value, ".", "");
+          units = getUnitsInMeterOrKm(dist);
+        }
         break;
       case FTDistanceNext:
         title = "next";
         var distNext = mMetrics.getDistanceToNextPoint();
         available = distNext > 0;
-        text = getDistanceInMeterOrKm(distNext).format(getFormatForMeterAndKm(distNext));
-        units_side = getUnitsInMeterOrKm(distNext);
+        value = getDistanceInMeterOrKm(distNext).format(getFormatForMeterAndKm(distNext));
+        if (mDisplaySize.equals("s")) {
+          text = value;
+          units_side = getUnitsInMeterOrKm(distNext);
+        } else {
+          number = stringLeft(value, ".", value);
+          decimals = stringRight(value, ".", "");
+          units = getUnitsInMeterOrKm(distNext);
+        }
         break;
       case FTDistanceDest:
         title = "dest";
         var distDest = mMetrics.getDistanceToDestination();
         available = distDest > 0;
-        text = getDistanceInMeterOrKm(distDest).format(getFormatForMeterAndKm(distDest));
-        units_side = getUnitsInMeterOrKm(distDest);
+        value = getDistanceInMeterOrKm(distDest).format(getFormatForMeterAndKm(distDest));
+        if (mDisplaySize.equals("s")) {
+          text = value;
+          units_side = getUnitsInMeterOrKm(distDest);
+        } else {
+          number = stringLeft(value, ".", value);
+          decimals = stringRight(value, ".", "");
+          units = getUnitsInMeterOrKm(distDest);
+        }
         break;
       case FTGrade:
         title = "grade";
-        fieldType = FTGrade;
         var grade = mMetrics.getGrade();
 
         if (gGradeFallbackStart < $.gGradeFallbackEnd) {
@@ -411,7 +437,6 @@ class whatmetricsView extends WatchUi.DataField {
         break;
       case FTClock:
         title = "clock";
-        fieldType = FTClock;
         var today = Gregorian.info(Time.now(), Time.FORMAT_MEDIUM);
         text = Lang.format("$1$:$2$", [today.hour, today.min.format("%02d")]);
         decimals = today.sec.format("%02d");
@@ -419,14 +444,14 @@ class whatmetricsView extends WatchUi.DataField {
         iconParam = Time.now().value() * 1000; // to mmsec
         break;
 
+      case FTAverageHeartRate:
       case FTHeartRate:
         var heartRate = mMetrics.getHeartRate();
         available = heartRate > 0;
         title = "heartrate";
-        fieldType = FTHeartRate;
         units = "bpm";
 
-        if (gShowAverageWhenPaused && mPaused) {
+        if ((gShowAverageWhenPaused && mPaused) || fieldType == FTAverageHeartRate) {
           heartRate = mMetrics.getAverageHeartRate();
           iconParam = mMetrics.getHeartRateZone(true);
           units = "~bpm";
@@ -436,9 +461,10 @@ class whatmetricsView extends WatchUi.DataField {
         number = heartRate.format("%0d");
 
         iconColor = getIconColor(heartRate, $.gTargetHeartRate);
-        text_botleft = "zone " + iconParam.format("%0d");
+        // text_botleft = "zone " + iconParam.format("%0d");
         break;
 
+      case FTAveragePower:
       case FTPower:
         // @@ TODO special field by index
         // if (mMetrics.getFrontDerailleurSize() > 0) {
@@ -452,9 +478,8 @@ class whatmetricsView extends WatchUi.DataField {
           prefix = "2*";
         }
         title = "power (" + mMetrics.getPowerPerSec().format("%0d") + " sec)";
-        fieldType = FTPower;
         units = "w";
-        if (gShowAverageWhenPaused && mPaused) {
+        if ((gShowAverageWhenPaused && mPaused) || fieldType == FTAveragePower) {
           number = mMetrics.getAveragePower().format("%0d");
           units = "~w";
         } else {
@@ -471,18 +496,17 @@ class whatmetricsView extends WatchUi.DataField {
 
       case FTBearing:
         text = getCompassDirection(mMetrics.getBearing());
-        fieldType = FTBearing;
 
         break;
+      case FTAverageSpeed:
       case FTSpeed:
         // if (mMetrics.getRearDerailleurSize() > 0) {
         //   text_middleleft = mMetrics.getRearDerailleurSize().format("%0d");
         // }
         title = "speed";
-        fieldType = FTSpeed;
         units = "km/h";
         var speed;
-        if (gShowAverageWhenPaused && mPaused) {
+        if ((gShowAverageWhenPaused && mPaused) || fieldType == FTAverageSpeed) {
           speed = mpsToKmPerHour(mMetrics.getAverageSpeed());
           units = "~km/h";
         } else {
@@ -497,7 +521,6 @@ class whatmetricsView extends WatchUi.DataField {
 
       case FTAltitude:
         title = "altitude";
-        fieldType = FTAltitude;
         units = "m";
         var altitude = mMetrics.getAltitude();
 
@@ -547,14 +570,14 @@ class whatmetricsView extends WatchUi.DataField {
         decimals = stringRight(value, ".", "");
         break;
 
+      case FTAverageCadence:
       case FTCadence:
         title = "cadence";
-        fieldType = FTCadence;
         units = "rpm";
         available = mMetrics.getCadence() > 0 and (mCadenceFallbackCountdown > 0 or $.gCadenceCountdownToFallBack == 0);
 
         var cadence;
-        if (gShowAverageWhenPaused && mPaused) {
+        if ((gShowAverageWhenPaused && mPaused) || fieldType == FTAverageCadence) {
           cadence = mMetrics.getAverageCadence();
           units = "~rpm";
         } else {
@@ -574,7 +597,6 @@ class whatmetricsView extends WatchUi.DataField {
         if (mHiitt.isEnabled()) {
           available = true;
           title = "hiit";
-          fieldType = FTHiit;
           var vo2max = mHiitt.getVo2Max();
           if (vo2max > 30) {
             text = vo2max.format("%0.1f");
@@ -752,11 +774,11 @@ class whatmetricsView extends WatchUi.DataField {
       drawElapsedTimeIcon(dc, x, y, width, height, mIconColor, fi.iconParam.toNumber(), fi.iconParam2.toNumber());
       return;
     }
-    if (fi.type == FTHeartRate) {
+    if (fi.type == FTHeartRate || fi.type == FTAverageHeartRate) {
       drawHeartIcon(dc, x, y, width, height, fi.iconColor, fi.iconParam.toNumber());
       return;
     }
-    if (fi.type == FTPower) {
+    if (fi.type == FTPower || fi.type == FTAveragePower) {
       drawPowerIcon(dc, x, y, width, height, fi.iconColor);
 
       if ($.gShowPowerBattery) {
@@ -769,7 +791,7 @@ class whatmetricsView extends WatchUi.DataField {
       // @@ drawBearingIcon(dc, x, y, width, height, mIconColor);
       return;
     }
-    if (fi.type == FTSpeed) {
+    if (fi.type == FTSpeed || fi.type == FTAverageSpeed) {
       drawSpeedIcon(dc, x, y, width, height, fi.iconColor);
       return;
     }
@@ -785,7 +807,7 @@ class whatmetricsView extends WatchUi.DataField {
       drawPressureIcon(dc, x, y, width, height, mIconColor);
       return;
     }
-    if (fi.type == FTCadence) {
+    if (fi.type == FTCadence || fi.type == FTAverageCadence) {
       drawCadenceIcon(dc, x, y, width, height, fi.iconColor);
       return;
     }
