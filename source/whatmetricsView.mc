@@ -313,325 +313,269 @@ class whatmetricsView extends WatchUi.DataField {
   }
 
   function getFallbackField(fieldType as FieldType) as FieldType {
-    switch (fieldType) {
-      case FTPower:
-        return $.gFBPower;
-      case FTPowerPerWeight:
-        return $.gFBPowerPerWeight;
-      case FTPowerBalance:
-        return $.gFBPowerBalance;
-      case FTHeartRate:
-        return $.gFBHeartRate;
-      case FTHeartRateZone:
-        return $.gFBHeartRateZone;
-      case FTDistanceNext:
-        return $.gFBDistanceNext;
-      case FTDistanceDest:
-        return $.gFBDistanceDest;
-      case FTHiit:
-        return $.gFBHiit;
-      case FTAltitude:
-        return $.gFBAltitude;
-      case FTGrade:
-        return $.gFBGrade;
-      case FTCadence:
-        return $.gFBCadence;
-      case FTGearCombo:
-        return $.gFBGearCombo;
-      case FTGearIndex:
-        return $.gFBGearIndex;
-      case FTAverageHeartRate:
-        return $.gFBAverageHeartRate;
-      case FTAveragePower:
-        return $.gFBAveragePower;
-      case FTAverageCadence:
-        return $.gFBAverageCadence;
-      default:
-        return FTUnknown;
-    }
-  }
-  function getFieldInfo(fieldType as FieldType, fieldIdx as Number) as FieldInfo {
-    var available = true;
-    var title = "";
-    var value = "";
-    var prefix = "";
-    var text = "";
-    var number = "";
-    var decimals = "";
-    var units = "";
-    var units_side = "";
-    var text_botright = "";
-    var text_botleft = "";
+    var idx = fieldType as Number;
 
-    var text_middleleft = "";
-    var text_middleright = "";
-    var iconColor = -1;
-    var iconParam = 0;
-    var iconParam2 = 0;
+    if (idx >= $.gFallbackFields.size()) {
+      return FTUnknown;
+    }
+    return $.gFallbackFields[idx] as FieldType;
+  }
+
+  function getFieldInfo(fieldType as FieldType, fieldIdx as Number) as FieldInfo {
+    var fi = new FieldInfo(fieldType, fieldIdx);
 
     switch (fieldType) {
       case FTDistance:
-        title = "distance";
+        fi.title = "distance";
         var dist = mMetrics.getElapsedDistance();
-        value = getDistanceInMeterOrKm(dist).format(getFormatForMeterAndKm(dist));
+        fi.value = getDistanceInMeterOrKm(dist).format(getFormatForMeterAndKm(dist));
         if (mDisplaySize.equals("s")) {
-          text = value;
-          units_side = getUnitsInMeterOrKm(dist);
+          fi.text = fi.value;
+          fi.units_side = getUnitsInMeterOrKm(dist);
         } else {
-          number = stringLeft(value, ".", value);
-          decimals = stringRight(value, ".", "");
-          units = getUnitsInMeterOrKm(dist);
+          fi.number = stringLeft(fi.value, ".", fi.value);
+          fi.decimals = stringRight(fi.value, ".", "");
+          fi.units = getUnitsInMeterOrKm(dist);
         }
-        break;
+        return fi;
+
       case FTDistanceNext:
-        title = "next";
+        fi.title = "next";
         var distNext = mMetrics.getDistanceToNextPoint();
-        available = distNext > 0;
-        value = getDistanceInMeterOrKm(distNext).format(getFormatForMeterAndKm(distNext));
+        fi.available = distNext > 0;
+        fi.value = getDistanceInMeterOrKm(distNext).format(getFormatForMeterAndKm(distNext));
         if (mDisplaySize.equals("s")) {
-          text = value;
-          units_side = getUnitsInMeterOrKm(distNext);
+          fi.text = fi.value;
+          fi.units_side = getUnitsInMeterOrKm(distNext);
         } else {
-          number = stringLeft(value, ".", value);
-          decimals = stringRight(value, ".", "");
-          units = getUnitsInMeterOrKm(distNext);
+          fi.number = stringLeft(fi.value, ".", fi.value);
+          fi.decimals = stringRight(fi.value, ".", "");
+          fi.units = getUnitsInMeterOrKm(distNext);
         }
-        break;
+        return fi;
+
       case FTDistanceDest:
-        title = "dest";
+        fi.title = "dest";
         var distDest = mMetrics.getDistanceToDestination();
-        available = distDest > 0;
-        value = getDistanceInMeterOrKm(distDest).format(getFormatForMeterAndKm(distDest));
+        fi.available = distDest > 0;
+        fi.value = getDistanceInMeterOrKm(distDest).format(getFormatForMeterAndKm(distDest));
         if (mDisplaySize.equals("s")) {
-          text = value;
-          units_side = getUnitsInMeterOrKm(distDest);
+          fi.text = fi.value;
+          fi.units_side = getUnitsInMeterOrKm(distDest);
         } else {
-          number = stringLeft(value, ".", value);
-          decimals = stringRight(value, ".", "");
-          units = getUnitsInMeterOrKm(distDest);
+          fi.number = stringLeft(fi.value, ".", fi.value);
+          fi.decimals = stringRight(fi.value, ".", "");
+          fi.units = getUnitsInMeterOrKm(distDest);
         }
-        break;
+        return fi;
+
       case FTGrade:
-        title = "grade";
+        fi.title = "grade";
         var grade = mMetrics.getGrade();
 
         if (gGradeFallbackStart < $.gGradeFallbackEnd) {
-          available = grade <= $.gGradeFallbackStart or grade >= $.gGradeFallbackEnd;
+          fi.available = grade <= $.gGradeFallbackStart or grade >= $.gGradeFallbackEnd;
         }
 
-        value = grade.format("%0.1f");
+        fi.value = grade.format("%0.1f");
         if (mDisplaySize.equals("s")) {
-          text = value;
-          units_side = "%";
+          fi.text = fi.value;
+          fi.units_side = "%";
         } else {
-          units = "%";
-          number = stringLeft(value, ".", value);
-          decimals = stringRight(value, ".", "");
+          fi.units = "%";
+          fi.number = stringLeft(fi.value, ".", fi.value);
+          fi.decimals = stringRight(fi.value, ".", "");
         }
         var g = grade;
         if (grade < 0) {
           grade = grade * -1;
         }
-        iconColor = getIconColor(grade, $.gTargetGrade);
-        iconParam = g;
-        break;
+        fi.iconColor = getIconColor(grade, $.gTargetGrade);
+        fi.iconParam = g;
+        return fi;
+
       case FTClock:
-        title = "clock";
+        fi.title = "clock";
         var today = Gregorian.info(Time.now(), Time.FORMAT_MEDIUM);
-        text = Lang.format("$1$:$2$", [today.hour, today.min.format("%02d")]);
-        decimals = today.sec.format("%02d");
-        units = Lang.format("$1$ $2$ $3$", [today.day_of_week, today.day, today.month]);
-        iconParam = Time.now().value() * 1000; // to mmsec
-        break;
+        fi.text = Lang.format("$1$:$2$", [today.hour, today.min.format("%02d")]);
+        fi.decimals = today.sec.format("%02d");
+        fi.units = Lang.format("$1$ $2$ $3$", [today.day_of_week, today.day, today.month]);
+        fi.iconParam = Time.now().value() * 1000; // to mmsec
+        return fi;
 
       case FTAverageHeartRate:
       case FTHeartRate:
         var heartRate = mMetrics.getHeartRate();
-        available = heartRate > 0;
-        title = "heartrate";
-        units = "bpm";
+        fi.available = heartRate > 0;
+        fi.title = "heartrate";
+        fi.units = "bpm";
 
         if ((gShowAverageWhenPaused && mPaused) || fieldType == FTAverageHeartRate) {
           heartRate = mMetrics.getAverageHeartRate();
-          iconParam = mMetrics.getHeartRateZone(true);
-          units = "~bpm";
+          fi.iconParam = mMetrics.getHeartRateZone(true);
+          fi.units = "~bpm";
         } else {
-          iconParam = mMetrics.getHeartRateZone(false);
+          fi.iconParam = mMetrics.getHeartRateZone(false);
         }
-        number = heartRate.format("%0d");
+        fi.number = heartRate.format("%0d");
 
-        iconColor = getIconColor(heartRate, $.gTargetHeartRate);
-        // text_botleft = "zone " + iconParam.format("%0d");
-        break;
+        fi.iconColor = getIconColor(heartRate, $.gTargetHeartRate);
+        return fi;
 
       case FTAveragePower:
       case FTPower:
-        // @@ TODO special field by index
-        // if (mMetrics.getFrontDerailleurSize() > 0) {
-        //   text_middleright = mMetrics.getFrontDerailleurSize().format("%0d");
-        // }
-
         var power = mMetrics.getPower();
-        available = power > 0 and (mPowerFallbackCountdown > 0 or $.gPowerCountdownToFallBack == 0);
+        fi.available = power > 0 and (mPowerFallbackCountdown > 0 or $.gPowerCountdownToFallBack == 0);
 
         if (mMetrics.getHasFailingDualpower()) {
-          prefix = "2*";
+          fi.prefix = "2*";
         }
-        title = "power (" + mMetrics.getPowerPerSec().format("%0d") + " sec)";
-        units = "w";
+        fi.title = "power (" + mMetrics.getPowerPerSec().format("%0d") + " sec)";
+        fi.units = "w";
         if ((gShowAverageWhenPaused && mPaused) || fieldType == FTAveragePower) {
-          number = mMetrics.getAveragePower().format("%0d");
-          units = "~w";
+          fi.number = mMetrics.getAveragePower().format("%0d");
+          fi.units = "~w";
         } else {
-          number = mMetrics.getPower().format("%0d");
+          fi.number = mMetrics.getPower().format("%0d");
         }
-        // @@ extra details in field .. option antizen mode
-        // if (gShowPowerAverage) {
-        //   text_botleft = "avg " + mMetrics.getAveragePower().format("%0d");
-        // } else {
-        //   text_botleft = mMetrics.getPowerPerWeight().format("%0.1f") + "/kg";
-        // }
-        iconColor = getIconColor(mMetrics.getPower(), $.gTargetFtp);
-        break;
+        fi.iconColor = getIconColor(mMetrics.getPower(), $.gTargetFtp);
+        return fi;
 
       case FTBearing:
-        text = getCompassDirection(mMetrics.getBearing());
+        fi.text = getCompassDirection(mMetrics.getBearing());
+        return fi;
 
-        break;
       case FTAverageSpeed:
       case FTSpeed:
-        // if (mMetrics.getRearDerailleurSize() > 0) {
-        //   text_middleleft = mMetrics.getRearDerailleurSize().format("%0d");
-        // }
-        title = "speed";
-        units = "km/h";
+        fi.title = "speed";
+        fi.units = "km/h";
         var speed;
         if ((gShowAverageWhenPaused && mPaused) || fieldType == FTAverageSpeed) {
           speed = mpsToKmPerHour(mMetrics.getAverageSpeed());
-          units = "~km/h";
+          fi.units = "~km/h";
         } else {
           speed = mpsToKmPerHour(mMetrics.getSpeed());
         }
-        value = speed.format("%0.1f");
-        number = stringLeft(value, ".", value);
-        decimals = stringRight(value, ".", "");
-        iconColor = getIconColor(speed, $.gTargetSpeed);
-        // text_botleft = "avg " + mpsToKmPerHour(mMetrics.getAverageSpeed()).format("%0.1f");
-        break;
+        fi.value = speed.format("%0.1f");
+        fi.number = stringLeft(fi.value, ".", fi.value);
+        fi.decimals = stringRight(fi.value, ".", "");
+        fi.iconColor = getIconColor(speed, $.gTargetSpeed);
+        return fi;
 
       case FTAltitude:
-        title = "altitude";
-        units = "m";
+        fi.title = "altitude";
+        fi.units = "m";
         var altitude = mMetrics.getAltitude();
 
         if (gAltitudeFallbackStart < $.gAltitudeFallbackEnd) {
-          available = altitude <= $.gAltitudeFallbackStart or altitude >= $.gAltitudeFallbackEnd;
+          fi.available = altitude <= $.gAltitudeFallbackStart or altitude >= $.gAltitudeFallbackEnd;
         }
 
         if (mpsToKmPerHour(mMetrics.getSpeed()) < 15) {
-          value = altitude.format("%0.2f");
+          fi.value = altitude.format("%0.2f");
         } else {
-          value = altitude.format("%0d");
+          fi.value = altitude.format("%0d");
         }
 
         if (mDisplaySize.equals("w")) {
-          number = value;
-          units_side = "m";
+          fi.number = fi.value;
+          fi.units_side = "m";
         } else {
-          number = stringLeft(value, ".", value);
-          decimals = stringRight(value, ".", "");
+          fi.number = stringLeft(fi.value, ".", fi.value);
+          fi.decimals = stringRight(fi.value, ".", "");
         }
 
         if (altitude < 0) {
           altitude = altitude * -1;
         }
-        iconColor = getIconColor(altitude, $.gTargetAltitude);
+        fi.iconColor = getIconColor(altitude, $.gTargetAltitude);
 
         var totalAsc = mMetrics.getTotalAscent();
         if (totalAsc > 0) {
-          text_botleft = "A " + totalAsc.format("%0.0f");
+          fi.text_botleft = "A " + totalAsc.format("%0.0f");
         }
         var totalDesc = mMetrics.getTotalDescent();
         if (totalDesc > 0) {
-          text_botright = "D " + totalDesc.format("%0.0f");
+          fi.text_botright = "D " + totalDesc.format("%0.0f");
         }
-        break;
+        return fi;
 
       case FTPressureAtSea:
       case FTPressure:
-        title = "pressure";
-        units = "hPa";
-        value = mMetrics.getAmbientPressure().format("%0.2f");
+        fi.title = "pressure";
+        fi.units = "hPa";
+        fi.value = mMetrics.getAmbientPressure().format("%0.2f");
         if (fieldType == FTPressureAtSea) {
-          title = "at sea";
-          value = mMetrics.getMeanSeaLevelPressure().format("%0.2f");
+          fi.title = "at sea";
+          fi.value = mMetrics.getMeanSeaLevelPressure().format("%0.2f");
         }
-        number = stringLeft(value, ".", value);
-        decimals = stringRight(value, ".", "");
-        break;
+        fi.number = stringLeft(fi.value, ".", fi.value);
+        fi.decimals = stringRight(fi.value, ".", "");
+        return fi;
 
       case FTAverageCadence:
       case FTCadence:
-        title = "cadence";
-        units = "rpm";
-        available = mMetrics.getCadence() > 0 and (mCadenceFallbackCountdown > 0 or $.gCadenceCountdownToFallBack == 0);
+        fi.title = "cadence";
+        fi.units = "rpm";
+        fi.available =
+          mMetrics.getCadence() > 0 and (mCadenceFallbackCountdown > 0 or $.gCadenceCountdownToFallBack == 0);
 
         var cadence;
         if ((gShowAverageWhenPaused && mPaused) || fieldType == FTAverageCadence) {
           cadence = mMetrics.getAverageCadence();
-          units = "~rpm";
+          fi.units = "~rpm";
         } else {
           cadence = mMetrics.getCadence();
         }
-        number = cadence.format("%0d");
+        fi.number = cadence.format("%0d");
         if (mDisplaySize.equals("w")) {
-          units_side = "rpm";
+          fi.units_side = "rpm";
         }
-        iconColor = getIconColor(cadence, $.gTargetCadence);
-        break;
+        fi.iconColor = getIconColor(cadence, $.gTargetCadence);
+        return fi;
 
       case FTHiit:
         // @@ TODO, keep bottom information / stats field
         // available  = mHiitt.isHiitInProgress
-        available = false;
+        fi.available = false;
         if (mHiitt.isEnabled()) {
-          available = true;
-          title = "hiit";
+          fi.available = true;
+          fi.title = "hiit";
           var vo2max = mHiitt.getVo2Max();
           if (vo2max > 30) {
-            text = vo2max.format("%0.1f");
+            fi.text = vo2max.format("%0.1f");
           }
 
           var recovery = mHiitt.getRecoveryElapsedSeconds();
           if (recovery > 0) {
-            text = secondsToCompactTimeString(recovery, "({m}:{s})");
+            fi.text = secondsToCompactTimeString(recovery, "({m}:{s})");
             if (mHiitt.wasValidHiit()) {
-              iconColor = Graphics.COLOR_BLUE;
+              fi.iconColor = Graphics.COLOR_BLUE;
             }
           } else {
             var counter = mHiitt.getCounter();
             if (counter > 0) {
-              text = counter.format("%01d");
+              fi.text = counter.format("%01d");
             } else {
               var hiitElapsed = mHiitt.getElapsedSeconds();
               if (hiitElapsed > 0) {
-                text = secondsToCompactTimeString(hiitElapsed, "({m}:{s})");
+                fi.text = secondsToCompactTimeString(hiitElapsed, "({m}:{s})");
                 if (mHiitt.wasValidHiit()) {
-                  iconColor = Graphics.COLOR_GREEN;
+                  fi.iconColor = Graphics.COLOR_GREEN;
                 }
                 vo2max = mHiitt.getVo2Max();
                 if (vo2max > 30) {
-                  decimals = vo2max.format("%0.1f");
+                  fi.decimals = vo2max.format("%0.1f");
                 }
               }
             }
           }
           var nrHiit = mHiitt.getNumberOfHits();
           if (nrHiit > 0) {
-            text_botleft = "H " + nrHiit.format("%0.0d");
-            text_botleft += " " + mHiitt.getHistStatusAsString();
+            fi.text_botleft = "H " + nrHiit.format("%0.0d");
+            fi.text_botleft += " " + mHiitt.getHistStatusAsString();
           } else {
-            text_botleft = mHiitt.getHistStatusAsString();
+            fi.text_botleft = mHiitt.getHistStatusAsString();
           }
 
           var scores = mHiitt.getHitScores();
@@ -641,60 +585,59 @@ class whatmetricsView extends WatchUi.DataField {
             for (var sIdx = scores.size() - 1; sIdx >= 0 and sCounter < 4; sIdx--) {
               var score = scores[sIdx] as Float;
 
-              text_botright = text_botright + " " + score.format("%0.0f");
+              fi.text_botright = fi.text_botright + " " + score.format("%0.0f");
               sCounter++;
             }
           }
         }
+        return fi;
 
-        break;
       case FTTimer:
-        title = "timer";
-        iconParam = mMetrics.getTimerTime();
-        var timerTime = millisecondsToShortTimeString(iconParam, "{h}.{m}:{s}");
-        iconParam2 = stringLeft(timerTime, ".", "").toNumber();
-        text = stringRight(timerTime, ".", timerTime);
-        break;
-      case FTTimeElapsed:
-        title = "elapsed";
-        iconParam = mMetrics.getElapsedTime();
-        var elapsedTime = millisecondsToShortTimeString(iconParam, "{h}.{m}:{s}");
-        iconParam2 = stringLeft(elapsedTime, ".", "").toNumber();
-        prefix = stringLeft(elapsedTime, ".", "");
-        if (prefix.equals("0")) {
-          prefix = "";
-        }
-        text = stringRight(elapsedTime, ".", elapsedTime);
-        break;
-      case FTGearCombo:
-        title = "gear combo";
-        available = mMetrics.getFrontDerailleurSize() > 0;
-        text = mMetrics.getFrontDerailleurSize().format("%0d") + ":" + mMetrics.getRearDerailleurSize().format("%0d");
+        fi.title = "timer";
+        fi.iconParam = mMetrics.getTimerTime();
+        var timerTime = millisecondsToShortTimeString(fi.iconParam, "{h}.{m}:{s}");
+        fi.iconParam2 = $.convertToNumber(stringLeft(timerTime, ".", "0"), 0);
+        fi.text = stringRight(timerTime, ".", timerTime);
+        return fi;
 
-        break;
+      case FTTimeElapsed:
+        fi.title = "elapsed";
+        fi.iconParam = mMetrics.getElapsedTime();
+        var elapsedTime = millisecondsToShortTimeString(fi.iconParam, "{h}.{m}:{s}");
+        fi.iconParam2 = $.convertToNumber(stringLeft(elapsedTime, ".", "0"), 0);                
+        fi.text = stringRight(elapsedTime, ".", elapsedTime);
+        return fi;
+
+      case FTGearCombo:
+        fi.title = "gear combo";
+        fi.available = mMetrics.getFrontDerailleurSize() > 0;
+        fi.text =
+          mMetrics.getFrontDerailleurSize().format("%0d") + ":" + mMetrics.getRearDerailleurSize().format("%0d");
+        return fi;
+
       case FTPowerPerWeight:
-        title = "power (" + mMetrics.getPowerPerSec().format("%0d") + " sec) / kg";
+        fi.title = "power (" + mMetrics.getPowerPerSec().format("%0d") + " sec) / kg";
         var powerpw = mMetrics.getPowerPerWeight();
-        available = powerpw > 0 and (mPowerFallbackCountdown > 0 or $.gPowerCountdownToFallBack == 0);
-        units = "w/kg";
+        fi.available = powerpw > 0 and (mPowerFallbackCountdown > 0 or $.gPowerCountdownToFallBack == 0);
+        fi.units = "w/kg";
 
         if (mMetrics.getHasFailingDualpower()) {
-          prefix = "2*";
+          fi.prefix = "2*";
         }
 
         if (gShowAverageWhenPaused && mPaused) {
-          value = mMetrics.getAveragePowerPerWeight().format("%0.1f");
-          units = "~w/kg";
+          fi.value = mMetrics.getAveragePowerPerWeight().format("%0.1f");
+          fi.units = "~w/kg";
         } else {
-          value = powerpw.format("%0.1f");
+          fi.value = powerpw.format("%0.1f");
         }
-        number = $.stringLeft(value, ".", value);
-        decimals = $.stringRight(value, ".", "");
-        break;
+        fi.number = $.stringLeft(fi.value, ".", fi.value);
+        fi.decimals = $.stringRight(fi.value, ".", "");
+        return fi;
 
       case FTPowerBalance:
-        title = "power balance";
-        available = mMetrics.getPower() > 0 and (mPowerFallbackCountdown > 0 or $.gPowerCountdownToFallBack == 0);
+        fi.title = "power balance";
+        fi.available = mMetrics.getPower() > 0 and (mPowerFallbackCountdown > 0 or $.gPowerCountdownToFallBack == 0);
 
         var pLeft = mMetrics.getPowerBalanceLeft();
         if (gShowAverageWhenPaused && mPaused) {
@@ -702,39 +645,24 @@ class whatmetricsView extends WatchUi.DataField {
         }
         if (pLeft > 0 and pLeft < 100) {
           var pRight = 100 - (pLeft as Number);
-          text = Lang.format("$1$:$2$", [(pLeft as Number).format("%02d"), pRight.format("%02d")]);
+          fi.text = Lang.format("$1$:$2$", [(pLeft as Number).format("%02d"), pRight.format("%02d")]);
         }
-        break;
-      case FTHeartRateZone:
-        title = "heartrate zone";
-        available = mMetrics.getHeartRate() > 0;
-        text = mMetrics.getHeartRateZone(gShowAverageWhenPaused && mPaused).format("%d");
-        break;
-      case FTGearIndex:
-        title = "gear index";
-        available = mMetrics.getFrontDerailleurSize() > 0;
-        text = mMetrics.getFrontDerailleurIndex().format("%0d") + "|" + mMetrics.getRearDerailleurIndex().format("%0d");
-        break;
-    }
+        return fi;
 
-    var fi = new FieldInfo();
-    fi.available = available;
-    fi.index = fieldIdx;
-    fi.type = fieldType as FieldType;
-    fi.title = title;
-    fi.value = value;
-    fi.prefix = prefix;
-    fi.text = text;
-    fi.number = number;
-    fi.decimals = decimals;
-    fi.text_middleleft = text_middleleft;
-    fi.text_middleright = text_middleright;
-    fi.iconColor = iconColor;
-    fi.iconParam = iconParam;
-    fi.units = units;
-    fi.units_side = units_side;
-    fi.text_botleft = text_botleft;
-    fi.text_botright = text_botright;
+      case FTHeartRateZone:
+        fi.title = "heartrate zone";
+        fi.available = mMetrics.getHeartRate() > 0;
+        fi.text = mMetrics.getHeartRateZone(gShowAverageWhenPaused && mPaused).format("%d");
+        return fi;
+
+      case FTGearIndex:
+        fi.title = "gear index";
+        fi.available = mMetrics.getFrontDerailleurSize() > 0;
+        fi.text =
+          mMetrics.getFrontDerailleurIndex().format("%0d") + "|" + mMetrics.getRearDerailleurIndex().format("%0d");
+        return fi;
+      // Average fields are handled in the specific non-average field
+    }
 
     return fi;
   }

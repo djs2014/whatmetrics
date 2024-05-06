@@ -30,8 +30,8 @@ class whatmetricsApp extends Application.AppBase {
     hiitt.updateProfile();
 
     var version = getStorageValue("version", "") as String;
-    if (!version.equals("1.0.1")) {
-      Storage.setValue("version", "1.0.1");
+    if (!version.equals("1.0.2")) {
+      Storage.setValue("version", "1.0.2");
       Storage.setValue("resetDefaults", true);
     }
 
@@ -91,23 +91,18 @@ class whatmetricsApp extends Application.AppBase {
       Storage.setValue("wide_field_zen", ZMWhenMoving);
       Storage.setValue("small_field_zen", ZMOn);
 
-      // @@TODO Array
-      Storage.setValue("fb_power", FTDistance);
-      Storage.setValue("fb_power_per_weight", FTDistance);
-      Storage.setValue("fb_power_balance", FTDistance);
-      Storage.setValue("fb_heart_rate", FTTimer);
-      Storage.setValue("fb_heart_rate_zone", FTTimeElapsed);
-      Storage.setValue("fb_distance_next", FTDistanceDest);
-      Storage.setValue("fb_distance_dest", FTDistance);
-      Storage.setValue("fb_hiit", FTClock);
-      Storage.setValue("fb_altitude", FTPressureAtSea);
-      Storage.setValue("fb_grade", FTUnknown);
-      Storage.setValue("fb_cadence", FTUnknown);
-      Storage.setValue("fb_gear_combo", FTUnknown);
-      Storage.setValue("fb_gear_index", FTUnknown);
-      Storage.setValue("fb_average_heart_rate", FTUnknown);
-      Storage.setValue("fb_average_power", FTUnknown);
-      Storage.setValue("fb_average_cadence", FTUnknown);
+      $.gFallbackFields = [];
+      setFallbackField(FTDistanceNext, FTDistanceDest);
+      setFallbackField(FTDistanceDest, FTDistance);
+      setFallbackField(FTPower, FTDistance);
+      setFallbackField(FTPowerPerWeight, FTDistance);
+      setFallbackField(FTHeartRate, FTClock);
+      setFallbackField(FTHeartRateZone, FTTimeElapsed);
+      // @@ setFallbackField(FTHiit, FTTimeElapsed);
+      setFallbackField(FTAltitude, FTPressureAtSea);
+      setFallbackField(FTCadence, FTAverageSpeed);
+
+      Storage.setValue("fields_fallback", $.gFallbackFields);
       
       Storage.setValue("demofields", false);
       Storage.setValue("demofields_wait", 2);
@@ -152,6 +147,7 @@ class whatmetricsApp extends Application.AppBase {
       metrics.initHrZones(heartRateZones);
     }
 
+    // @@ TODO init array fields size of 9
     $.gLargeField = getStorageValue("large_field", $.gLargeField) as Array<Number>;
     $.gWideField = getStorageValue("wide_field", $.gWideField) as Array<Number>;
     $.gSmallField = getStorageValue("small_field", $.gSmallField) as Array<Number>;
@@ -160,25 +156,10 @@ class whatmetricsApp extends Application.AppBase {
     $.gWideFieldZen = getStorageValue("wide_field_zen", $.gWideFieldZen) as ZenMode;
     $.gSmallFieldZen = getStorageValue("small_field_zen", $.gSmallFieldZen) as ZenMode;
 
-    // TODO make it one array
-    $.gFBPower = getStorageValue("fb_power", $.gFBPower) as FieldType;
-    $.gFBPowerPerWeight = getStorageValue("fb_power_per_weight", $.gFBPowerPerWeight) as FieldType;
-    $.gFBPowerBalance = getStorageValue("fb_power_balance", $.gFBPowerBalance) as FieldType;
-    $.gFBHeartRate = getStorageValue("fb_heart_rate", $.gFBHeartRate) as FieldType;
-    $.gFBHeartRateZone = getStorageValue("fb_heart_rate_zone", $.gFBHeartRateZone) as FieldType;
-    $.gFBDistanceNext = getStorageValue("fb_distance_next", $.gFBDistanceNext) as FieldType;
-    $.gFBDistanceDest = getStorageValue("fb_distance_dest", $.gFBDistanceDest) as FieldType;
-    $.gFBHiit = getStorageValue("fb_hiit", $.gFBHiit) as FieldType;
-    $.gFBAltitude = getStorageValue("fb_altitude", $.gFBAltitude) as FieldType;
-    $.gFBGrade = getStorageValue("fb_grade", $.gFBGrade) as FieldType;
-    $.gFBCadence = getStorageValue("fb_cadence", $.gFBCadence) as FieldType;
-    $.gFBGearCombo = getStorageValue("fb_gear_combo", $.gFBGearCombo) as FieldType;
-    $.gFBGearIndex = getStorageValue("fb_gear_index", $.gFBGearIndex) as FieldType;
-
-    $.gFBAverageHeartRate = getStorageValue("fb_average_heart_rate", $.gFBAverageHeartRate) as FieldType;
-    $.gFBAveragePower = getStorageValue("fb_average_power", $.gFBAveragePower) as FieldType;
-    $.gFBAverageCadence = getStorageValue("fb_average_cadence", $.gFBAverageCadence) as FieldType;
-
+    $.gFallbackFields = getStorageValue("fields_fallback", $.gFallbackFields) as Array<Number>;
+    while ($.gFallbackFields.size() < $.FieldTypeCount) {
+      $.gFallbackFields.add(FTUnknown);
+    }
 
     $.gDebug = getStorageValue("debug", $.gDebug) as Boolean;
     $.gShowColors = getStorageValue("show_colors", $.gShowColors) as Boolean;
@@ -201,7 +182,6 @@ class whatmetricsApp extends Application.AppBase {
     $.gCadenceCountdownToFallBack =
       getStorageValue("cadence_countdowntofallback", $.gCadenceCountdownToFallBack) as Number;
 
-   
     if ($.gShowPowerBalance or $.gShowPowerBattery or powerDualSecFallback > 0) {
       metrics.initPowerBalance(powerDualSecFallback, powerTimesTwo);
     }
@@ -211,10 +191,17 @@ class whatmetricsApp extends Application.AppBase {
     if (demoFields) {
       Storage.setValue("demofields", false);
       $.gDemoFieldsWait = getStorageValue("demofields_wait", 2) as Number;
-      $.gDemoFieldsRoundTrip = getStorageValue("demofields_roundtrip", 1) as Number;      
+      $.gDemoFieldsRoundTrip = getStorageValue("demofields_roundtrip", 1) as Number;
     } else {
       $.gDemoFieldsRoundTrip = 0;
     }
+  }
+
+  hidden function setFallbackField(field as FieldType, fallback as FieldType) as Void {
+    while ($.gFallbackFields.size() < $.FieldTypeCount) {
+      $.gFallbackFields.add(FTUnknown);
+    }
+    $.gFallbackFields[field as Number] = fallback;
   }
 }
 
@@ -271,25 +258,7 @@ var gLargeFieldZen as ZenMode = ZMOff;
 var gWideFieldZen as ZenMode = ZMOff;
 var gSmallFieldZen as ZenMode = ZMOff;
 
-// @@ Refactor: Can be one array
-var gFBPower as FieldType = FTUnknown;
-var gFBPowerPerWeight as FieldType = FTUnknown;
-var gFBPowerBalance as FieldType = FTUnknown;
-var gFBHeartRate as FieldType = FTUnknown;
-var gFBHeartRateZone as FieldType = FTUnknown;
-var gFBDistanceNext as FieldType = FTUnknown;
-var gFBDistanceDest as FieldType = FTUnknown;
-var gFBHiit as FieldType = FTUnknown;
-var gFBAltitude as FieldType = FTUnknown;
-var gFBGrade as FieldType = FTUnknown;
-var gFBCadence as FieldType = FTUnknown;
-var gFBGearCombo as FieldType = FTUnknown;
-var gFBGearIndex as FieldType = FTUnknown;
-
-var gFBAverageHeartRate as FieldType = FTUnknown;
-var gFBAveragePower as FieldType = FTUnknown;
-var gFBAverageCadence as FieldType = FTUnknown;
-
+var gFallbackFields as Array<Number> = [] as Array<Number>;
 
 var gDemoFieldsWait as Number = 2;
 var gDemoFieldsRoundTrip as Number = 0;

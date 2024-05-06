@@ -474,6 +474,14 @@ function pointOnCircle_y(x as Number, y as Number, radius as Number, angleInDegr
   return (radius * Math.sin(deg2rad(angleInDegrees)) + y).toNumber();
 }
 
+function convertToNumber(value as String, defaultValue as Number) as Number {
+  var converted = value.toNumber();
+  if (converted == null) {
+    return defaultValue;
+  }
+  return converted;
+}
+
 // o (one), l (large), w (wide), s (small)
 function getDisplaySize(width as Number, height as Number) as String {
   var display = "s";

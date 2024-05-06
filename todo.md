@@ -1,6 +1,6 @@
 readme
 fallback hiit / indien geen -- 
-fi.textisnumber = true -> bigger font possible
+cleanup old storage fields
 
 gShowPowerBalance
 -> wanneer veld aanwezig is?
@@ -25,7 +25,7 @@ build optimized niet ok
 // @@ TODO, keep bottom information / stats field
         // available  = mHiitt.isHiitInProgress
 
-
+size of 9
 
 settings
  - define field in middle like gearcombo now

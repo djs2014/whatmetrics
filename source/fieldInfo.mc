@@ -2,9 +2,10 @@ import Toybox.Lang;
 import Toybox.System;
 
 class FieldInfo {
-    var available as Boolean = true;
-    var index as Number = 0;
     var type as FieldType = FTDistance;
+    var index as Number = 0;
+
+    var available as Boolean = true;
     var title as String = "";
     var value as String = "";
     var number as String = "";
@@ -18,9 +19,14 @@ class FieldInfo {
     var text_middleleft as String = "";
     var text_middleright as String = "";
 
-    var iconColor as Number = 0;
+    var iconColor as Number = -1;
     var iconParam as Numeric = 0;
     var iconParam2 as Numeric = 0;
+
+    function initialize(fieldType as FieldType, fieldIndex as Number) {
+        type = fieldType;
+        index = fieldIndex;
+    }
 }
 
 const FieldLayoutCount = 3;
