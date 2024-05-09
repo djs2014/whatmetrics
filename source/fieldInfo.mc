@@ -66,6 +66,7 @@ enum FieldType {
     FTAverageCadence = 25,
 
     // @@ TODO
+    // TTS, NormalizedPower, IF
     // FTVo2Max = 22,
     // FTCalories = 23,
     // FTEnergyExpenditure = 24,

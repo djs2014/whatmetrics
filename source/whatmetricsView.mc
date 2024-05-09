@@ -539,15 +539,21 @@ class whatmetricsView extends WatchUi.DataField {
         // available  = mHiitt.isHiitInProgress
         fi.available = false;
         if (mHiitt.isEnabled()) {
-          fi.available = true;
+          // Hiit needs power data
+          var nrHiit = mHiitt.getNumberOfHits();
+          fi.available =
+            nrHiit > 0 ||
+            (mMetrics.getPower() > 0 and (mPowerFallbackCountdown > 0 or $.gPowerCountdownToFallBack == 0));
           fi.title = "hiit";
+          var showHiitIcon = 1;            
           var vo2max = mHiitt.getVo2Max();
           if (vo2max > 30) {
             fi.text = vo2max.format("%0.1f");
+            showHiitIcon = 0;
           }
-
           var recovery = mHiitt.getRecoveryElapsedSeconds();
           if (recovery > 0) {
+            showHiitIcon = 0;
             fi.text = secondsToCompactTimeString(recovery, "({m}:{s})");
             if (mHiitt.wasValidHiit()) {
               fi.iconColor = Graphics.COLOR_BLUE;
@@ -555,22 +561,26 @@ class whatmetricsView extends WatchUi.DataField {
           } else {
             var counter = mHiitt.getCounter();
             if (counter > 0) {
+              showHiitIcon = 0;
               fi.text = counter.format("%01d");
             } else {
               var hiitElapsed = mHiitt.getElapsedSeconds();
               if (hiitElapsed > 0) {
+                showHiitIcon = 0;
                 fi.text = secondsToCompactTimeString(hiitElapsed, "({m}:{s})");
                 if (mHiitt.wasValidHiit()) {
                   fi.iconColor = Graphics.COLOR_GREEN;
                 }
-                vo2max = mHiitt.getVo2Max();
+                // vo2max = mHiitt.getVo2Max();
                 if (vo2max > 30) {
-                  fi.decimals = vo2max.format("%0.1f");
+                  fi.decimals = vo2max.format("%0.0f");
                 }
               }
             }
           }
-          var nrHiit = mHiitt.getNumberOfHits();
+          // @@ text has value, no icon
+          fi.iconParam = showHiitIcon;
+          
           if (nrHiit > 0) {
             fi.text_botleft = "H " + nrHiit.format("%0.0d");
             fi.text_botleft += " " + mHiitt.getHistStatusAsString();
@@ -604,7 +614,7 @@ class whatmetricsView extends WatchUi.DataField {
         fi.title = "elapsed";
         fi.iconParam = mMetrics.getElapsedTime();
         var elapsedTime = millisecondsToShortTimeString(fi.iconParam, "{h}.{m}:{s}");
-        fi.iconParam2 = $.convertToNumber(stringLeft(elapsedTime, ".", "0"), 0);                
+        fi.iconParam2 = $.convertToNumber(stringLeft(elapsedTime, ".", "0"), 0);
         fi.text = stringRight(elapsedTime, ".", elapsedTime);
         return fi;
 
@@ -741,7 +751,7 @@ class whatmetricsView extends WatchUi.DataField {
     }
     if (fi.type == FTHiit) {
       // && fi.iconColor != -1
-      drawHiitIcon(dc, x, y, width, height, fi.iconColor);
+      drawHiitIcon(dc, x, y, width, height, fi.iconColor, fi.iconParam.toNumber());
       return;
     }
     if (fi.type == FTGearCombo) {
@@ -1355,7 +1365,8 @@ class whatmetricsView extends WatchUi.DataField {
     y as Number,
     width as Number,
     height as Number,
-    color as ColorType
+    color as ColorType,
+    showText as Number
   ) as Void {
     var x1 = x + width / 2;
     var y1 = y + height / 2;
@@ -1363,14 +1374,18 @@ class whatmetricsView extends WatchUi.DataField {
     dc.setColor(color, Graphics.COLOR_TRANSPARENT);
     dc.fillRectangle(x, y, width, height);
 
-    if (color == Graphics.COLOR_TRANSPARENT || color == mBackgroundColor) {
-      dc.setColor(Graphics.COLOR_LT_GRAY, Graphics.COLOR_TRANSPARENT);
-    } else {
-      dc.setColor(mBackgroundColor, Graphics.COLOR_TRANSPARENT);
+    if (showText  > 0) {
+      // @@TODO draw very faint, hiit/vo2max text
+
+      if (color == Graphics.COLOR_TRANSPARENT || color == mBackgroundColor) {
+        dc.setColor(Graphics.COLOR_LT_GRAY, Graphics.COLOR_TRANSPARENT);
+      } else {
+        dc.setColor(mBackgroundColor, Graphics.COLOR_TRANSPARENT);
+      }
+      var text = "HIIT";      
+      var font = getMatchingFont(dc, mFonts, width, height, text) as FontType;
+      dc.drawText(x1, y1, font, text, Graphics.TEXT_JUSTIFY_CENTER | Graphics.TEXT_JUSTIFY_VCENTER);
     }
-    var text = "HIIT";
-    var font = getMatchingFont(dc, mFonts, width, height, text) as FontType;
-    dc.drawText(x1, y1, font, text, Graphics.TEXT_JUSTIFY_CENTER | Graphics.TEXT_JUSTIFY_VCENTER);
   }
 
   hidden function drawCadenceIcon(

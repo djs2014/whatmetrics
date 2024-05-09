@@ -1,3 +1,9 @@
+normalized power
+https://www.trainingpeaks.com/coach-blog/normalized-power-how-coaches-use/
+TSS
+https://www.cyclistshub.com/tools/tss-calculator/
+https://www.trainingpeaks.com/learn/articles/normalized-power-intensity-factor-training-stress/
+
 readme
 fallback hiit / indien geen -- 
 cleanup old storage fields

@@ -642,6 +642,7 @@ function fieldHasFallback(idx as Number) as Boolean {
       FTAverageHeartRate,
       FTAveragePower,
       FTAverageCadence,
+      FTHiit
     ].indexOf(idx) > -1
   );
 }

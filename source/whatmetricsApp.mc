@@ -82,7 +82,7 @@ class whatmetricsApp extends Application.AppBase {
         [FL6Fields, FTGrade, FTDistanceNext, FTHeartRate, FTPower, FTSpeed, FTAltitude, FTCadence, FTHiit] as
         Array<Number>;
       $.gSmallField =
-        [FL4Fields, FTGrade, FTBearing, FTHeartRate, FTPower, FTSpeed, FTAltitude, FTCadence, FTHiit] as Array<Number>;
+        [FL4Fields, FTSpeed, FTPower, FTHeartRate, FTCadence, FTGrade, FTAltitude, FTCadence, FTHiit] as Array<Number>;
       Storage.setValue("large_field", $.gLargeField);
       Storage.setValue("wide_field", $.gWideField);
       Storage.setValue("small_field", $.gSmallField);
@@ -96,9 +96,9 @@ class whatmetricsApp extends Application.AppBase {
       setFallbackField(FTDistanceDest, FTDistance);
       setFallbackField(FTPower, FTDistance);
       setFallbackField(FTPowerPerWeight, FTDistance);
-      setFallbackField(FTHeartRate, FTClock);
-      setFallbackField(FTHeartRateZone, FTTimeElapsed);
-      // @@ setFallbackField(FTHiit, FTTimeElapsed);
+      setFallbackField(FTHeartRate, FTTimer);
+      setFallbackField(FTHeartRateZone, FTTimer);
+      setFallbackField(FTHiit, FTClock);
       setFallbackField(FTAltitude, FTPressureAtSea);
       setFallbackField(FTCadence, FTAverageSpeed);
 
