@@ -30,8 +30,9 @@ class whatmetricsApp extends Application.AppBase {
     hiitt.updateProfile();
 
     var version = getStorageValue("version", "") as String;
-    if (!version.equals("1.0.2")) {
-      Storage.setValue("version", "1.0.2");
+    if (!version.equals("1.0.3")) {
+      Storage.clearValues();
+      Storage.setValue("version", "1.0.3");
       Storage.setValue("resetDefaults", true);
     }
 
@@ -65,9 +66,13 @@ class whatmetricsApp extends Application.AppBase {
       Storage.setValue("show_colors", $.gShowColors);
       Storage.setValue("show_grid", $.gShowGrid);
       Storage.setValue("show_average", true);
-      Storage.setValue("show_powerbalance", $.gShowPowerBalance);
+      Storage.setValue("show_np_as_avg", $.gShowNPasAverage);
+      Storage.setValue("np_skip_zero", false);
+
+      // @@
+      // Storage.setValue("show_powerbalance", $.gShowPowerBalance);
       Storage.setValue("show_powerbattery", $.gShowPowerBattery);
-      Storage.setValue("show_powerperweight", $.gShowPowerPerWeight);
+
       Storage.setValue("power_dual_sec_fallback", 0);
       Storage.setValue("power_times_two", false);
 
@@ -75,6 +80,8 @@ class whatmetricsApp extends Application.AppBase {
       Storage.setValue("altitude_end_fb", $.gAltitudeFallbackEnd);
       Storage.setValue("grade_start_fb", $.gGradeFallbackStart);
       Storage.setValue("grade_end_fb", $.gGradeFallbackEnd);
+      Storage.setValue("power_countdowntofb", 10);
+      Storage.setValue("cadence_countdowntofb", 30);
 
       $.gLargeField =
         [FL8Fields, FTGrade, FTBearing, FTHeartRate, FTPower, FTSpeed, FTAltitude, FTCadence, FTHiit] as Array<Number>;
@@ -101,9 +108,10 @@ class whatmetricsApp extends Application.AppBase {
       setFallbackField(FTHiit, FTClock);
       setFallbackField(FTAltitude, FTPressureAtSea);
       setFallbackField(FTCadence, FTAverageSpeed);
+      setFallbackField(FTNormalizedPower, FTTimeElapsed);
 
       Storage.setValue("fields_fallback", $.gFallbackFields);
-      
+
       Storage.setValue("demofields", false);
       Storage.setValue("demofields_wait", 2);
       Storage.setValue("demofields_roundtrip", 1);
@@ -171,20 +179,19 @@ class whatmetricsApp extends Application.AppBase {
     $.gGradeFallbackStart = getStorageValue("grade_start_fb", 0) as Number;
     $.gGradeFallbackEnd = getStorageValue("grade_end_fb", 0) as Number;
 
-    $.gShowPowerBalance = getStorageValue("show_powerbalance", $.gShowPowerBalance) as Boolean;
+    // $.gShowPowerBalance = getStorageValue("show_powerbalance", $.gShowPowerBalance) as Boolean;
     $.gShowPowerBattery = getStorageValue("show_powerbattery", $.gShowPowerBattery) as Boolean;
-    $.gShowPowerPerWeight = getStorageValue("show_powerperweight", $.gShowPowerPerWeight) as Boolean;
+    $.gShowNPasAverage = getStorageValue("show_np_as_avg", $.gShowNPasAverage) as Boolean;
+    var NPSkipZero = getStorageValue("np_skip_zero", false) as Boolean;
+    metrics.initNP(NPSkipZero);
 
-    // @@ TODO
+    // @@ TODO refactor
     var powerDualSecFallback = getStorageValue("power_dual_sec_fallback", 0) as Number;
     var powerTimesTwo = getStorageValue("power_times_two", false) as Boolean;
-    $.gPowerCountdownToFallBack = getStorageValue("power_countdowntofallback", $.gPowerCountdownToFallBack) as Number;
-    $.gCadenceCountdownToFallBack =
-      getStorageValue("cadence_countdowntofallback", $.gCadenceCountdownToFallBack) as Number;
-
-    if ($.gShowPowerBalance or $.gShowPowerBattery or powerDualSecFallback > 0) {
-      metrics.initPowerBalance(powerDualSecFallback, powerTimesTwo);
-    }
+    $.gPowerCountdownToFallBack = getStorageValue("power_countdowntofb", $.gPowerCountdownToFallBack) as Number;
+    $.gCadenceCountdownToFallBack = getStorageValue("cadence_countdowntofb", $.gCadenceCountdownToFallBack) as Number;
+    metrics.initPowerBalance(powerDualSecFallback, powerTimesTwo);
+    
     metrics.initWeight();
 
     var demoFields = getStorageValue("demofields", false) as Boolean;
@@ -237,13 +244,14 @@ var gShowColors as Boolean = false;
 var gShowGrid as Boolean = true;
 var gShowAverageWhenPaused as Boolean = false;
 
+var gShowNPasAverage as Boolean = false;
+
 // @@ refactor
-var gShowPowerBalance as Boolean = true;
+// var gShowPowerBalance as Boolean = true;
 var gShowPowerBattery as Boolean = true;
-var gShowPowerPerWeight as Boolean = false;
 
 var gPowerCountdownToFallBack as Number = 10;
-var gCadenceCountdownToFallBack as Number = 10;
+var gCadenceCountdownToFallBack as Number = 30;
 
 var gAltitudeFallbackStart as Number = -10;
 var gAltitudeFallbackEnd as Number = 10;

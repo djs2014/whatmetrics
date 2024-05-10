@@ -7,7 +7,7 @@ import Toybox.AntPlus;
 
 class WhatMetrics {
   hidden var a_info as Activity.Info?;
-  
+
   // grade
   hidden var mCurrentGrade as Double = 0.0d;
   hidden var gradeWindowSize as Number = 4;
@@ -27,6 +27,12 @@ class WhatMetrics {
   hidden var mPowerDataPerSec as Array<Number> = [] as Array<Number>;
   hidden var mPowerBalance as PowerBalance? = null;
   hidden var userWeightKg as Float = 0.0f;
+
+  // Normalized power
+  hidden var mPowerDataPer30Sec as Array<Number> = [] as Array<Number>;
+  hidden var mAvgPowerToFourthPer30Sec as Array<Decimal> = [] as Array<Decimal>;
+  hidden var mCurrentNP as Number = 0;
+  hidden var mNPSkipZero as Boolean = false;
 
   // detect if l/r power is not 0 for x seconds
   hidden var mPowerDualSecFallback as Number = 0;
@@ -61,6 +67,9 @@ class WhatMetrics {
     mHrZones = zones;
   }
 
+  function initNP(skipZeroPower as Boolean) as Void {
+    mNPSkipZero = skipZeroPower;
+  }
   function setPowerPerSec(seconds as Number) as Void {
     mPowerPerSec = seconds;
   }
@@ -107,7 +116,7 @@ class WhatMetrics {
 
   // pressure hPa
   function getAmbientPressure() as Float {
-    return (getActivityValue(a_info, :ambientPressure, 0.0f)  as Float) / 100.0;
+    return (getActivityValue(a_info, :ambientPressure, 0.0f) as Float) / 100.0;
   }
   function getMeanSeaLevelPressure() as Float {
     return (getActivityValue(a_info, :meanSeaLevelPressure, 0.0f) as Float) / 100.0;
@@ -234,6 +243,10 @@ class WhatMetrics {
     return getAveragePower() / userWeightKg.toFloat();
   }
 
+  function getNormalizedPower() as Number {
+    return mCurrentNP;
+  }
+
   // % power balance left
   function getPowerBalanceLeft() as Number {
     if (mPowerBalance != null) {
@@ -308,14 +321,17 @@ class WhatMetrics {
 
   hidden function calculateMetrics(intermediateAltitude as Float, intermediateDistance as Float) as Void {
     mCurrentGrade = calculateGrade(intermediateAltitude, intermediateDistance);
-    mCurrentPowerPerX = calculatePower();
+
+    var power = getActivityValue(a_info, :currentPower, 0) as Number;
+    checkForFalingDualPower();
+    mCurrentPowerPerX = calculatePower(power);
+
+    if (power > 0 || (!mNPSkipZero && power == 0)) {
+      mCurrentNP = calculateNormalizedPower(calculatePower30(power));
+    }
   }
 
-  hidden function calculatePower() as Number {
-    var power = getActivityValue(a_info, :currentPower, 0) as Number;
-
-    checkForFalingDualPower();
-
+  hidden function calculatePower(power as Number) as Number {
     if (mPowerDataPerSec.size() >= mPowerPerSec) {
       mPowerDataPerSec = mPowerDataPerSec.slice(1, mPowerPerSec);
     }
@@ -325,6 +341,32 @@ class WhatMetrics {
       return 0;
     }
     return Math.mean(mPowerDataPerSec as Array<Number>).toNumber();
+  }
+
+  hidden function calculatePower30(power as Number) as Number {
+    if (mPowerDataPer30Sec.size() >= 30) {
+      mPowerDataPer30Sec = mPowerDataPer30Sec.slice(1, 30);
+    }
+    mPowerDataPer30Sec.add(power);
+
+    if (mPowerDataPer30Sec.size() == 0) {
+      return 0;
+    }
+    return Math.mean(mPowerDataPer30Sec as Array<Number>).toNumber();
+  }
+
+  hidden function calculateNormalizedPower(PowerPer30 as Number) as Number {
+    if (mAvgPowerToFourthPer30Sec.size() >= 30) {
+      mAvgPowerToFourthPer30Sec = mAvgPowerToFourthPer30Sec.slice(1, 30);
+    }
+
+    mAvgPowerToFourthPer30Sec.add(Math.pow(PowerPer30, 4));
+
+    if (mAvgPowerToFourthPer30Sec.size() < 30) {
+      return 0;
+    }
+    var avg = Math.mean(mAvgPowerToFourthPer30Sec as Array<Decimal>).toDouble();
+    return Math.pow(avg, 0.25).toNumber();
   }
 
   hidden function checkForFalingDualPower() as Void {

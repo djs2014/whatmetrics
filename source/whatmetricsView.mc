@@ -170,13 +170,13 @@ class whatmetricsView extends WatchUi.DataField {
     var perc = percentageOf(power, $.gTargetFtp);
     mHiitt.compute(info, perc, power);
 
-    if (power > 0.0 and mPowerFallbackCountdown < 5) {
+    if (power > 0.0) {
       mPowerFallbackCountdown = $.gPowerCountdownToFallBack;
     } else if (mPowerFallbackCountdown > 0) {
       mPowerFallbackCountdown--;
     }
     var cadence = mMetrics.getCadence();
-    if (cadence > 0.0 and mCadenceFallbackCountdown < 5) {
+    if (cadence > 0.0) {
       mCadenceFallbackCountdown = $.gCadenceCountdownToFallBack;
     } else if (mCadenceFallbackCountdown > 0) {
       mCadenceFallbackCountdown--;
@@ -250,7 +250,7 @@ class whatmetricsView extends WatchUi.DataField {
         // If field not available, get fallback field
         var fbProcessed = [] as Array<FieldType>;
         while (!fi.available) {
-          System.println("Check fallback for " + fi.type);
+          // System.println("Check fallback for " + fi.type);
           var fb = getFallbackField(fi.type);
           if (fb == FTUnknown || fbProcessed.indexOf(fb) > -1) {
             fi.available = true;
@@ -258,7 +258,7 @@ class whatmetricsView extends WatchUi.DataField {
             fbProcessed.add(fb);
             var old = fi.type;
             fi = getFieldInfo(fb, f);
-            System.println("Fallback from " + old + " to " + fi.type);
+            // System.println("Fallback from " + old + " to " + fi.type);
           }
         }
 
@@ -406,11 +406,11 @@ class whatmetricsView extends WatchUi.DataField {
       case FTAverageHeartRate:
       case FTHeartRate:
         var heartRate = mMetrics.getHeartRate();
-        fi.available = heartRate > 0;
         fi.title = "heartrate";
         fi.units = "bpm";
 
         if ((gShowAverageWhenPaused && mPaused) || fieldType == FTAverageHeartRate) {
+          fi.title = "avg heartrate";
           heartRate = mMetrics.getAverageHeartRate();
           fi.iconParam = mMetrics.getHeartRateZone(true);
           fi.units = "~bpm";
@@ -418,6 +418,7 @@ class whatmetricsView extends WatchUi.DataField {
           fi.iconParam = mMetrics.getHeartRateZone(false);
         }
         fi.number = heartRate.format("%0d");
+        fi.available = heartRate > 0;
 
         fi.iconColor = getIconColor(heartRate, $.gTargetHeartRate);
         return fi;
@@ -425,20 +426,25 @@ class whatmetricsView extends WatchUi.DataField {
       case FTAveragePower:
       case FTPower:
         var power = mMetrics.getPower();
-        fi.available = power > 0 and (mPowerFallbackCountdown > 0 or $.gPowerCountdownToFallBack == 0);
-
         if (mMetrics.getHasFailingDualpower()) {
           fi.prefix = "2*";
         }
         fi.title = "power (" + mMetrics.getPowerPerSec().format("%0d") + " sec)";
         fi.units = "w";
-        if ((gShowAverageWhenPaused && mPaused) || fieldType == FTAveragePower) {
-          fi.number = mMetrics.getAveragePower().format("%0d");
-          fi.units = "~w";
-        } else {
-          fi.number = mMetrics.getPower().format("%0d");
+        if (($.gShowAverageWhenPaused && mPaused) || fieldType == FTAveragePower) {
+          if ($.gShowNPasAverage && fieldType == FTPower) {
+            fi.title = "normalized power";
+            power = mMetrics.getNormalizedPower();
+          } else {
+            fi.title = "avg power";
+            power = mMetrics.getAveragePower();
+            fi.units = "~w";
+          }
         }
-        fi.iconColor = getIconColor(mMetrics.getPower(), $.gTargetFtp);
+        fi.number = power.format("%0d");
+        System.println("Power " + power + " mPowerFallbackCountdown " + mPowerFallbackCountdown);
+        fi.available = power > 0 and (mPowerFallbackCountdown > 0 or $.gPowerCountdownToFallBack == 0);
+        fi.iconColor = getIconColor(power, $.gTargetFtp);
         return fi;
 
       case FTBearing:
@@ -451,6 +457,7 @@ class whatmetricsView extends WatchUi.DataField {
         fi.units = "km/h";
         var speed;
         if ((gShowAverageWhenPaused && mPaused) || fieldType == FTAverageSpeed) {
+          fi.title = "avg speed";
           speed = mpsToKmPerHour(mMetrics.getAverageSpeed());
           fi.units = "~km/h";
         } else {
@@ -517,8 +524,6 @@ class whatmetricsView extends WatchUi.DataField {
       case FTCadence:
         fi.title = "cadence";
         fi.units = "rpm";
-        fi.available =
-          mMetrics.getCadence() > 0 and (mCadenceFallbackCountdown > 0 or $.gCadenceCountdownToFallBack == 0);
 
         var cadence;
         if ((gShowAverageWhenPaused && mPaused) || fieldType == FTAverageCadence) {
@@ -531,6 +536,8 @@ class whatmetricsView extends WatchUi.DataField {
         if (mDisplaySize.equals("w")) {
           fi.units_side = "rpm";
         }
+        fi.available =
+          mMetrics.getCadence() > 0 and (mCadenceFallbackCountdown > 0 or $.gCadenceCountdownToFallBack == 0);
         fi.iconColor = getIconColor(cadence, $.gTargetCadence);
         return fi;
 
@@ -545,7 +552,7 @@ class whatmetricsView extends WatchUi.DataField {
             nrHiit > 0 ||
             (mMetrics.getPower() > 0 and (mPowerFallbackCountdown > 0 or $.gPowerCountdownToFallBack == 0));
           fi.title = "hiit";
-          var showHiitIcon = 1;            
+          var showHiitIcon = 1;
           var vo2max = mHiitt.getVo2Max();
           if (vo2max > 30) {
             fi.text = vo2max.format("%0.1f");
@@ -580,7 +587,7 @@ class whatmetricsView extends WatchUi.DataField {
           }
           // @@ text has value, no icon
           fi.iconParam = showHiitIcon;
-          
+
           if (nrHiit > 0) {
             fi.text_botleft = "H " + nrHiit.format("%0.0d");
             fi.text_botleft += " " + mHiitt.getHistStatusAsString();
@@ -626,42 +633,53 @@ class whatmetricsView extends WatchUi.DataField {
         return fi;
 
       case FTPowerPerWeight:
-        fi.title = "power (" + mMetrics.getPowerPerSec().format("%0d") + " sec) / kg";
-        var powerpw = mMetrics.getPowerPerWeight();
-        fi.available = powerpw > 0 and (mPowerFallbackCountdown > 0 or $.gPowerCountdownToFallBack == 0);
-        fi.units = "w/kg";
-
         if (mMetrics.getHasFailingDualpower()) {
           fi.prefix = "2*";
         }
-
+        var powerpw;
         if (gShowAverageWhenPaused && mPaused) {
-          fi.value = mMetrics.getAveragePowerPerWeight().format("%0.1f");
+          fi.title = "avg power (" + mMetrics.getPowerPerSec().format("%0d") + " sec) / kg";
+          powerpw = mMetrics.getAveragePowerPerWeight();
           fi.units = "~w/kg";
         } else {
-          fi.value = powerpw.format("%0.1f");
+          fi.title = "power (" + mMetrics.getPowerPerSec().format("%0d") + " sec) / kg";
+          powerpw = mMetrics.getPowerPerWeight();
+          fi.units = "w/kg";
         }
+        fi.value = powerpw.format("%0.1f");
         fi.number = $.stringLeft(fi.value, ".", fi.value);
         fi.decimals = $.stringRight(fi.value, ".", "");
+        fi.available = powerpw > 0 and (mPowerFallbackCountdown > 0 or $.gPowerCountdownToFallBack == 0);
         return fi;
 
       case FTPowerBalance:
-        fi.title = "power balance";
-        fi.available = mMetrics.getPower() > 0 and (mPowerFallbackCountdown > 0 or $.gPowerCountdownToFallBack == 0);
-
+        var powerCheck;
         var pLeft = mMetrics.getPowerBalanceLeft();
         if (gShowAverageWhenPaused && mPaused) {
+          fi.title = "avg power balance";
           pLeft = mMetrics.getAveragePowerBalanceLeft();
+          powerCheck = mMetrics.getAveragePower();
+        } else {
+          fi.title = "power balance";
+          powerCheck = mMetrics.getPower();
         }
         if (pLeft > 0 and pLeft < 100) {
           var pRight = 100 - (pLeft as Number);
           fi.text = Lang.format("$1$:$2$", [(pLeft as Number).format("%02d"), pRight.format("%02d")]);
         }
+        fi.available = powerCheck > 0 and (mPowerFallbackCountdown > 0 or $.gPowerCountdownToFallBack == 0);
         return fi;
 
       case FTHeartRateZone:
-        fi.title = "heartrate zone";
-        fi.available = mMetrics.getHeartRate() > 0;
+        var hrcheck;
+        if (gShowAverageWhenPaused && mPaused) {
+          fi.title = "avg heartrate zone";
+          hrcheck = mMetrics.getAverageHeartRate();
+        } else {
+          fi.title = "heartrate zone";
+          hrcheck = mMetrics.getHeartRate();
+        }
+        fi.available = hrcheck > 0;
         fi.text = mMetrics.getHeartRateZone(gShowAverageWhenPaused && mPaused).format("%d");
         return fi;
 
@@ -672,6 +690,18 @@ class whatmetricsView extends WatchUi.DataField {
           mMetrics.getFrontDerailleurIndex().format("%0d") + "|" + mMetrics.getRearDerailleurIndex().format("%0d");
         return fi;
       // Average fields are handled in the specific non-average field
+      case FTNormalizedPower:
+        var np = mMetrics.getNormalizedPower();
+        fi.available = np > 0; // and (mPowerFallbackCountdown > 0 or $.gPowerCountdownToFallBack == 0);
+
+        if (mMetrics.getHasFailingDualpower()) {
+          fi.prefix = "2*";
+        }
+        fi.title = "normalized power";
+        fi.units = "w";
+        fi.number = np.format("%0d");
+        fi.iconColor = getIconColor(np, $.gTargetFtp);
+        return fi;
     }
 
     return fi;
@@ -716,7 +746,7 @@ class whatmetricsView extends WatchUi.DataField {
       drawHeartIcon(dc, x, y, width, height, fi.iconColor, fi.iconParam.toNumber());
       return;
     }
-    if (fi.type == FTPower || fi.type == FTAveragePower) {
+    if (fi.type == FTPower || fi.type == FTAveragePower || fi.type == FTNormalizedPower) {
       drawPowerIcon(dc, x, y, width, height, fi.iconColor);
 
       if ($.gShowPowerBattery) {
@@ -1374,7 +1404,7 @@ class whatmetricsView extends WatchUi.DataField {
     dc.setColor(color, Graphics.COLOR_TRANSPARENT);
     dc.fillRectangle(x, y, width, height);
 
-    if (showText  > 0) {
+    if (showText > 0) {
       // @@TODO draw very faint, hiit/vo2max text
 
       if (color == Graphics.COLOR_TRANSPARENT || color == mBackgroundColor) {
@@ -1382,7 +1412,7 @@ class whatmetricsView extends WatchUi.DataField {
       } else {
         dc.setColor(mBackgroundColor, Graphics.COLOR_TRANSPARENT);
       }
-      var text = "HIIT";      
+      var text = "HIIT";
       var font = getMatchingFont(dc, mFonts, width, height, text) as FontType;
       dc.drawText(x1, y1, font, text, Graphics.TEXT_JUSTIFY_CENTER | Graphics.TEXT_JUSTIFY_VCENTER);
     }

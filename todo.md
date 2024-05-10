@@ -1,3 +1,13 @@
+cleanup old storage fields
+
+power zones -> profile
+layout -> option extra small fields below normal layout?
+for avg values/ balance ??
+
+show_powerbalance -> not needed?
+-> if field active
+
+
 normalized power
 https://www.trainingpeaks.com/coach-blog/normalized-power-how-coaches-use/
 TSS
@@ -6,7 +16,6 @@ https://www.trainingpeaks.com/learn/articles/normalized-power-intensity-factor-t
 
 readme
 fallback hiit / indien geen -- 
-cleanup old storage fields
 
 gShowPowerBalance
 -> wanneer veld aanwezig is?
@@ -192,4 +201,21 @@ menu:
   - x sound:
   - x hit start perc / stop perc
   - x hiit countdown start, cooldown
+
+--------------------
+normalized power
+    Step 1: Calculate the rolling average power with a window size of 30 seconds. Start at 30s and calculate the average of the previous 30s and repeat this for every second.
+
+    Step 2: Take each value from step one and take this value to the fourth power (multiply this number by itself four times).
+
+    Step 3: Calculate the average of values from the previous step.
+
+    Step 4: Take the fourth root of the average from the previous step — this value gives us the normalized power.
+
+
+  rolling .. avg power / 30sec
+  [0 .. 29] contains (avg power/30sec) ^ 4 
+  get average of these 30 => P
+  square root(square root (P)) ==> NP
+
 

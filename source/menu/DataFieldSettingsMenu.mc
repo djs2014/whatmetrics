@@ -116,17 +116,18 @@ class DataFieldSettingsMenuDelegate extends WatchUi.Menu2InputDelegate {
       mi.setSubLabel($.getStorageNumberAsString(mi.getId() as String));
       powerMenu.addItem(mi);
 
-      var boolean = Storage.getValue("show_powerbalance") ? true : false;
-      powerMenu.addItem(new WatchUi.ToggleMenuItem("Power balance", null, "show_powerbalance", boolean, null));
+      var boolean;
+      //  boolean = Storage.getValue("show_powerbalance") ? true : false;
+      // powerMenu.addItem(new WatchUi.ToggleMenuItem("Balance", null, "show_powerbalance", boolean, null));
 
       boolean = Storage.getValue("show_powerbattery") ? true : false;
-      powerMenu.addItem(new WatchUi.ToggleMenuItem("Power batt. level", null, "show_powerbattery", boolean, null));
+      powerMenu.addItem(new WatchUi.ToggleMenuItem("Batt. level", null, "show_powerbattery", boolean, null));
 
-      boolean = Storage.getValue("show_powerperweight") ? true : false;
-      powerMenu.addItem(new WatchUi.ToggleMenuItem("Power per weight", null, "show_powerperweight", boolean, null));
+      boolean = Storage.getValue("show_np_as_avg") ? true : false;
+      powerMenu.addItem(new WatchUi.ToggleMenuItem("NP for avg", null, "show_np_as_avg", boolean, null));
 
-      boolean = Storage.getValue("show_poweraverage") ? true : false;
-      powerMenu.addItem(new WatchUi.ToggleMenuItem("Power average", null, "show_poweraverage", boolean, null));
+      boolean = Storage.getValue("np_skip_zero") ? true : false;
+      powerMenu.addItem(new WatchUi.ToggleMenuItem("NP skip zeros", null, "np_skip_zero", boolean, null));
 
       mi = new WatchUi.MenuItem("Dualpwr sec fallback", null, "power_dual_sec_fallback", null);
       mi.setSubLabel($.getStorageNumberAsString(mi.getId() as String));
@@ -202,10 +203,10 @@ class DataFieldSettingsMenuDelegate extends WatchUi.Menu2InputDelegate {
     if (id instanceof String && id.equals("fallbackstriggers")) {
       var fbtMenu = new WatchUi.Menu2({ :title => "Fallback triggers" });
 
-      var mi = new WatchUi.MenuItem("Sec. 0 power", null, "power_countdowntofallback", null);
+      var mi = new WatchUi.MenuItem("Sec. 0 power", null, "power_countdowntofb", null);
       mi.setSubLabel($.getStorageNumberAsString(mi.getId() as String));
       fbtMenu.addItem(mi);
-      mi = new WatchUi.MenuItem("Sec. 0 cadence", null, "cadence_countdowntofallback", null);
+      mi = new WatchUi.MenuItem("Sec. 0 cadence", null, "cadence_countdowntofb", null);
       mi.setSubLabel($.getStorageNumberAsString(mi.getId() as String));
       fbtMenu.addItem(mi);
 
@@ -615,6 +616,8 @@ function getFieldTypeAsString(fieldType as FieldType) as String {
       return "avg power";
     case FTAverageCadence:
       return "avg cadence";
+    case FTNormalizedPower:
+      return "normalized power";
     default:
       return "unknown";
   }
@@ -642,7 +645,7 @@ function fieldHasFallback(idx as Number) as Boolean {
       FTAverageHeartRate,
       FTAveragePower,
       FTAverageCadence,
-      FTHiit
+      FTNormalizedPower,
     ].indexOf(idx) > -1
   );
 }
