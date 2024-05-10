@@ -186,7 +186,7 @@ class WhatHiitt {
 
     switch (hitStatus) {
       case InActive:
-        System.println("InActive");
+        // System.println("InActive");
         if (percOfTarget >= hitStartOnPerc) {
           // Start warming up for x seconds
           hitStatus = WarmingUp;
@@ -195,7 +195,7 @@ class WhatHiitt {
         }
         break;
       case WarmingUp:
-        System.println("Warming up");
+        // System.println("Warming up");
         hitCounter = hitCounter - 1;
         hitAttentionWarmingUp(playTone);
         mValidHiitPerformed = false;
@@ -218,7 +218,7 @@ class WhatHiitt {
         }
         break;
       case CoolingDown:
-        System.println("Cooling down");
+        // System.println("Cooling down");
         hitAttentionCoolingdown(playTone);
         hitCounter = hitCounter - 1;
 
@@ -251,7 +251,7 @@ class WhatHiitt {
         }
         break;
       case Active:
-        System.println("Active");
+        // System.println("Active");
 
         mValidHiitPerformed = getElapsedSeconds() >= minimalElapsedSeconds;
         if (percOfTarget < hitStopOnPerc) {
@@ -277,7 +277,7 @@ class WhatHiitt {
     // [ avg' * (n-1) + x ] / n
     powerTicks = powerTicks + 1;
     avgPowerPerSec = (avgPowerPerSec * (powerTicks - 1) + power) / powerTicks.toDouble();
-    System.println(Lang.format("p $1$ ticks $2$ avg $3$", [power, powerTicks, avgPowerPerSec]));
+    // System.println(Lang.format("p $1$ ticks $2$ avg $3$", [power, powerTicks, avgPowerPerSec]));
   }
 
   hidden function updateRecoveryTime() as Void {
