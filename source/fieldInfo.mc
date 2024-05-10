@@ -36,7 +36,7 @@ enum FieldLayout {
     FL4Fields = 2
 }
 
-const FieldTypeCount = 27; // incl the 0
+const FieldTypeCount = 29; // incl the 0
 enum FieldType {
     FTUnknown = 0,
     FTDistance = 1,
@@ -65,6 +65,9 @@ enum FieldType {
     FTAveragePower = 24,
     FTAverageCadence = 25,
     FTNormalizedPower = 26,
+    FTIntensityFactor = 27,
+    FTTrainingStressScore = 28,
+
 
     // @@ TODO
     // TTS, NormalizedPower, IF

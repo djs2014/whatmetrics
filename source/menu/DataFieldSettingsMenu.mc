@@ -618,6 +618,10 @@ function getFieldTypeAsString(fieldType as FieldType) as String {
       return "avg cadence";
     case FTNormalizedPower:
       return "normalized power";
+    case FTIntensityFactor:
+      return "intensity factor";
+    case FTTrainingStressScore:
+      return "training stress score";
     default:
       return "unknown";
   }
@@ -646,6 +650,8 @@ function fieldHasFallback(idx as Number) as Boolean {
       FTAveragePower,
       FTAverageCadence,
       FTNormalizedPower,
+      FTIntensityFactor,
+      FTTrainingStressScore
     ].indexOf(idx) > -1
   );
 }

@@ -442,7 +442,7 @@ class whatmetricsView extends WatchUi.DataField {
           }
         }
         fi.number = power.format("%0d");
-        System.println("Power " + power + " mPowerFallbackCountdown " + mPowerFallbackCountdown);
+        // System.println("Power " + power + " mPowerFallbackCountdown " + mPowerFallbackCountdown);
         fi.available = power > 0 and (mPowerFallbackCountdown > 0 or $.gPowerCountdownToFallBack == 0);
         fi.iconColor = getIconColor(power, $.gTargetFtp);
         return fi;
@@ -702,6 +702,18 @@ class whatmetricsView extends WatchUi.DataField {
         fi.number = np.format("%0d");
         fi.iconColor = getIconColor(np, $.gTargetFtp);
         return fi;
+      case FTIntensityFactor:
+        var ifactor = mMetrics.getIntensityFactor();
+        fi.available = ifactor > 0;
+        fi.title = "IF";
+        fi.number = ifactor.format("%0.2f");
+        return fi;
+      case FTTrainingStressScore:
+        var tss = mMetrics.getTrainingStressScore();
+        fi.available = tss > 0;
+        fi.title = "TSS";
+        fi.number = tss.format("%0.02f");
+        return fi;    
     }
 
     return fi;

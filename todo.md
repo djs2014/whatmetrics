@@ -1,4 +1,18 @@
-cleanup old storage fields
+check array length when reset/setting
+
+graphical info - levels / color/bar
+IF 
+TSS
+HR zone
+Pwr zone
+
+[optional]
+if ---
+tss ---
+hr 
+pwr 
+
+[avg fields bar]
 
 power zones -> profile
 layout -> option extra small fields below normal layout?
@@ -203,19 +217,31 @@ menu:
   - x hiit countdown start, cooldown
 
 --------------------
-normalized power
-    Step 1: Calculate the rolling average power with a window size of 30 seconds. Start at 30s and calculate the average of the previous 30s and repeat this for every second.
+https://www.trainingpeaks.com/learn/articles/normalized-power-intensity-factor-training-stress/
 
-    Step 2: Take each value from step one and take this value to the fourth power (multiply this number by itself four times).
+This TSS calculator calculates TSS based on the following formula:
+TSS = (sec × NP × IF) / (FTP × 3600) × 100
+Where
+• sec is the workout duration in seconds
+• NP is Normalized Power
+• IF is the Intensity Factor calculated as the percentage of your FTP
+• FTP is Functional Threshold Power
+• 3600 is the number of seconds in an hour.
 
-    Step 3: Calculate the average of values from the previous step.
+IF = FTP /  cur power * 100
 
-    Step 4: Take the fourth root of the average from the previous step — this value gives us the normalized power.
+3600 sec
+NP 200
+FTP 250
+TSS == 64
 
+0-50 low
+50 - 150 moderate
+150+ high
 
-  rolling .. avg power / 30sec
-  [0 .. 29] contains (avg power/30sec) ^ 4 
-  get average of these 30 => P
-  square root(square root (P)) ==> NP
+(60 * 200 * IF) / (250 * 3600) * 100
 
+IF = NP / FTP 200/250  == 0.8 
 
+== 1,3
+IF = 250 / 200 == 1,25

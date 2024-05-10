@@ -109,7 +109,7 @@ class whatmetricsApp extends Application.AppBase {
       setFallbackField(FTAltitude, FTPressureAtSea);
       setFallbackField(FTCadence, FTAverageSpeed);
       setFallbackField(FTNormalizedPower, FTTimeElapsed);
-
+      
       Storage.setValue("fields_fallback", $.gFallbackFields);
 
       Storage.setValue("demofields", false);
@@ -184,6 +184,8 @@ class whatmetricsApp extends Application.AppBase {
     $.gShowNPasAverage = getStorageValue("show_np_as_avg", $.gShowNPasAverage) as Boolean;
     var NPSkipZero = getStorageValue("np_skip_zero", false) as Boolean;
     metrics.initNP(NPSkipZero);
+    // @@ from user profile possible?
+    metrics.setFTP($.gTargetFtp);
 
     // @@ TODO refactor
     var powerDualSecFallback = getStorageValue("power_dual_sec_fallback", 0) as Number;

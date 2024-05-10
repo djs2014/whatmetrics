@@ -26,7 +26,9 @@ class WhatMetrics {
   hidden var mPowerPerSec as Number = 3;
   hidden var mPowerDataPerSec as Array<Number> = [] as Array<Number>;
   hidden var mPowerBalance as PowerBalance? = null;
-  hidden var userWeightKg as Float = 0.0f;
+
+  hidden var mUserWeightKg as Float = 0.0f;
+  hidden var mUserFTP as Number = 0;
 
   // Normalized power
   hidden var mPowerDataPer30Sec as Array<Number> = [] as Array<Number>;
@@ -55,21 +57,27 @@ class WhatMetrics {
 
   function initWeight() as Void {
     var profile = UserProfile.getProfile();
-    userWeightKg = 0.0f;
+    mUserWeightKg = 0.0f;
     if (profile.weight == null) {
       return;
     }
     var weight = profile.weight as Number;
-    userWeightKg = weight / 1000.0;
+    mUserWeightKg = weight / 1000.0;
   }
 
   function initHrZones(zones as Lang.Array<Lang.Number>) as Void {
     mHrZones = zones;
   }
 
+  // @@TODO initPwrZones
+
   function initNP(skipZeroPower as Boolean) as Void {
     mNPSkipZero = skipZeroPower;
   }
+  function setFTP(ftp as Number) as Void {
+    mUserFTP = ftp;
+  }
+
   function setPowerPerSec(seconds as Number) as Void {
     mPowerPerSec = seconds;
   }
@@ -231,20 +239,40 @@ class WhatMetrics {
     return getActivityValue(a_info, :maxPower, 0) as Number;
   }
   function getPowerPerWeight() as Float {
-    if (userWeightKg == 0) {
+    if (mUserWeightKg == 0) {
       return 0.0f;
     }
-    return getPower() / userWeightKg.toFloat();
+    return getPower() / mUserWeightKg.toFloat();
   }
   function getAveragePowerPerWeight() as Float {
-    if (userWeightKg == 0) {
+    if (mUserWeightKg == 0) {
       return 0.0f;
     }
-    return getAveragePower() / userWeightKg.toFloat();
+    return getAveragePower() / mUserWeightKg.toFloat();
   }
 
   function getNormalizedPower() as Number {
     return mCurrentNP;
+  }
+
+  function getIntensityFactor() as Float {
+    if (mUserFTP == 0) {
+      return 0.0f;
+    }
+    return getNormalizedPower() / mUserFTP.toFloat();
+  }
+
+  function getTrainingStressScore() as Float {
+    if (mUserFTP == 0) {
+      return 0.0f;
+    }
+    // TSS = (sec × NP × IF) / (FTP × 3600) × 100
+    var seconds = getElapsedTime() / 1000.0;
+    var fraction = mUserFTP.toFloat() * 3600.0f;
+    if (fraction == 0) {
+      return 0.0f;
+    }
+    return ((seconds * getNormalizedPower() * getIntensityFactor()) / fraction) * 100.0f;
   }
 
   // % power balance left
