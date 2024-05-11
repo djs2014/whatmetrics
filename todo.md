@@ -1,4 +1,18 @@
 check array length when reset/setting
+TODO
+    mi = new WatchUi.MenuItem("Target calories kcal", null, "target_calories", null);
+      mi.setSubLabel($.getStorageNumberAsString(mi.getId() as String));
+      targetMenu.addItem(mi);
+      mi = new WatchUi.MenuItem("Target grade %", null, "target_grade", null);
+      mi.setSubLabel($.getStorageNumberAsString(mi.getId() as String));
+      targetMenu.addItem(mi);
+      mi = new WatchUi.MenuItem("Target altitude meters", null, "target_altitude", null);
+      mi.setSubLabel($.getStorageNumberAsString(mi.getId() as String));
+
+target if
+target tts
+target np == ftp?
+target speed 
 
 graphical info - levels / color/bar
 IF 

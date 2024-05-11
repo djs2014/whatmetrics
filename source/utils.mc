@@ -304,6 +304,13 @@ const PERC_COLORS_RED =
     [100, 255, 0, 0],
   ] as Array<Array<Number> >;
 
+const PERC_COLORS_GREEN_RED =
+  [
+     [0, 102, 204, 0],
+    [50, 255, 153, 51],
+    [100, 255, 0, 0],
+  ] as Array<Array<Number> >;
+
 const PERC_COLORS_SCHEME =
   [
     [0, 244, 244, 244],

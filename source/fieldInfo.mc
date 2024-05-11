@@ -23,6 +23,9 @@ class FieldInfo {
     var iconParam as Numeric = 0;
     var iconParam2 as Numeric = 0;
 
+    var rawValue as Numeric = 0;
+    var maxValue as Numeric = 0;
+
     function initialize(fieldType as FieldType, fieldIndex as Number) {
         type = fieldType;
         index = fieldIndex;
@@ -36,7 +39,7 @@ enum FieldLayout {
     FL4Fields = 2
 }
 
-const FieldTypeCount = 29; // incl the 0
+const FieldTypeCount = 30; // incl the 0
 enum FieldType {
     FTUnknown = 0,
     FTDistance = 1,
@@ -67,17 +70,15 @@ enum FieldType {
     FTNormalizedPower = 26,
     FTIntensityFactor = 27,
     FTTrainingStressScore = 28,
+    FTCalories = 29,
 
 
     // @@ TODO
-    // TTS, NormalizedPower, IF
     // FTVo2Max = 22,
-    // FTCalories = 23,
     // FTEnergyExpenditure = 24,
     // FTTrainingEffect = 25,
     // FTTotalAscent = 26,
-    // FTTotalDescent = 27,
-    // FTAverage ..
+    // FTTotalDescent = 27,    
   }
 
 enum ZenMode {

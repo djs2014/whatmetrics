@@ -160,6 +160,9 @@ class WhatMetrics {
     }
     return mHrZones.size();
   }
+  function getMaxHeartRateZone() as Number {
+    return mHrZones.size();
+  }
 
   // distance, meters
   function getElapsedDistance() as Float {
@@ -255,6 +258,10 @@ class WhatMetrics {
     return mCurrentNP;
   }
 
+  function getUserFTP() as Number {
+    return mUserFTP;
+  }
+  
   function getIntensityFactor() as Float {
     if (mUserFTP == 0) {
       return 0.0f;

@@ -30,9 +30,9 @@ class whatmetricsApp extends Application.AppBase {
     hiitt.updateProfile();
 
     var version = getStorageValue("version", "") as String;
-    if (!version.equals("1.0.3")) {
+    if (!version.equals("1.0.4")) {
       Storage.clearValues();
-      Storage.setValue("version", "1.0.3");
+      Storage.setValue("version", "1.0.4");
       Storage.setValue("resetDefaults", true);
     }
 
@@ -56,6 +56,8 @@ class whatmetricsApp extends Application.AppBase {
       Storage.setValue("target_grade", $.gTargetGrade);
       Storage.setValue("target_altitude", $.gTargetAltitude);
       Storage.setValue("target_hrzone", 4);
+      Storage.setValue("target_if", $.gTargetIF);
+      Storage.setValue("target_tss", $.gTargetTSS);
 
       Storage.setValue("metric_ppersec", 3);
       Storage.setValue("metric_gradews", 4);
@@ -98,6 +100,7 @@ class whatmetricsApp extends Application.AppBase {
       Storage.setValue("wide_field_zen", ZMWhenMoving);
       Storage.setValue("small_field_zen", ZMOn);
 
+
       $.gFallbackFields = [];
       setFallbackField(FTDistanceNext, FTDistanceDest);
       setFallbackField(FTDistanceDest, FTDistance);
@@ -111,6 +114,12 @@ class whatmetricsApp extends Application.AppBase {
       setFallbackField(FTNormalizedPower, FTTimeElapsed);
       
       Storage.setValue("fields_fallback", $.gFallbackFields);
+
+      $.gGraphic_fields =
+        [FTTrainingStressScore, FTHeartRateZone, FTIntensityFactor, FTUnknown, FTUnknown] as Array<Number>;
+      Storage.setValue("graphic_fields", $.gGraphic_fields);
+      Storage.setValue("gf_line_width", 5);
+      Storage.setValue("show_graphic_fields", true);
 
       Storage.setValue("demofields", false);
       Storage.setValue("demofields_wait", 2);
@@ -143,8 +152,10 @@ class whatmetricsApp extends Application.AppBase {
     $.gTargetCalories = getStorageValue("target_calories", 0) as Number;
     $.gTargetGrade = getStorageValue("target_grade", 0) as Number;
     $.gTargetAltitude = getStorageValue("target_altitude", 0) as Number;
-    var targetHrZone = getStorageValue("target_hrzone", 4) as Number;
+    $.gTargetIF = getStorageValue("target_if", 1.2f) as Float;
+    $.gTargetTSS = getStorageValue("target_tss", 450) as Number;
 
+    var targetHrZone = getStorageValue("target_hrzone", 4) as Number;
     var heartRateZones = UserProfile.getHeartRateZones(UserProfile.HR_ZONE_SPORT_BIKING);
     if (heartRateZones.size() > 0) {
       if (targetHrZone > 0 and targetHrZone < heartRateZones.size()) {
@@ -168,6 +179,13 @@ class whatmetricsApp extends Application.AppBase {
     while ($.gFallbackFields.size() < $.FieldTypeCount) {
       $.gFallbackFields.add(FTUnknown);
     }
+    // @@
+    $.gGraphic_fields = getStorageValue("graphic_fields", $.gGraphic_fields) as Array<Number>;
+    while ($.gGraphic_fields.size() < 5) {
+      $.gGraphic_fields.add(FTUnknown);
+    }
+    $.gShow_graphic_fields = getStorageValue("show_graphic_fields", $.gShow_graphic_fields) as Boolean;
+    $.gGraphic_fields_line_width = getStorageValue("gf_line_width", $.gGraphic_fields_line_width) as Number;
 
     $.gDebug = getStorageValue("debug", $.gDebug) as Boolean;
     $.gShowColors = getStorageValue("show_colors", $.gShowColors) as Boolean;
@@ -240,7 +258,12 @@ var gTargetCalories as Number = 2000;
 var gTargetGrade as Number = 8;
 var gTargetAltitude as Number = 1000;
 var gTargetHeartRate as Number = 200;
+var gTargetIF as Float = 1.2f;
+var gTargetTSS as Number = 450;
+
 var gDebug as Boolean = false;
+var gShow_graphic_fields as Boolean = true;
+var gGraphic_fields_line_width as Number = 5;
 
 var gShowColors as Boolean = false;
 var gShowGrid as Boolean = true;
@@ -263,6 +286,8 @@ var gGradeFallbackEnd as Number = 2;
 var gLargeField as Array<Number> = [0, 0, 0, 0, 0, 0, 0, 0, 0] as Array<Number>;
 var gWideField as Array<Number> = [0, 0, 0, 0, 0, 0, 0, 0, 0] as Array<Number>;
 var gSmallField as Array<Number> = [0, 0, 0, 0, 0, 0, 0, 0, 0] as Array<Number>;
+
+var gGraphic_fields as Array<Number> = [0, 0, 0, 0, 0] as Array<Number>;
 
 var gLargeFieldZen as ZenMode = ZMOff;
 var gWideFieldZen as ZenMode = ZMOff;

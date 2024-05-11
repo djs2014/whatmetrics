@@ -62,6 +62,9 @@ class DataFieldSettingsDelegate extends WatchUi.BehaviorDelegate {
     mi = new WatchUi.MenuItem("Small field", null, "small_field", null);
     menu.addItem(mi);
 
+    mi = new WatchUi.MenuItem("Graphic field", null, "graphic_fields", null);
+    menu.addItem(mi);
+
     mi = new WatchUi.MenuItem("Fallback fields", null, "fallbacks", null);
     menu.addItem(mi);
     mi = new WatchUi.MenuItem("Fallback triggers", null, "fallbackstriggers", null);
@@ -73,21 +76,25 @@ class DataFieldSettingsDelegate extends WatchUi.BehaviorDelegate {
     boolean = Storage.getValue("show_colors") ? true : false;
     menu.addItem(new WatchUi.ToggleMenuItem("Colors", null, "show_colors", boolean, null));
 
-    boolean = Storage.getValue("show_grid") ? true : false;
-    menu.addItem(new WatchUi.ToggleMenuItem("Grid lines", null, "show_grid", boolean, null));
-
     // @@TODO?? nope, on paused, always (in details)
     boolean = Storage.getValue("show_average") ? true : false;
     menu.addItem(new WatchUi.ToggleMenuItem("Average on pause", null, "show_average", boolean, null));
     
+    boolean = Storage.getValue("show_graphic_fields") ? true : false;
+    menu.addItem(new WatchUi.ToggleMenuItem("Graphic fields", null, "show_graphic_fields", boolean, null));
+
     boolean = Storage.getValue("resetDefaults") ? true : false;
     menu.addItem(new WatchUi.ToggleMenuItem("Reset to defaults", null, "resetDefaults", boolean, null));
 
+    boolean = Storage.getValue("show_grid") ? true : false;
+    menu.addItem(new WatchUi.ToggleMenuItem("Grid lines", null, "show_grid", boolean, null));
+
     mi = new WatchUi.MenuItem("Demo fields", null, "demofieldsmenu", null);
     menu.addItem(mi);
-
+    
     boolean = Storage.getValue("debug") ? true : false;
     menu.addItem(new WatchUi.ToggleMenuItem("Debug", null, "debug", boolean, null));
+
 
     var view = new $.DataFieldSettingsView();
     WatchUi.pushView(menu, new $.DataFieldSettingsMenuDelegate(view), WatchUi.SLIDE_IMMEDIATE);

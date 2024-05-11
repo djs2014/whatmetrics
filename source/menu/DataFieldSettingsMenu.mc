@@ -85,6 +85,12 @@ class DataFieldSettingsMenuDelegate extends WatchUi.Menu2InputDelegate {
       mi = new WatchUi.MenuItem("Target altitude meters", null, "target_altitude", null);
       mi.setSubLabel($.getStorageNumberAsString(mi.getId() as String));
       targetMenu.addItem(mi);
+      mi = new WatchUi.MenuItem("Target IF|0.0~1.2", null, "target_if", null);
+      mi.setSubLabel($.getStorageNumberAsString(mi.getId() as String));
+      targetMenu.addItem(mi);
+      mi = new WatchUi.MenuItem("Target TSS|0~450", null, "target_tss", null);
+      mi.setSubLabel($.getStorageNumberAsString(mi.getId() as String));
+      targetMenu.addItem(mi);
 
       mi = new WatchUi.MenuItem("Target heartrate zone", null, "target_hrzone", null);
       mi.setSubLabel("zone " + $.getStorageNumberAsString(mi.getId() as String));
@@ -147,7 +153,7 @@ class DataFieldSettingsMenuDelegate extends WatchUi.Menu2InputDelegate {
 
       // Layout
       var mi = new WatchUi.MenuItem("Layout", null, prefix + "|0", null);
-      mi.setSubLabel($.getFieldByIndex(prefix, 0));
+      mi.setSubLabel($.getLayoutByIndex(prefix, 0));
       fieldMenu.addItem(mi);
       // Fields
       for (var i = 1; i < 9; i++) {
@@ -163,6 +169,29 @@ class DataFieldSettingsMenuDelegate extends WatchUi.Menu2InputDelegate {
       fieldMenu.addItem(mi);
 
       WatchUi.pushView(fieldMenu, new $.GeneralMenuDelegate(self, fieldMenu), WatchUi.SLIDE_UP);
+      return;
+    }
+
+    if (id instanceof String && id.equals("graphic_fields")) {
+      var label = item.getLabel();
+      var prefix = "graphic_fields";
+      var gfieldMenu = new WatchUi.Menu2({ :title => label + " items" });
+
+      var boolean = Storage.getValue("show_graphic_fields") ? true : false;
+      gfieldMenu.addItem(new WatchUi.ToggleMenuItem("Visible", null, "show_graphic_fields", boolean, null));
+
+      var mi = new WatchUi.MenuItem("Line width|1~10", null, "gf_line_width", null);
+      mi.setSubLabel($.getStorageNumberAsString(mi.getId() as String));
+      gfieldMenu.addItem(mi);
+
+      // Fields
+      for (var i = 0; i < 5; i++) {
+        mi = new WatchUi.MenuItem("Field " + i, null, prefix + "|" + i.format("%d"), null);
+        mi.setSubLabel($.getFieldByIndex(prefix, i));
+        gfieldMenu.addItem(mi);
+      }
+
+      WatchUi.pushView(gfieldMenu, new $.GeneralMenuDelegate(self, gfieldMenu), WatchUi.SLIDE_UP);
       return;
     }
 
@@ -186,7 +215,7 @@ class DataFieldSettingsMenuDelegate extends WatchUi.Menu2InputDelegate {
     if (id instanceof String && id.equals("fallbacks")) {
       var fbMenu = new WatchUi.Menu2({ :title => "Fallback for field" });
 
-      // Fields, skip 0 (field Unknown) is also used for layout in getFieldByIndex :-)
+      // Fields, skip 0 (field Unknown)
       for (var i = 1; i < $.FieldTypeCount; i++) {
         if ($.fieldHasFallback(i)) {
           var field = i as FieldType;
@@ -309,22 +338,6 @@ class GeneralMenuDelegate extends WatchUi.Menu2InputDelegate {
       return;
     }
 
-    // Fields: key starts with large_field|Layout, wide_field|Layout, small_field|Layout
-    // if (id.find("|0") != null) { //
-    //   var prefix = stringLeft(id, "|", "");
-    //   var index = stringRight(id, "|", "").toNumber();
-    //   if (prefix == "" || index == null) {
-    //     return;
-    //   }
-    //   var sp = new selectionMenuPicker("Field layout", id as String);
-    //   for (var i = 0; i < $.FieldLayoutCount; i++) {
-    //     sp.add($.getFieldLayoutAsString(i as FieldLayout, null, i);
-    //   }
-    //   sp.setOnSelected(self, :onSelectedFieldLayout, item);
-    //   sp.show();
-    //   return;
-    // }
-
     // Fallback fields, storage in fields_fallback
     if (id.find("fields_fallback|") != null) {
       var prefix = stringLeft(id, "|", "");
@@ -337,6 +350,26 @@ class GeneralMenuDelegate extends WatchUi.Menu2InputDelegate {
       var sp = new selectionMenuPicker(label, id as String);
       for (var i = 0; i < $.FieldTypeCount; i++) {
         sp.add($.getFieldTypeAsString(i as FieldType), null, i);
+      }
+      sp.setOnSelected(self, :onSelectedField, item);
+      sp.show();
+      return;
+    }
+
+    // Graphic fields, storage in graphic_fields
+    if (id.find("graphic_fields|") != null) {
+      var prefix = stringLeft(id, "|", "");
+      var index = stringRight(id, "|", "").toNumber();
+      if (prefix == "" || index == null) {
+        return;
+      }
+      var idx = index as Number;
+      var label = "Line: " + $.getFieldTypeAsString(idx as FieldType);
+      var sp = new selectionMenuPicker(label, id as String);
+      for (var i = 0; i < $.FieldTypeCount; i++) {
+        if ($.fieldHasGraphic(i)) {
+          sp.add($.getFieldTypeAsString(i as FieldType), null, i);
+        }
       }
       sp.setOnSelected(self, :onSelectedField, item);
       sp.show();
@@ -524,13 +557,19 @@ function getHiittSoundText(value as WhatHiitt.HiitSound) as String {
 }
 
 // Content array: [layout, field 1 .. field 8 ]
-function getFieldByIndex(key as String, index as Number) as String {
-  var fields = getStorageValue(key, [0, 0, 0, 0, 0, 0, 0, 0, 0]) as Array<Number>;
+function getLayoutByIndex(key as String, index as Number) as String {
+  var fields = getStorageValue(key, []) as Array<Number>;
   if (index < 0 || index >= fields.size()) {
     return "--";
   }
-  if (index == 0) {
-    return $.getFieldLayoutAsString(fields[0] as FieldLayout);
+  return $.getFieldLayoutAsString(fields[index] as FieldLayout);
+}
+
+// Content array: [layout, field 1 .. field 8 ]
+function getFieldByIndex(key as String, index as Number) as String {
+  var fields = getStorageValue(key, []) as Array<Number>;
+  if (index < 0 || index >= fields.size()) {
+    return "--";
   }
 
   var field = fields[index] as FieldType;
@@ -622,6 +661,8 @@ function getFieldTypeAsString(fieldType as FieldType) as String {
       return "intensity factor";
     case FTTrainingStressScore:
       return "training stress score";
+    case FTCalories:
+      return "calories";
     default:
       return "unknown";
   }
@@ -651,7 +692,22 @@ function fieldHasFallback(idx as Number) as Boolean {
       FTAverageCadence,
       FTNormalizedPower,
       FTIntensityFactor,
-      FTTrainingStressScore
+      FTTrainingStressScore,
+    ].indexOf(idx) > -1
+  );
+}
+
+function fieldHasGraphic(idx as Number) as Boolean {
+  return (
+    [
+      FTUnknown,
+      FTHeartRateZone,
+      FTNormalizedPower,
+      FTIntensityFactor,
+      FTTrainingStressScore,
+      FTAverageSpeed,
+      FTAverageCadence,
+      FTCalories
     ].indexOf(idx) > -1
   );
 }

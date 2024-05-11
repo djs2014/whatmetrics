@@ -57,6 +57,9 @@ class whatmetricsView extends WatchUi.DataField {
   hidden var mDemoFt as FieldType = FTUnknown;
   hidden var mDemoFields_Counter as Number = -1;
   hidden var mBackgroundColor as Graphics.ColorType = 0xffffff;
+  hidden var mGraphicFieldHeight as Number = 0;
+  hidden var mGraphicLineHeight as Number = 5;
+
   // hidden var mGrade as Double = 0.0d;
   function initialize() {
     DataField.initialize();
@@ -95,6 +98,19 @@ class whatmetricsView extends WatchUi.DataField {
       mZenMode = $.gLargeFieldZen;
     }
     mFieldLayout = mFields[0] as FieldLayout;
+
+    mGraphicFieldHeight = 0;
+    if ($.gShow_graphic_fields) {
+      mGraphicLineHeight = $.gGraphic_fields_line_width;
+      // reserve space for extra graphical fields
+      for (var e = 0; e < $.gGraphic_fields.size(); e++) {
+        var eft = $.gGraphic_fields[e] as FieldType;
+        if (eft != FTUnknown) {
+          mGraphicFieldHeight = mGraphicFieldHeight + mGraphicLineHeight;
+        }
+      }
+      h = h - mGraphicFieldHeight;
+    }
 
     mGrid = [] as Array<Array<Array<Number> > >;
 
@@ -250,15 +266,12 @@ class whatmetricsView extends WatchUi.DataField {
         // If field not available, get fallback field
         var fbProcessed = [] as Array<FieldType>;
         while (!fi.available) {
-          // System.println("Check fallback for " + fi.type);
           var fb = getFallbackField(fi.type);
           if (fb == FTUnknown || fbProcessed.indexOf(fb) > -1) {
             fi.available = true;
           } else {
             fbProcessed.add(fb);
-            var old = fi.type;
             fi = getFieldInfo(fb, f);
-            // System.println("Fallback from " + old + " to " + fi.type);
           }
         }
 
@@ -270,6 +283,38 @@ class whatmetricsView extends WatchUi.DataField {
         f = f + 1;
       }
       y = y + h;
+    }
+
+    if ($.gShow_graphic_fields && $.gGraphic_fields.size() > 0) {
+      var eMaxWidth = dc.getWidth() - 2;
+      var ey = dc.getHeight() - mGraphicFieldHeight;
+      // @@ some icon in front?
+      // @@ set max values in target menu
+      for (var e = 0; e < $.gGraphic_fields.size(); e++) {
+        var eft = $.gGraphic_fields[e] as FieldType;
+        if (eft != FTUnknown) {
+          var efi = getFieldInfo(eft, e);
+          // @@ show label
+          var ePerc = $.percentageOf(efi.rawValue, efi.maxValue);
+
+          var darker = 0;
+          // if (getBackgroundColor() == Graphics.COLOR_BLACK) {
+          //   darker = 30;
+          // }
+          var eColor = $.percentageToColor(ePerc, 255, $.PERC_COLORS_GREEN_RED, darker);
+          drawPercentageLine(dc, 1, ey, eMaxWidth, ePerc, mGraphicLineHeight, eColor);
+        }
+        ey = ey + mGraphicLineHeight;
+      }
+      // the zones 0 - 5
+      var zoneWidth = dc.getWidth() / 5;
+      var zoneY = dc.getHeight();
+      for (var z = 1; z < 5; z++) {
+        dc.setColor(Graphics.COLOR_LT_GRAY, Graphics.COLOR_TRANSPARENT);
+        dc.setPenWidth(3);
+        dc.drawLine(z * zoneWidth, zoneY, z * zoneWidth, zoneY - mGraphicFieldHeight);
+        dc.setPenWidth(1);
+      }
     }
 
     if ($.gDebug) {
@@ -467,6 +512,8 @@ class whatmetricsView extends WatchUi.DataField {
         fi.number = stringLeft(fi.value, ".", fi.value);
         fi.decimals = stringRight(fi.value, ".", "");
         fi.iconColor = getIconColor(speed, $.gTargetSpeed);
+        fi.rawValue = speed;
+        fi.maxValue = $.gTargetSpeed;
         return fi;
 
       case FTAltitude:
@@ -539,6 +586,8 @@ class whatmetricsView extends WatchUi.DataField {
         fi.available =
           mMetrics.getCadence() > 0 and (mCadenceFallbackCountdown > 0 or $.gCadenceCountdownToFallBack == 0);
         fi.iconColor = getIconColor(cadence, $.gTargetCadence);
+        fi.rawValue = cadence;
+        fi.maxValue = $.gTargetCadence;
         return fi;
 
       case FTHiit:
@@ -679,8 +728,11 @@ class whatmetricsView extends WatchUi.DataField {
           fi.title = "heartrate zone";
           hrcheck = mMetrics.getHeartRate();
         }
+        var hrz = mMetrics.getHeartRateZone(gShowAverageWhenPaused && mPaused);
         fi.available = hrcheck > 0;
-        fi.text = mMetrics.getHeartRateZone(gShowAverageWhenPaused && mPaused).format("%d");
+        fi.text = hrz.format("%d");
+        fi.rawValue = hrz;
+        fi.maxValue = mMetrics.getMaxHeartRateZone();
         return fi;
 
       case FTGearIndex:
@@ -701,19 +753,37 @@ class whatmetricsView extends WatchUi.DataField {
         fi.units = "w";
         fi.number = np.format("%0d");
         fi.iconColor = getIconColor(np, $.gTargetFtp);
+        fi.rawValue = np;
+        fi.maxValue = $.gTargetFtp;
         return fi;
+
       case FTIntensityFactor:
         var ifactor = mMetrics.getIntensityFactor();
         fi.available = ifactor > 0;
         fi.title = "IF";
         fi.number = ifactor.format("%0.2f");
+        fi.rawValue = ifactor;
+        fi.maxValue = $.gTargetIF;
         return fi;
+
       case FTTrainingStressScore:
         var tss = mMetrics.getTrainingStressScore();
         fi.available = tss > 0;
         fi.title = "TSS";
         fi.number = tss.format("%0.02f");
-        return fi;    
+        fi.rawValue = tss;
+        fi.maxValue = $.gTargetTSS;
+        return fi;
+      
+      case FTCalories:
+        var calories = mMetrics.getCalories();
+        fi.available = calories > 0;
+        fi.title = "calories";
+        fi.number = calories.format("%0d");
+        fi.rawValue = calories;
+        fi.maxValue = $.gTargetCalories;        
+        return fi;
+        
     }
 
     return fi;
