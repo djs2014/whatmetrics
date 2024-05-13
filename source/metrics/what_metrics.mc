@@ -7,7 +7,7 @@ import Toybox.AntPlus;
 
 class WhatMetrics {
   hidden var a_info as Activity.Info?;
-
+  hidden var mPaused as Boolean = true;
   // grade
   hidden var mCurrentGrade as Double = 0.0d;
   hidden var gradeWindowSize as Number = 4;
@@ -261,7 +261,7 @@ class WhatMetrics {
   function getUserFTP() as Number {
     return mUserFTP;
   }
-  
+
   function getIntensityFactor() as Float {
     if (mUserFTP == 0) {
       return 0.0f;
@@ -274,7 +274,7 @@ class WhatMetrics {
       return 0.0f;
     }
     // TSS = (sec × NP × IF) / (FTP × 3600) × 100
-    var seconds = getElapsedTime() / 1000.0;
+    var seconds = getTimerTime() / 1000.0;
     var fraction = mUserFTP.toFloat() * 3600.0f;
     if (fraction == 0) {
       return 0.0f;
@@ -336,6 +336,11 @@ class WhatMetrics {
 
   // called per second
   function compute(info as Activity.Info) as Void {
+    mPaused = false;
+    if (info has :timerState) {
+      mPaused = info.timerState == Activity.TIMER_STATE_PAUSED or info.timerState == Activity.TIMER_STATE_OFF;
+    }
+
     var intermediateAltitude = getAltitude();
     if (previousAltitude == 0.0f) {
       previousAltitude = intermediateAltitude;
@@ -361,8 +366,10 @@ class WhatMetrics {
     checkForFalingDualPower();
     mCurrentPowerPerX = calculatePower(power);
 
-    if (power > 0 || (!mNPSkipZero && power == 0)) {
-      mCurrentNP = calculateNormalizedPower(calculatePower30(power));
+    if (!mPaused) {
+      if (power > 0 || (!mNPSkipZero && power == 0)) {
+        mCurrentNP = calculateNormalizedPower(calculatePower30(power));
+      }
     }
   }
 

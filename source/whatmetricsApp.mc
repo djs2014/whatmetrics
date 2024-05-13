@@ -101,7 +101,6 @@ class whatmetricsApp extends Application.AppBase {
       Storage.setValue("wide_field_zen", ZMWhenMoving);
       Storage.setValue("small_field_zen", ZMOn);
 
-
       $.gFallbackFields = [];
       setFallbackField(FTDistanceNext, FTDistanceDest);
       setFallbackField(FTDistanceDest, FTDistance);
@@ -113,7 +112,7 @@ class whatmetricsApp extends Application.AppBase {
       setFallbackField(FTAltitude, FTPressureAtSea);
       setFallbackField(FTCadence, FTAverageSpeed);
       setFallbackField(FTNormalizedPower, FTTimeElapsed);
-      
+
       Storage.setValue("fields_fallback", $.gFallbackFields);
 
       $.gGraphic_fields =
@@ -180,6 +179,12 @@ class whatmetricsApp extends Application.AppBase {
     while ($.gFallbackFields.size() < $.FieldTypeCount) {
       $.gFallbackFields.add(FTUnknown);
     }
+    
+    // @@TODO
+    // $.gLargeFieldGraphic = getStorageValue("large_field_g", $.gLargeFieldGraphic) as Array<Number>;
+    // $.gWideFieldGraphic = getStorageValue("wide_field_g", $.gWideFieldGraphic) as Array<Number>;
+    // $.gSmallFieldGraphic = getStorageValue("small_field_g", $.gSmallFieldGraphic) as Array<Number>;
+
     // @@
     $.gGraphic_fields = getStorageValue("graphic_fields", $.gGraphic_fields) as Array<Number>;
     while ($.gGraphic_fields.size() < 5) {
@@ -187,6 +192,7 @@ class whatmetricsApp extends Application.AppBase {
     }
     $.gShow_graphic_fields = getStorageValue("show_graphic_fields", $.gShow_graphic_fields) as Boolean;
     $.gGraphic_fields_line_width = getStorageValue("gf_line_width", $.gGraphic_fields_line_width) as Number;
+    $.gGraphic_fields_zones = getStorageValue("gf_zones", $.gGraphic_fields_zones) as Number;
 
     $.gDebug = getStorageValue("debug", $.gDebug) as Boolean;
     $.gShowColors = getStorageValue("show_colors", $.gShowColors) as Boolean;
@@ -198,7 +204,6 @@ class whatmetricsApp extends Application.AppBase {
     $.gGradeFallbackStart = getStorageValue("grade_start_fb", 0) as Number;
     $.gGradeFallbackEnd = getStorageValue("grade_end_fb", 0) as Number;
 
-    // $.gShowPowerBalance = getStorageValue("show_powerbalance", $.gShowPowerBalance) as Boolean;
     $.gShowPowerBattery = getStorageValue("show_powerbattery", $.gShowPowerBattery) as Boolean;
     $.gShowNPasAverage = getStorageValue("show_np_as_avg", $.gShowNPasAverage) as Boolean;
     var NPSkipZero = getStorageValue("np_skip_zero", false) as Boolean;
@@ -212,7 +217,7 @@ class whatmetricsApp extends Application.AppBase {
     $.gPowerCountdownToFallBack = getStorageValue("power_countdowntofb", $.gPowerCountdownToFallBack) as Number;
     $.gCadenceCountdownToFallBack = getStorageValue("cadence_countdowntofb", $.gCadenceCountdownToFallBack) as Number;
     metrics.initPowerBalance(powerDualSecFallback, powerTimesTwo);
-    
+
     metrics.initWeight();
 
     var demoFields = getStorageValue("demofields", false) as Boolean;
@@ -263,8 +268,10 @@ var gTargetIF as Float = 1.2f;
 var gTargetTSS as Number = 450;
 
 var gDebug as Boolean = false;
+
 var gShow_graphic_fields as Boolean = true;
-var gGraphic_fields_line_width as Number = 5;
+var gGraphic_fields_line_width as Number = 7;
+var gGraphic_fields_zones as Number = 6;
 
 var gShowColors as Boolean = false;
 var gShowGrid as Boolean = true;
@@ -288,7 +295,10 @@ var gLargeField as Array<Number> = [0, 0, 0, 0, 0, 0, 0, 0, 0] as Array<Number>;
 var gWideField as Array<Number> = [0, 0, 0, 0, 0, 0, 0, 0, 0] as Array<Number>;
 var gSmallField as Array<Number> = [0, 0, 0, 0, 0, 0, 0, 0, 0] as Array<Number>;
 
-var gGraphic_fields as Array<Number> = [0, 0, 0, 0, 0] as Array<Number>;
+// var gLargeFieldGraphic as Array<Number> = [0, 0, 0, 0, 0, 0, 0, 0] as Array<Number>;
+// var gWideFieldGraphic as Array<Number> = [0, 0, 0, 0, 0, 0, 0, 0] as Array<Number>;
+// var gSmallFieldGraphic as Array<Number> = [0, 0, 0, 0, 0, 0, 0, 0] as Array<Number>;
+var gGraphic_fields as Array<Number> = [] as Array<Number>;
 
 var gLargeFieldZen as ZenMode = ZMOff;
 var gWideFieldZen as ZenMode = ZMOff;

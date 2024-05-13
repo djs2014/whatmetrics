@@ -172,24 +172,21 @@ class DataFieldSettingsMenuDelegate extends WatchUi.Menu2InputDelegate {
       return;
     }
 
-    // if (id instanceof String && id.equals("graphic_fields")) {
-    // [show, size, zones, field1 .. field5]
-    if (id instanceof String && (id.equals("large_field_g") || id.equals("wide_field_g") || id.equals("small_field_g"))) {
+    if (id instanceof String && id.equals("graphic_fields")) {
       var label = item.getLabel();
-      var prefix = id.toString();
+      var prefix = "graphic_fields";
       var gfieldMenu = new WatchUi.Menu2({ :title => label + " items" });
 
       var boolean = Storage.getValue("show_graphic_fields") ? true : false;
       gfieldMenu.addItem(new WatchUi.ToggleMenuItem("Visible", null, "show_graphic_fields", boolean, null));
 
-      var mi = new WatchUi.MenuItem("Line width|1~10", null, prefix + "|1", null);
-      mi.setSubLabel($.getGraphicInfoByIndex(prefix, 1) as String);
+      var mi = new WatchUi.MenuItem("Line width|1~10", null, "gf_line_width", null);
+      mi.setSubLabel($.getStorageNumberAsString(mi.getId() as String));
       gfieldMenu.addItem(mi);
-      
+
       mi = new WatchUi.MenuItem("Zones|0~12", null,  prefix + "|2", null);
       mi.setSubLabel($.getGraphicInfoByIndex(prefix, 2) as String);      
       gfieldMenu.addItem(mi);
-
       // Fields
       for (var i = 0; i < 5; i++) {
         mi = new WatchUi.MenuItem("Field " + i, null, prefix + "|" + i.format("%d"), null);

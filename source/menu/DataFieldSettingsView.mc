@@ -80,8 +80,8 @@ class DataFieldSettingsDelegate extends WatchUi.BehaviorDelegate {
     boolean = Storage.getValue("show_average") ? true : false;
     menu.addItem(new WatchUi.ToggleMenuItem("Average on pause", null, "show_average", boolean, null));
     
-    boolean = Storage.getValue("show_graphic_fields") ? true : false;
-    menu.addItem(new WatchUi.ToggleMenuItem("Graphic fields", null, "show_graphic_fields", boolean, null));
+    // boolean = Storage.getValue("show_graphic_fields") ? true : false;
+    // menu.addItem(new WatchUi.ToggleMenuItem("Graphic fields", null, "show_graphic_fields", boolean, null));
 
     boolean = Storage.getValue("resetDefaults") ? true : false;
     menu.addItem(new WatchUi.ToggleMenuItem("Reset to defaults", null, "resetDefaults", boolean, null));

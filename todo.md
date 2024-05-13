@@ -1,3 +1,5 @@
+https://cyklopedia.cc/cycling-tips/normalized-power-and-variability-index/
+
 show_graphic_fields
 graphic_fields
 gf_zones
