@@ -116,9 +116,9 @@ class whatmetricsApp extends Application.AppBase {
       Storage.setValue("fields_fallback", $.gFallbackFields);
 
       $.gGraphic_fields =
-        [FTTrainingStressScore, FTHeartRateZone, FTIntensityFactor, FTUnknown, FTUnknown] as Array<Number>;
+        [FTTrainingStressScore, FTHeartRateZone, FTUnknown, FTUnknown, FTUnknown] as Array<Number>;
       Storage.setValue("graphic_fields", $.gGraphic_fields);
-      Storage.setValue("gf_line_width", 5);
+      Storage.setValue("gf_line_width", 7);
       Storage.setValue("show_graphic_fields", true);
 
       Storage.setValue("demofields", false);

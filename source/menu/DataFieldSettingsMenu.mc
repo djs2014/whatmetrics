@@ -172,6 +172,7 @@ class DataFieldSettingsMenuDelegate extends WatchUi.Menu2InputDelegate {
       return;
     }
 
+// @@ TODO show large / wide / small
     if (id instanceof String && id.equals("graphic_fields")) {
       var label = item.getLabel();
       var prefix = "graphic_fields";

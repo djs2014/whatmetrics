@@ -87,18 +87,26 @@ class whatmetricsView extends WatchUi.DataField {
   function onLayout(dc as Dc) as Void {
     // fix for leaving menu, draw complete screen, large field
     dc.clearClip();
-    
+
     var h = dc.getHeight();
     var w = dc.getWidth();
     mFieldSize = Lang.format("$1$x$2$", [w, h]);
 
+    mGraphicLineHeight = $.gGraphic_fields_line_width;
     mDisplaySize = $.getDisplaySize(w, h);
     if (mDisplaySize.equals("s")) {
       mFields = $.gSmallField as Array<Number>;
       mZenMode = $.gSmallFieldZen;
+      // @@QND
+      if (mGraphicLineHeight > 2) { 
+        mGraphicLineHeight = 2;
+      }
     } else if (mDisplaySize.equals("w")) {
       mFields = $.gWideField as Array<Number>;
       mZenMode = $.gWideFieldZen;
+      if (mGraphicLineHeight > 4) {
+        mGraphicLineHeight = 4;
+      }
     } else {
       mFields = $.gLargeField as Array<Number>;
       mZenMode = $.gLargeFieldZen;
@@ -107,7 +115,6 @@ class whatmetricsView extends WatchUi.DataField {
 
     mGraphicFieldHeight = 0;
     if ($.gShow_graphic_fields) {
-      mGraphicLineHeight = $.gGraphic_fields_line_width;
       // reserve space for extra graphical fields
       var divider = 0;
       for (var e = 0; e < $.gGraphic_fields.size(); e++) {
