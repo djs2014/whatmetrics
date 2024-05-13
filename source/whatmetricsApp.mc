@@ -49,15 +49,16 @@ class whatmetricsApp extends Application.AppBase {
       Storage.setValue("hiit_valid_sec", 30);
       Storage.setValue("hiit_recovery_sec", 300);
 
-      Storage.setValue("target_ftp", $.gTargetFtp);
-      Storage.setValue("target_speed", $.gTargetSpeed);
-      Storage.setValue("target_cadence", $.gTargetCadence);
-      Storage.setValue("target_calories", $.gTargetCalories);
-      Storage.setValue("target_grade", $.gTargetGrade);
-      Storage.setValue("target_altitude", $.gTargetAltitude);
-      Storage.setValue("target_hrzone", 4);
-      Storage.setValue("target_if", $.gTargetIF);
-      Storage.setValue("target_tss", $.gTargetTSS);
+      // Targets unchanged using reset
+      // Storage.setValue("target_ftp", $.gTargetFtp);
+      // Storage.setValue("target_speed", $.gTargetSpeed);
+      // Storage.setValue("target_cadence", $.gTargetCadence);
+      // Storage.setValue("target_calories", $.gTargetCalories);
+      // Storage.setValue("target_grade", $.gTargetGrade);
+      // Storage.setValue("target_altitude", $.gTargetAltitude);
+      // Storage.setValue("target_hrzone", 4);
+      // Storage.setValue("target_if", 1.2f);
+      // Storage.setValue("target_tss", 450);
 
       Storage.setValue("metric_ppersec", 3);
       Storage.setValue("metric_gradews", 4);
@@ -254,7 +255,7 @@ var gMetrics as WhatMetrics?;
 var gTargetFtp as Number = 250;
 var gTargetSpeed as Number = 30;
 var gTargetCadence as Number = 90;
-var gTargetCalories as Number = 2000;
+var gTargetCalories as Number = 4000;
 var gTargetGrade as Number = 8;
 var gTargetAltitude as Number = 1000;
 var gTargetHeartRate as Number = 200;

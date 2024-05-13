@@ -7,6 +7,7 @@ class FieldInfo {
 
     var available as Boolean = true;
     var title as String = "";
+    var tag as String = "";
     var value as String = "";
     var number as String = "";
     var prefix as String = "";

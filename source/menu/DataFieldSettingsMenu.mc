@@ -86,7 +86,7 @@ class DataFieldSettingsMenuDelegate extends WatchUi.Menu2InputDelegate {
       mi.setSubLabel($.getStorageNumberAsString(mi.getId() as String));
       targetMenu.addItem(mi);
       mi = new WatchUi.MenuItem("Target IF|0.0~1.2", null, "target_if", null);
-      mi.setSubLabel($.getStorageNumberAsString(mi.getId() as String));
+      mi.setSubLabel($.getStorageFloatAsString(mi.getId() as String));
       targetMenu.addItem(mi);
       mi = new WatchUi.MenuItem("Target TSS|0~450", null, "target_tss", null);
       mi.setSubLabel($.getStorageNumberAsString(mi.getId() as String));
@@ -172,16 +172,22 @@ class DataFieldSettingsMenuDelegate extends WatchUi.Menu2InputDelegate {
       return;
     }
 
-    if (id instanceof String && id.equals("graphic_fields")) {
+    // if (id instanceof String && id.equals("graphic_fields")) {
+    // [show, size, zones, field1 .. field5]
+    if (id instanceof String && (id.equals("large_field_g") || id.equals("wide_field_g") || id.equals("small_field_g"))) {
       var label = item.getLabel();
-      var prefix = "graphic_fields";
+      var prefix = id.toString();
       var gfieldMenu = new WatchUi.Menu2({ :title => label + " items" });
 
       var boolean = Storage.getValue("show_graphic_fields") ? true : false;
       gfieldMenu.addItem(new WatchUi.ToggleMenuItem("Visible", null, "show_graphic_fields", boolean, null));
 
-      var mi = new WatchUi.MenuItem("Line width|1~10", null, "gf_line_width", null);
-      mi.setSubLabel($.getStorageNumberAsString(mi.getId() as String));
+      var mi = new WatchUi.MenuItem("Line width|1~10", null, prefix + "|1", null);
+      mi.setSubLabel($.getGraphicInfoByIndex(prefix, 1) as String);
+      gfieldMenu.addItem(mi);
+      
+      mi = new WatchUi.MenuItem("Zones|0~12", null,  prefix + "|2", null);
+      mi.setSubLabel($.getGraphicInfoByIndex(prefix, 2) as String);      
       gfieldMenu.addItem(mi);
 
       // Fields
@@ -576,6 +582,24 @@ function getFieldByIndex(key as String, index as Number) as String {
   return $.getFieldTypeAsString(field);
 }
 
+function getGraphicInfoByIndex(key as String, index as Number) as String or Boolean {
+  var fields = getStorageValue(key, []) as Array<Number>;
+  if (index < 0 || index >= fields.size()) {
+    return "--";
+  }
+  if (index == 0 ){
+    // Boolean: 0, 1, show line
+    return fields[index] == 1;
+  }
+  if (index == 1) {
+    // Number, width
+    return (fields[index]).format("%0d");
+  }
+  var field = fields[index] as FieldType;
+  return $.getFieldTypeAsString(field);
+}
+
+
 function getZenModeAsString(zenMode as ZenMode) as String {
   switch (zenMode) {
     case ZMOff:
@@ -672,6 +696,10 @@ function getStorageNumberAsString(key as String) as String {
   return (getStorageValue(key, 0) as Number).format("%.0d");
 }
 
+function getStorageFloatAsString(key as String) as String {
+  return (getStorageValue(key, 0) as Float).format("%.1f");
+}
+
 function fieldHasFallback(idx as Number) as Boolean {
   return (
     [
@@ -705,8 +733,9 @@ function fieldHasGraphic(idx as Number) as Boolean {
       FTNormalizedPower,
       FTIntensityFactor,
       FTTrainingStressScore,
-      FTAverageSpeed,
-      FTAverageCadence,
+      FTSpeed,
+      FTCadence,
+      FTHeartRate,
       FTCalories
     ].indexOf(idx) > -1
   );

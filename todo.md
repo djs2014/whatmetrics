@@ -1,8 +1,19 @@
+show_graphic_fields
+graphic_fields
+gf_zones
+$.gGraphic_fields
+
 check array length when reset/setting
+per large_field, wide ... etc.
+  + graphics field def
+  + height, ft, ..
+
+// var gShow_graphic_fields as Boolean = true;
+// var gGraphic_fields_line_width as Number = 7;
+// var gGraphic_fields_zones as Number = 6;
+
+
 TODO
-    mi = new WatchUi.MenuItem("Target calories kcal", null, "target_calories", null);
-      mi.setSubLabel($.getStorageNumberAsString(mi.getId() as String));
-      targetMenu.addItem(mi);
       mi = new WatchUi.MenuItem("Target grade %", null, "target_grade", null);
       mi.setSubLabel($.getStorageNumberAsString(mi.getId() as String));
       targetMenu.addItem(mi);

@@ -34,7 +34,10 @@ class whatmetricsView extends WatchUi.DataField {
     Graphics.FONT_XTINY,
     Graphics.FONT_TINY,
     Graphics.FONT_SYSTEM_SMALL,
+    Graphics.FONT_SYSTEM_MEDIUM,
+    Graphics.FONT_SYSTEM_LARGE,
     Graphics.FONT_NUMBER_MILD,
+    Graphics.FONT_NUMBER_MEDIUM,
     Graphics.FONT_NUMBER_HOT,
     Graphics.FONT_NUMBER_THAI_HOT,
   ];
@@ -82,6 +85,9 @@ class whatmetricsView extends WatchUi.DataField {
   }
 
   function onLayout(dc as Dc) as Void {
+    // fix for leaving menu, draw complete screen, large field
+    dc.clearClip();
+    
     var h = dc.getHeight();
     var w = dc.getWidth();
     mFieldSize = Lang.format("$1$x$2$", [w, h]);
@@ -103,9 +109,16 @@ class whatmetricsView extends WatchUi.DataField {
     if ($.gShow_graphic_fields) {
       mGraphicLineHeight = $.gGraphic_fields_line_width;
       // reserve space for extra graphical fields
+      var divider = 0;
       for (var e = 0; e < $.gGraphic_fields.size(); e++) {
         var eft = $.gGraphic_fields[e] as FieldType;
         if (eft != FTUnknown) {
+          if (divider > 1) {
+            // Add divider
+            mGraphicFieldHeight = mGraphicFieldHeight + 1;
+          }
+          divider++;
+
           mGraphicFieldHeight = mGraphicFieldHeight + mGraphicLineHeight;
         }
       }
@@ -288,32 +301,50 @@ class whatmetricsView extends WatchUi.DataField {
     if ($.gShow_graphic_fields && $.gGraphic_fields.size() > 0) {
       var eMaxWidth = dc.getWidth() - 2;
       var ey = dc.getHeight() - mGraphicFieldHeight;
-      // @@ some icon in front?
-      // @@ set max values in target menu
+      var tagX = 1;
+      var divider = 0;
       for (var e = 0; e < $.gGraphic_fields.size(); e++) {
         var eft = $.gGraphic_fields[e] as FieldType;
         if (eft != FTUnknown) {
+          if (divider > 1) {
+            // Add divider
+            ey = ey + 1;
+          }
+          divider++;
           var efi = getFieldInfo(eft, e);
-          // @@ show label
+          // Show label at start of line
+          if (mPaused and efi.tag.length() > 0) {
+            dc.setColor(Graphics.COLOR_LT_GRAY, Graphics.COLOR_TRANSPARENT);
+            dc.drawText(
+              tagX,
+              ey,
+              Graphics.FONT_XTINY,
+              efi.tag,
+              Graphics.TEXT_JUSTIFY_VCENTER | Graphics.TEXT_JUSTIFY_LEFT
+            );
+            tagX = tagX + dc.getTextDimensions(efi.tag, Graphics.FONT_XTINY)[0];
+          }
+          // @@ for hr zone. value 0 set bar to zone 1 to fill zone 0.
+          // @@ todo, use hr value and see if zones match?
+          if (efi.type == FTHeartRateZone) {
+            efi.rawValue = efi.rawValue + 1;
+          }
           var ePerc = $.percentageOf(efi.rawValue, efi.maxValue);
-
           var darker = 0;
-          // if (getBackgroundColor() == Graphics.COLOR_BLACK) {
-          //   darker = 30;
-          // }
           var eColor = $.percentageToColor(ePerc, 255, $.PERC_COLORS_GREEN_RED, darker);
           drawPercentageLine(dc, 1, ey, eMaxWidth, ePerc, mGraphicLineHeight, eColor);
         }
         ey = ey + mGraphicLineHeight;
       }
-      // the zones 0 - 5
-      var zoneWidth = dc.getWidth() / 5;
-      var zoneY = dc.getHeight();
-      for (var z = 1; z < 5; z++) {
-        dc.setColor(Graphics.COLOR_LT_GRAY, Graphics.COLOR_TRANSPARENT);
-        dc.setPenWidth(3);
-        dc.drawLine(z * zoneWidth, zoneY, z * zoneWidth, zoneY - mGraphicFieldHeight);
-        dc.setPenWidth(1);
+      if ($.gGraphic_fields_zones > 0) {
+        var zoneWidth = dc.getWidth() / $.gGraphic_fields_zones;
+        var zoneY = dc.getHeight();
+        for (var z = 1; z < $.gGraphic_fields_zones; z++) {
+          dc.setColor(Graphics.COLOR_WHITE, Graphics.COLOR_TRANSPARENT);
+          dc.setPenWidth(3);
+          dc.drawLine(z * zoneWidth, zoneY, z * zoneWidth, zoneY - mGraphicFieldHeight);
+          dc.setPenWidth(1);
+        }
       }
     }
 
@@ -452,8 +483,8 @@ class whatmetricsView extends WatchUi.DataField {
       case FTHeartRate:
         var heartRate = mMetrics.getHeartRate();
         fi.title = "heartrate";
+        fi.tag = "hr";
         fi.units = "bpm";
-
         if ((gShowAverageWhenPaused && mPaused) || fieldType == FTAverageHeartRate) {
           fi.title = "avg heartrate";
           heartRate = mMetrics.getAverageHeartRate();
@@ -465,6 +496,8 @@ class whatmetricsView extends WatchUi.DataField {
         fi.number = heartRate.format("%0d");
         fi.available = heartRate > 0;
 
+        fi.rawValue = heartRate;
+        fi.maxValue = $.gTargetHeartRate;
         fi.iconColor = getIconColor(heartRate, $.gTargetHeartRate);
         return fi;
 
@@ -499,6 +532,7 @@ class whatmetricsView extends WatchUi.DataField {
       case FTAverageSpeed:
       case FTSpeed:
         fi.title = "speed";
+        fi.tag = "spd";
         fi.units = "km/h";
         var speed;
         if ((gShowAverageWhenPaused && mPaused) || fieldType == FTAverageSpeed) {
@@ -570,6 +604,7 @@ class whatmetricsView extends WatchUi.DataField {
       case FTAverageCadence:
       case FTCadence:
         fi.title = "cadence";
+        fi.tag = "cad";
         fi.units = "rpm";
 
         var cadence;
@@ -720,6 +755,7 @@ class whatmetricsView extends WatchUi.DataField {
         return fi;
 
       case FTHeartRateZone:
+        fi.tag = "hrz";
         var hrcheck;
         if (gShowAverageWhenPaused && mPaused) {
           fi.title = "avg heartrate zone";
@@ -743,6 +779,7 @@ class whatmetricsView extends WatchUi.DataField {
         return fi;
       // Average fields are handled in the specific non-average field
       case FTNormalizedPower:
+        fi.tag = "np";
         var np = mMetrics.getNormalizedPower();
         fi.available = np > 0; // and (mPowerFallbackCountdown > 0 or $.gPowerCountdownToFallBack == 0);
 
@@ -758,32 +795,34 @@ class whatmetricsView extends WatchUi.DataField {
         return fi;
 
       case FTIntensityFactor:
+        fi.title = "IF";
+        fi.tag = "if";
         var ifactor = mMetrics.getIntensityFactor();
         fi.available = ifactor > 0;
-        fi.title = "IF";
         fi.number = ifactor.format("%0.2f");
         fi.rawValue = ifactor;
         fi.maxValue = $.gTargetIF;
         return fi;
 
       case FTTrainingStressScore:
+        fi.title = "TSS";
+        fi.tag = "tss";
         var tss = mMetrics.getTrainingStressScore();
         fi.available = tss > 0;
-        fi.title = "TSS";
         fi.number = tss.format("%0.02f");
         fi.rawValue = tss;
         fi.maxValue = $.gTargetTSS;
         return fi;
-      
+
       case FTCalories:
+        fi.title = "calories";
+        fi.tag = "cal";
         var calories = mMetrics.getCalories();
         fi.available = calories > 0;
-        fi.title = "calories";
         fi.number = calories.format("%0d");
         fi.rawValue = calories;
-        fi.maxValue = $.gTargetCalories;        
+        fi.maxValue = $.gTargetCalories;
         return fi;
-        
     }
 
     return fi;
