@@ -98,7 +98,7 @@ class whatmetricsView extends WatchUi.DataField {
       mFields = $.gSmallField as Array<Number>;
       mZenMode = $.gSmallFieldZen;
       // @@QND
-      if (mGraphicLineHeight > 2) { 
+      if (mGraphicLineHeight > 2) {
         mGraphicLineHeight = 2;
       }
     } else if (mDisplaySize.equals("w")) {
@@ -217,6 +217,14 @@ class whatmetricsView extends WatchUi.DataField {
     } else if (mCadenceFallbackCountdown > 0) {
       mCadenceFallbackCountdown--;
     }
+
+    // @@TEST
+    var tss = mMetrics.getTrainingStressScore();
+    var ifactor = mMetrics.getIntensityFactor();
+    var np = mMetrics.getNormalizedPower();
+    var tt = mMetrics.getTimerTime();
+    var timerTime = millisecondsToShortTimeString(tt, "{h}.{m}:{s}");
+    System.println("tt " + timerTime + " tt " + tt + "np " + np + " if " + ifactor + " tss " + tss);
   }
 
   function onUpdate(dc as Dc) as Void {
@@ -333,9 +341,9 @@ class whatmetricsView extends WatchUi.DataField {
           }
           // @@ for hr zone. value 0 set bar to zone 1 to fill zone 0.
           // @@ todo, use hr value and see if zones match?
-          if (efi.type == FTHeartRateZone) {
-            efi.rawValue = efi.rawValue + 1;
-          }
+          // if (efi.type == FTHeartRateZone) {
+          //   efi.rawValue = efi.rawValue + 1;
+          // }
           var ePerc = $.percentageOf(efi.rawValue, efi.maxValue);
           var darker = 0;
           var eColor = $.percentageToColor(ePerc, 255, $.PERC_COLORS_GREEN_RED, darker);

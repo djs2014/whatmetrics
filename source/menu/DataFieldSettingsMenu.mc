@@ -1,3 +1,4 @@
+import Toybox.Application;
 import Toybox.Application.Storage;
 import Toybox.Lang;
 import Toybox.WatchUi;
@@ -88,7 +89,7 @@ class DataFieldSettingsMenuDelegate extends WatchUi.Menu2InputDelegate {
       mi = new WatchUi.MenuItem("Target IF|0.0~1.2", null, "target_if", null);
       mi.setSubLabel($.getStorageFloatAsString(mi.getId() as String));
       targetMenu.addItem(mi);
-      mi = new WatchUi.MenuItem("Target TSS|0~450", null, "target_tss", null);
+      mi = new WatchUi.MenuItem("Target TSS|0~600", null, "target_tss", null);
       mi.setSubLabel($.getStorageNumberAsString(mi.getId() as String));
       targetMenu.addItem(mi);
 
@@ -185,8 +186,8 @@ class DataFieldSettingsMenuDelegate extends WatchUi.Menu2InputDelegate {
       mi.setSubLabel($.getStorageNumberAsString(mi.getId() as String));
       gfieldMenu.addItem(mi);
 
-      mi = new WatchUi.MenuItem("Zones|0~12", null,  prefix + "|2", null);
-      mi.setSubLabel($.getGraphicInfoByIndex(prefix, 2) as String);      
+      mi = new WatchUi.MenuItem("Zones|0~12", null, "gf_zones", null);
+      mi.setSubLabel($.getStorageNumberAsString(mi.getId() as String));      
       gfieldMenu.addItem(mi);
       // Fields
       for (var i = 0; i < 5; i++) {
@@ -269,8 +270,8 @@ class DataFieldSettingsMenuDelegate extends WatchUi.Menu2InputDelegate {
     }
   }
 
-  function onSelectedSelection(value as Object, storageKey as String) as Void {
-    Storage.setValue(storageKey, value as Number);
+ function onSelectedSelection(storageKey as String, value as Application.PropertyValueType) as Void {
+    Storage.setValue(storageKey, value);
   }
 }
 
@@ -300,7 +301,6 @@ class GeneralMenuDelegate extends WatchUi.Menu2InputDelegate {
       sp.add("Minimal", "hiit minimized", WhatHiitt.HiitMinimal);
       sp.add("Normal", "hiit full screen", WhatHiitt.HiitNormal);
 
-      //sp.setOnSelected(self, :onSelectedHiitMode, item);
       sp.setOnSelected(self, :onSelectedSelection, item);
       sp.show();
       return;
@@ -312,7 +312,6 @@ class GeneralMenuDelegate extends WatchUi.Menu2InputDelegate {
       sp.add("Low", "low noise", WhatHiitt.LowNoise);
       sp.add("Loud", "loud noise", WhatHiitt.LoudNoise);
 
-      //sp.setOnSelected(self, :onSelectedHiitSound, item);
       sp.setOnSelected(self, :onSelectedSelection, item);
       sp.show();
       return;
@@ -325,7 +324,6 @@ class GeneralMenuDelegate extends WatchUi.Menu2InputDelegate {
       sp.add("Zone 4", null, 4);
       sp.add("Zone 5", null, 5);
 
-      //sp.setOnSelected(self, :onSelectedHrZone, item);
       sp.setOnSelected(self, :onSelectedSelection, item);
       sp.show();
       return;
@@ -487,9 +485,11 @@ class GeneralMenuDelegate extends WatchUi.Menu2InputDelegate {
 
   // --
 
-  function onSelectedSelection(value as Object, storageKey as String) as Void {
-    Storage.setValue(storageKey, value as Number);
+ function onSelectedSelection(storageKey as String, value as Application.PropertyValueType) as Void {
+    Storage.setValue(storageKey, value);
   }
+  
+  
   function onSelectedFieldLayout(value as Object, storageKey as String) as Void {
     // storageKey large_field|0  (key and field index) value = 1 (field type)
     var key = stringLeft(storageKey, "|", "");

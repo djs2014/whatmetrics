@@ -1,5 +1,12 @@
-https://cyklopedia.cc/cycling-tips/normalized-power-and-variability-index/
+Check:
 
+ function onSelectedSelection(value as Object, storageKey as String) as Void {
+    Storage.setValue(storageKey, value as Number);
+  }
+Number -> Numeric ??
+
+https://cyklopedia.cc/cycling-tips/normalized-power-and-variability-index/
+hrv
 show_graphic_fields
 graphic_fields
 gf_zones

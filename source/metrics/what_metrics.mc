@@ -33,9 +33,11 @@ class WhatMetrics {
   // Normalized power
   hidden var mPowerDataPer30Sec as Array<Number> = [] as Array<Number>;
   hidden var mAvgPowerToFourthPer30Sec as Array<Decimal> = [] as Array<Decimal>;
-  hidden var mCurrentNP as Number = 0;
   hidden var mNPSkipZero as Boolean = false;
+  hidden var mPowerTicks as Number = 0;
+  hidden var mCurrentNP as Double = 0.0d;
 
+  
   // detect if l/r power is not 0 for x seconds
   hidden var mPowerDualSecFallback as Number = 0;
   hidden var mPowerTimesTwo as Boolean = false;
@@ -46,6 +48,9 @@ class WhatMetrics {
   hidden var mHrZones as Lang.Array<Lang.Number> = [] as Lang.Array<Lang.Number>;
   function initialize() {}
 
+  // function reset() as Void {
+  //   resetAverageNP();
+  // }
   function initPowerBalance(powerDualSecFallback as Number, powerTimesTwo as Boolean) as Void {
     if (mPowerBalance == null) {
       mPowerBalance = new PowerBalance();
@@ -161,7 +166,7 @@ class WhatMetrics {
     return mHrZones.size();
   }
   function getMaxHeartRateZone() as Number {
-    return mHrZones.size();
+    return mHrZones.size() - 1; // Zone 0 to 5
   }
 
   // distance, meters
@@ -255,7 +260,7 @@ class WhatMetrics {
   }
 
   function getNormalizedPower() as Number {
-    return mCurrentNP;
+    return mCurrentNP.toNumber();
   }
 
   function getUserFTP() as Number {
@@ -323,23 +328,28 @@ class WhatMetrics {
   // time of day, timer, elapsed time, date dd-month
   // elapsed time in millisec
   function getElapsedTime() as Number {
-    return getActivityValue(a_info, :elapsedTime, 0) as Number;
+    return $.getActivityValue(a_info, :elapsedTime, 0) as Number;
   }
   // current timer value in millisec
   function getTimerTime() as Number {
-    return getActivityValue(a_info, :timerTime, 0) as Number;
+    return $.getActivityValue(a_info, :timerTime, 0) as Number;
   }
   // start time of activity
   function getStartTime() as Time.Moment {
-    return getActivityValue(a_info, :startTime, 0) as Time.Moment;
+    return $.getActivityValue(a_info, :startTime, 0) as Time.Moment;
   }
 
   // called per second
   function compute(info as Activity.Info) as Void {
-    mPaused = false;
-    if (info has :timerState) {
-      mPaused = info.timerState == Activity.TIMER_STATE_PAUSED or info.timerState == Activity.TIMER_STATE_OFF;
+    var previousState = $.getActivityValue(a_info, :timerState, Activity.TIMER_STATE_OFF);
+    var currentState = $.getActivityValue(info, :timerState, Activity.TIMER_STATE_OFF);
+    mPaused = currentState == Activity.TIMER_STATE_PAUSED or currentState == Activity.TIMER_STATE_OFF;
+    if (previousState == Activity.TIMER_STATE_OFF && currentState == Activity.TIMER_STATE_ON) {
+      resetAverageNP();
     }
+    // if (info has :timerState) {
+    //   mPaused = info.timerState == Activity.TIMER_STATE_PAUSED or info.timerState == Activity.TIMER_STATE_OFF;
+    // }
 
     var intermediateAltitude = getAltitude();
     if (previousAltitude == 0.0f) {
@@ -363,12 +373,16 @@ class WhatMetrics {
     mCurrentGrade = calculateGrade(intermediateAltitude, intermediateDistance);
 
     var power = getActivityValue(a_info, :currentPower, 0) as Number;
+
     checkForFalingDualPower();
     mCurrentPowerPerX = calculatePower(power);
 
     if (!mPaused) {
       if (power > 0 || (!mNPSkipZero && power == 0)) {
-        mCurrentNP = calculateNormalizedPower(calculatePower30(power));
+        var currentNP = calculateNormalizedPower(calculatePower30(power));
+        if (currentNP > 0) {
+          mCurrentNP = addAverageNP(mCurrentNP, currentNP);
+        }
       }
     }
   }
@@ -476,6 +490,19 @@ class WhatMetrics {
       return 0.0d;
     }
     return Math.mean(arrGrade as Array<Float>);
+  }
+
+  hidden function resetAverageNP() as Void {
+    mPowerTicks = 0;
+    mCurrentNP = 0.0d;
+  }
+  hidden function addAverageNP(averagePower as Double, power as Number) as Double {
+    // [ avg' * (n-1) + x ] / n
+    mPowerTicks = mPowerTicks + 1;
+    averagePower = (averagePower * (mPowerTicks - 1) + power) / mPowerTicks.toDouble();
+    
+    System.println(Lang.format("p $1$ ticks $2$ avg $3$", [power, mPowerTicks, averagePower]));
+    return averagePower;
   }
 }
 

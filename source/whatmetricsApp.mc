@@ -49,17 +49,6 @@ class whatmetricsApp extends Application.AppBase {
       Storage.setValue("hiit_valid_sec", 30);
       Storage.setValue("hiit_recovery_sec", 300);
 
-      // Targets unchanged using reset
-      // Storage.setValue("target_ftp", $.gTargetFtp);
-      // Storage.setValue("target_speed", $.gTargetSpeed);
-      // Storage.setValue("target_cadence", $.gTargetCadence);
-      // Storage.setValue("target_calories", $.gTargetCalories);
-      // Storage.setValue("target_grade", $.gTargetGrade);
-      // Storage.setValue("target_altitude", $.gTargetAltitude);
-      // Storage.setValue("target_hrzone", 4);
-      // Storage.setValue("target_if", 1.2f);
-      // Storage.setValue("target_tss", 450);
-
       Storage.setValue("metric_ppersec", 3);
       Storage.setValue("metric_gradews", 4);
       Storage.setValue("metric_grademinrise", 0);
@@ -115,10 +104,10 @@ class whatmetricsApp extends Application.AppBase {
 
       Storage.setValue("fields_fallback", $.gFallbackFields);
 
-      $.gGraphic_fields =
-        [FTTrainingStressScore, FTHeartRateZone, FTUnknown, FTUnknown, FTUnknown] as Array<Number>;
+      $.gGraphic_fields = [FTTrainingStressScore, FTHeartRateZone, FTUnknown, FTUnknown, FTUnknown] as Array<Number>;
       Storage.setValue("graphic_fields", $.gGraphic_fields);
       Storage.setValue("gf_line_width", 7);
+      Storage.setValue("gf_zones", 5);
       Storage.setValue("show_graphic_fields", true);
 
       Storage.setValue("demofields", false);
@@ -146,14 +135,25 @@ class whatmetricsApp extends Application.AppBase {
     metrics.setGradeMinimalRise(getStorageValue("metric_grademinrise", 0) as Number);
     metrics.setGradeMinimalRun(getStorageValue("metric_grademinrun", 20) as Number);
 
-    $.gTargetFtp = getStorageValue("target_ftp", 0) as Number;
-    $.gTargetSpeed = getStorageValue("target_speed", 0) as Number;
-    $.gTargetCadence = getStorageValue("target_cadence", 0) as Number;
-    $.gTargetCalories = getStorageValue("target_calories", 0) as Number;
-    $.gTargetGrade = getStorageValue("target_grade", 0) as Number;
-    $.gTargetAltitude = getStorageValue("target_altitude", 0) as Number;
-    $.gTargetIF = getStorageValue("target_if", 1.2f) as Float;
-    $.gTargetTSS = getStorageValue("target_tss", 450) as Number;
+    if (getStorageValue("target_ftp", 0) as Number == 0) {
+      Storage.setValue("target_ftp", $.gTargetFtp);
+      Storage.setValue("target_speed", $.gTargetSpeed);
+      Storage.setValue("target_cadence", $.gTargetCadence);
+      Storage.setValue("target_calories", $.gTargetCalories);
+      Storage.setValue("target_grade", $.gTargetGrade);
+      Storage.setValue("target_altitude", $.gTargetAltitude);
+      Storage.setValue("target_hrzone", 4);
+      Storage.setValue("target_if", $.gTargetIF);
+      Storage.setValue("target_tss", $.gTargetTSS);
+    }
+    $.gTargetFtp = getStorageValue("target_ftp", $.gTargetFtp) as Number;
+    $.gTargetSpeed = getStorageValue("target_speed", $.gTargetSpeed) as Number;
+    $.gTargetCadence = getStorageValue("target_cadence", $.gTargetCadence) as Number;
+    $.gTargetCalories = getStorageValue("target_calories", $.gTargetCalories) as Number;
+    $.gTargetGrade = getStorageValue("target_grade", $.gTargetGrade) as Number;
+    $.gTargetAltitude = getStorageValue("target_altitude", $.gTargetAltitude) as Number;
+    $.gTargetIF = getStorageValue("target_if", $.gTargetIF) as Float;
+    $.gTargetTSS = getStorageValue("target_tss", $.gTargetTSS) as Number;
 
     var targetHrZone = getStorageValue("target_hrzone", 4) as Number;
     var heartRateZones = UserProfile.getHeartRateZones(UserProfile.HR_ZONE_SPORT_BIKING);
@@ -179,7 +179,7 @@ class whatmetricsApp extends Application.AppBase {
     while ($.gFallbackFields.size() < $.FieldTypeCount) {
       $.gFallbackFields.add(FTUnknown);
     }
-    
+
     // @@TODO
     // $.gLargeFieldGraphic = getStorageValue("large_field_g", $.gLargeFieldGraphic) as Array<Number>;
     // $.gWideFieldGraphic = getStorageValue("wide_field_g", $.gWideFieldGraphic) as Array<Number>;
@@ -271,7 +271,7 @@ var gDebug as Boolean = false;
 
 var gShow_graphic_fields as Boolean = true;
 var gGraphic_fields_line_width as Number = 7;
-var gGraphic_fields_zones as Number = 6;
+var gGraphic_fields_zones as Number = 5;
 
 var gShowColors as Boolean = false;
 var gShowGrid as Boolean = true;
