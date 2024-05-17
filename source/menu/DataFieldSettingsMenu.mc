@@ -173,7 +173,7 @@ class DataFieldSettingsMenuDelegate extends WatchUi.Menu2InputDelegate {
       return;
     }
 
-// @@ TODO show large / wide / small
+    // @@ TODO show large / wide / small
     if (id instanceof String && id.equals("graphic_fields")) {
       var label = item.getLabel();
       var prefix = "graphic_fields";
@@ -187,7 +187,7 @@ class DataFieldSettingsMenuDelegate extends WatchUi.Menu2InputDelegate {
       gfieldMenu.addItem(mi);
 
       mi = new WatchUi.MenuItem("Zones|0~12", null, "gf_zones", null);
-      mi.setSubLabel($.getStorageNumberAsString(mi.getId() as String));      
+      mi.setSubLabel($.getStorageNumberAsString(mi.getId() as String));
       gfieldMenu.addItem(mi);
       // Fields
       for (var i = 0; i < 5; i++) {
@@ -270,7 +270,7 @@ class DataFieldSettingsMenuDelegate extends WatchUi.Menu2InputDelegate {
     }
   }
 
- function onSelectedSelection(storageKey as String, value as Application.PropertyValueType) as Void {
+  function onSelectedSelection(storageKey as String, value as Application.PropertyValueType) as Void {
     Storage.setValue(storageKey, value);
   }
 }
@@ -485,12 +485,11 @@ class GeneralMenuDelegate extends WatchUi.Menu2InputDelegate {
 
   // --
 
- function onSelectedSelection(storageKey as String, value as Application.PropertyValueType) as Void {
+  function onSelectedSelection(storageKey as String, value as Application.PropertyValueType) as Void {
     Storage.setValue(storageKey, value);
   }
-  
-  
-  function onSelectedFieldLayout(value as Object, storageKey as String) as Void {
+
+  function onSelectedFieldLayout(storageKey as String, value as Application.PropertyValueType) as Void {
     // storageKey large_field|0  (key and field index) value = 1 (field type)
     var key = stringLeft(storageKey, "|", "");
     var index = 0;
@@ -505,7 +504,7 @@ class GeneralMenuDelegate extends WatchUi.Menu2InputDelegate {
     }
   }
 
-  function onSelectedField(value as Object, storageKey as String) as Void {
+  function onSelectedField(storageKey as String, value as Application.PropertyValueType) as Void {
     // storageKey large_field|0  (key and field index) value = 1 (field type)
     var key = stringLeft(storageKey, "|", "");
     var index = stringRight(storageKey, "|", "").toNumber();
@@ -585,18 +584,17 @@ function getGraphicInfoByIndex(key as String, index as Number) as String or Bool
   if (index < 0 || index >= fields.size()) {
     return "--";
   }
-  if (index == 0 ){
+  if (index == 0) {
     // Boolean: 0, 1, show line
     return fields[index] == 1;
   }
   if (index == 1) {
     // Number, width
-    return (fields[index]).format("%0d");
+    return fields[index].format("%0d");
   }
   var field = fields[index] as FieldType;
   return $.getFieldTypeAsString(field);
 }
-
 
 function getZenModeAsString(zenMode as ZenMode) as String {
   switch (zenMode) {
@@ -734,7 +732,7 @@ function fieldHasGraphic(idx as Number) as Boolean {
       FTSpeed,
       FTCadence,
       FTHeartRate,
-      FTCalories
+      FTCalories,
     ].indexOf(idx) > -1
   );
 }
