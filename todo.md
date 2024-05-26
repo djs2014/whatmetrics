@@ -1,3 +1,11 @@
+TODO
+numberpicker version to other apps
+
+settled x
+tired
+weather x
+poiradar x
+
 Check:
 
  function onSelectedSelection(value as Object, storageKey as String) as Void {

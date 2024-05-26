@@ -278,7 +278,6 @@ class DataFieldSettingsMenuDelegate extends WatchUi.Menu2InputDelegate {
 class GeneralMenuDelegate extends WatchUi.Menu2InputDelegate {
   hidden var _delegate as DataFieldSettingsMenuDelegate;
   hidden var _item as MenuItem?;
-  hidden var _currentPrompt as String = "";
   hidden var _debug as Boolean = false;
 
   function initialize(delegate as DataFieldSettingsMenuDelegate, menu as WatchUi.Menu2) {
@@ -415,38 +414,23 @@ class GeneralMenuDelegate extends WatchUi.Menu2InputDelegate {
       return;
     }
 
-    _currentPrompt = item.getLabel();
-    var numericOptions = $.parseLabelToOptions(_currentPrompt);
-
-    var currentValue = $.getStorageValue(id as String, 0) as Numeric;
-    if (numericOptions.isFloat) {
-      currentValue = currentValue.toFloat();
-    }
-    var view = new $.NumericInputView(_debug, _currentPrompt, currentValue);
-    view.processOptions(numericOptions);
-
+    // Numeric input
+    var prompt = item.getLabel();
+    var value = $.getStorageValue(id as String, 0) as Numeric;
+    var view = $.getNumericInputView(prompt, value);
     view.setOnAccept(self, :onAcceptNumericinput);
     view.setOnKeypressed(self, :onNumericinput);
 
     Toybox.WatchUi.pushView(view, new $.NumericInputDelegate(_debug, view), WatchUi.SLIDE_RIGHT);
   }
 
-  function onAcceptNumericinput(value as Numeric) as Void {
+ function onAcceptNumericinput(value as Numeric, subLabel as String) as Void {
     try {
       if (_item != null) {
         var storageKey = _item.getId() as String;
-        Storage.setValue(storageKey, value);
 
-        switch (value) {
-          case instanceof Long:
-          case instanceof Number:
-            (_item as MenuItem).setSubLabel(value.format("%.0d"));
-            break;
-          case instanceof Float:
-          case instanceof Double:
-            (_item as MenuItem).setSubLabel(value.format("%.2f"));
-            break;
-        }
+        Storage.setValue(storageKey, value);
+        (_item as MenuItem).setSubLabel(subLabel);
       }
     } catch (ex) {
       ex.printStackTrace();
@@ -462,7 +446,7 @@ class GeneralMenuDelegate extends WatchUi.Menu2InputDelegate {
   ) as Void {
     // Hack to refresh screen
     WatchUi.popView(WatchUi.SLIDE_IMMEDIATE);
-    var view = new $.NumericInputView(_debug, _currentPrompt, 0);
+    var view = new $.NumericInputView("", 0);
     view.processOptions(opt);
     view.setEditData(editData, cursorPos, insert, negative);
     view.setOnAccept(self, :onAcceptNumericinput);
