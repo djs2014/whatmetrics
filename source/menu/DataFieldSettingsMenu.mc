@@ -37,28 +37,28 @@ class DataFieldSettingsMenuDelegate extends WatchUi.Menu2InputDelegate {
       mi.setSubLabel($.getHiittSoundText(value));
       hiitMenu.addItem(mi);
 
-      mi = new WatchUi.MenuItem("Start when % of target|0~500", null, "hiit_startperc", null);
-      mi.setSubLabel($.getStorageNumberAsString(mi.getId() as String));
+      mi = new WatchUi.MenuItem("Start when % of target|0~500 (%)", null, "hiit_startperc", null);
+      mi.setSubLabel($.getStorageNumberAsString(mi.getId() as String) + " %");
       hiitMenu.addItem(mi);
 
-      mi = new WatchUi.MenuItem("Stop when % of target|0~500", null, "hiit_stopperc", null);
-      mi.setSubLabel($.getStorageNumberAsString(mi.getId() as String));
+      mi = new WatchUi.MenuItem("Stop when % of target|0~500 (%)", null, "hiit_stopperc", null);
+      mi.setSubLabel($.getStorageNumberAsString(mi.getId() as String) + " %");
       hiitMenu.addItem(mi);
 
-      mi = new WatchUi.MenuItem("Sec countdown to start|0~30", null, "hiit_countdown", null);
-      mi.setSubLabel($.getStorageNumberAsString(mi.getId() as String));
+      mi = new WatchUi.MenuItem("Sec countdown to start|0~30 (sec)", null, "hiit_countdown", null);
+      mi.setSubLabel($.getStorageNumberAsString(mi.getId() as String) + " sec");
       hiitMenu.addItem(mi);
 
-      mi = new WatchUi.MenuItem("Sec inactivity until stop|0~60", null, "hiit_inactivity", null);
-      mi.setSubLabel($.getStorageNumberAsString(mi.getId() as String));
+      mi = new WatchUi.MenuItem("Sec inactivity until stop|0~60 (sec)", null, "hiit_inactivity", null);
+      mi.setSubLabel($.getStorageNumberAsString(mi.getId() as String) + " sec");
       hiitMenu.addItem(mi);
 
-      mi = new WatchUi.MenuItem("Sec valid hiit", null, "hiit_valid_sec", null);
-      mi.setSubLabel($.getStorageNumberAsString(mi.getId() as String));
+      mi = new WatchUi.MenuItem("Sec valid hiit| (sec)", null, "hiit_valid_sec", null);
+      mi.setSubLabel($.getStorageNumberAsString(mi.getId() as String) + " sec");
       hiitMenu.addItem(mi);
 
-      mi = new WatchUi.MenuItem("Sec recovery", null, "hiit_recovery_sec", null);
-      mi.setSubLabel($.getStorageNumberAsString(mi.getId() as String));
+      mi = new WatchUi.MenuItem("Sec recovery| (sec)", null, "hiit_recovery_sec", null);
+      mi.setSubLabel($.getStorageNumberAsString(mi.getId() as String) + " sec");
       hiitMenu.addItem(mi);
 
       WatchUi.pushView(hiitMenu, new $.GeneralMenuDelegate(self, hiitMenu), WatchUi.SLIDE_UP);
@@ -206,12 +206,12 @@ class DataFieldSettingsMenuDelegate extends WatchUi.Menu2InputDelegate {
       var boolean = Storage.getValue("demofields") ? true : false;
       demMenu.addItem(new WatchUi.ToggleMenuItem("Show demo", null, "demofields", boolean, null));
 
-      var mi = new WatchUi.MenuItem("Wait seconds|0~60", null, "demofields_wait", null);
-      mi.setSubLabel($.getStorageNumberAsString(mi.getId() as String));
+      var mi = new WatchUi.MenuItem("Wait seconds|0~60 (sec)", null, "demofields_wait", null);
+      mi.setSubLabel($.getStorageNumberAsString(mi.getId() as String) + " sec");
       demMenu.addItem(mi);
 
-      mi = new WatchUi.MenuItem("Roundtrips|0~60", null, "demofields_roundtrip", null);
-      mi.setSubLabel($.getStorageNumberAsString(mi.getId() as String));
+      mi = new WatchUi.MenuItem("Roundtrips|0~60 (sec)", null, "demofields_roundtrip", null);
+      mi.setSubLabel($.getStorageNumberAsString(mi.getId() as String) + " sec");
       demMenu.addItem(mi);
 
       WatchUi.pushView(demMenu, new $.GeneralMenuDelegate(self, demMenu), WatchUi.SLIDE_UP);
@@ -424,7 +424,7 @@ class GeneralMenuDelegate extends WatchUi.Menu2InputDelegate {
     Toybox.WatchUi.pushView(view, new $.NumericInputDelegate(_debug, view), WatchUi.SLIDE_RIGHT);
   }
 
- function onAcceptNumericinput(value as Numeric, subLabel as String) as Void {
+  function onAcceptNumericinput(value as Numeric, subLabel as String) as Void {
     try {
       if (_item != null) {
         var storageKey = _item.getId() as String;
