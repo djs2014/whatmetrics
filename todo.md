@@ -1,4 +1,13 @@
-Check:
+hiit show when paused an has hits
+center text/value fields
+ongoing vo2max?
+hiit alwasy visible layout
+
+
+<!-- default:  hiit when start/active/cooldown - back timer
+hitt cooling down -> recovery time ...? -->
+-- show vo2 max score ..
+ // var yBase = y + (height / 2) - (dims_number_or_text[1] / 2); @@ TODO center text/values and rest valign center?
 
  function onSelectedSelection(value as Object, storageKey as String) as Void {
     Storage.setValue(storageKey, value as Number);

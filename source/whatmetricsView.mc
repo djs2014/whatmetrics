@@ -641,10 +641,10 @@ class whatmetricsView extends WatchUi.DataField {
         return fi;
 
       case FTHiit:
-        // @@ TODO, keep bottom information / stats field
-        // available  = mHiitt.isHiitInProgress
         fi.available = false;
         if (mHiitt.isEnabled()) {
+          // Force display hiit stats info
+          fi.text = " ";
           // Hiit needs power data
           var nrHiit = mHiitt.getNumberOfHits();
           fi.available =
@@ -652,11 +652,7 @@ class whatmetricsView extends WatchUi.DataField {
             (mMetrics.getPower() > 0 and (mPowerFallbackCountdown > 0 or $.gPowerCountdownToFallBack == 0));
           fi.title = "hiit";
           var showHiitIcon = 1;
-          var vo2max = mHiitt.getVo2Max();
-          if (vo2max > 30) {
-            fi.text = vo2max.format("%0.1f");
-            showHiitIcon = 0;
-          }
+          var vo2max = mHiitt.getVo2Max();          
           var recovery = mHiitt.getRecoveryElapsedSeconds();
           if (recovery > 0) {
             showHiitIcon = 0;
@@ -668,7 +664,7 @@ class whatmetricsView extends WatchUi.DataField {
             var counter = mHiitt.getCounter();
             if (counter > 0) {
               showHiitIcon = 0;
-              fi.text = counter.format("%01d");
+              fi.text = "(" + counter.format("%01d") + ")";
             } else {
               var hiitElapsed = mHiitt.getElapsedSeconds();
               if (hiitElapsed > 0) {
@@ -676,22 +672,22 @@ class whatmetricsView extends WatchUi.DataField {
                 fi.text = secondsToCompactTimeString(hiitElapsed, "({m}:{s})");
                 if (mHiitt.wasValidHiit()) {
                   fi.iconColor = Graphics.COLOR_GREEN;
-                }
-                // vo2max = mHiitt.getVo2Max();
-                if (vo2max > 30) {
-                  fi.decimals = vo2max.format("%0.0f");
-                }
+                }                
               }
             }
           }
-          // @@ text has value, no icon
+          if (vo2max > 30) {
+            fi.decimals = vo2max.format("%0.0f");            
+          }
+
+          if (mPaused) {
+            
+            fi.decimals = "";
+          }
           fi.iconParam = showHiitIcon;
 
           if (nrHiit > 0) {
             fi.text_botleft = "H " + nrHiit.format("%0.0d");
-            fi.text_botleft += " " + mHiitt.getHistStatusAsString();
-          } else {
-            fi.text_botleft = mHiitt.getHistStatusAsString();
           }
 
           var scores = mHiitt.getHitScores();
@@ -956,6 +952,7 @@ class whatmetricsView extends WatchUi.DataField {
     var text_botright = fieldInfo.text_botright;
     var text_middleleft = fieldInfo.text_middleleft;
     var text_middleright = fieldInfo.text_middleright;
+    // var text_middletop = fieldInfo.text_middletop;
 
     var hideDetails = false;
     if (fieldInfo.type != FTHiit) {
@@ -1033,12 +1030,18 @@ class whatmetricsView extends WatchUi.DataField {
       var number_or_text = "";
       if (text.length() > 0) {
         number_or_text = text;
-        font = getMatchingFont(dc, mFonts, width, height, text) as FontType;
+        font = getMatchingFont(dc, mFonts, width, height, number_or_text) as FontType;
         dims_number_or_text = dc.getTextDimensions(number_or_text, font);
+        // var fontAscent = Graphics.getFontAscent(font);
+        //   var fontDescent = Graphics.getFontDescent(font);
+        //   var fontHeight = Graphics.getFontHeight(font);
+        // if (fontAscent == 0) {
+        //   dims_number_or_text[1] = dims_number_or_text[1] + fontDescent;
+        // }
       } else if (number.length() > 0) {
         number_or_text = number;
-        font = getMatchingFont(dc, mFontsNumbers, width, height, number) as FontType;
-        dims_number_or_text = dc.getTextDimensions(number, font);
+        font = getMatchingFont(dc, mFontsNumbers, width, height, number_or_text) as FontType;
+        dims_number_or_text = dc.getTextDimensions(number_or_text, font);
       }
 
       var fontDecimals = Graphics.FONT_SYSTEM_MEDIUM;
@@ -1055,8 +1058,26 @@ class whatmetricsView extends WatchUi.DataField {
       }
 
       var xSplit = (x + (width - dims_number_or_text[0] - dims_decimals[0]) / 2 + dims_number_or_text[0]).toNumber();
-      var yBase = y + (height - dims_number_or_text[1]) / 2;
+      //var yBase = y + (height - dims_number_or_text[1]) / 2; 
+      var yBase = y + (height / 2) - (dims_number_or_text[1] / 2); // @@ TODO center text/values and rest valign center?
+      // dc.setColor(Graphics.COLOR_BLACK, Graphics.COLOR_GREEN);
       dc.drawText(xSplit, yBase + mYoffsetFix, font, number_or_text, Graphics.TEXT_JUSTIFY_RIGHT);
+
+      // System.print(number_or_text);
+      // System.println(dims_number_or_text);
+      // if (text_middletop.length() > 0) {
+      //   // @@ TODO get right font
+      //   var fontTextMiddleTop = fontDecimals;
+      //   var dims_middleTop = dc.getTextDimensions(text_middletop, fontTextMiddleTop);
+      //   var xMiddleTop = x + width / 2;
+      //   var yMiddleTop = y + dims_middleTop[0];
+      //   if (mReverseColor) {
+      //     dc.setColor(Graphics.COLOR_WHITE, Graphics.COLOR_TRANSPARENT);
+      //   } else {
+      //     dc.setColor(mDecimalsColor, Graphics.COLOR_TRANSPARENT);
+      //   }
+      //   dc.drawText(xMiddleTop, yMiddleTop, fontTextMiddleTop, text_middletop, Graphics.TEXT_JUSTIFY_CENTER);
+      // }
 
       if (decimals.length() > 0) {
         var yDec =

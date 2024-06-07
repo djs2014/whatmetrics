@@ -19,6 +19,7 @@ class FieldInfo {
     var text_botright as String = "";
     var text_middleleft as String = "";
     var text_middleright as String = "";
+    // var text_middletop as String = "";
 
     var iconColor as Number = -1;
     var iconParam as Numeric = 0;

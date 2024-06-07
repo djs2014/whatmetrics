@@ -40,7 +40,7 @@ class whatmetricsApp extends Application.AppBase {
     if (reset == null || (reset as Boolean)) {
       Storage.setValue("resetDefaults", false);
 
-      Storage.setValue("hiit_mode", WhatHiitt.HiitMinimal);
+      Storage.setValue("hiit_mode", WhatHiitt.HiitWhenActive);
       Storage.setValue("hiit_sound", WhatHiitt.StartOnlySound);
       Storage.setValue("hiit_startperc", 150);
       Storage.setValue("hiit_stopperc", 100);
@@ -95,9 +95,9 @@ class whatmetricsApp extends Application.AppBase {
       setFallbackField(FTDistanceDest, FTDistance);
       setFallbackField(FTPower, FTDistance);
       setFallbackField(FTPowerPerWeight, FTDistance);
-      setFallbackField(FTHeartRate, FTTimer);
-      setFallbackField(FTHeartRateZone, FTTimer);
-      setFallbackField(FTHiit, FTClock);
+      setFallbackField(FTHeartRate, FTClock);
+      setFallbackField(FTHeartRateZone, FTClock);
+      setFallbackField(FTHiit, FTTimer);
       setFallbackField(FTAltitude, FTPressureAtSea);
       setFallbackField(FTCadence, FTAverageSpeed);
       setFallbackField(FTNormalizedPower, FTTimeElapsed);

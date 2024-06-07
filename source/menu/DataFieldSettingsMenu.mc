@@ -295,10 +295,13 @@ class GeneralMenuDelegate extends WatchUi.Menu2InputDelegate {
       return;
     }
     if (id instanceof String && id.equals("hiit_mode")) {
-      var sp = new selectionMenuPicker("Hiit mode", id as String);
-      sp.add("Disabled", "hiit is not active", WhatHiitt.HiitDisabled);
-      sp.add("Minimal", "hiit minimized", WhatHiitt.HiitMinimal);
-      sp.add("Normal", "hiit full screen", WhatHiitt.HiitNormal);
+      var sp = new selectionMenuPicker("Hiit mode, visible", id as String);
+      for(var i = 0; i < 3; i++) {
+        sp.add($.getHiittModeText(i as WhatHiitt.HiitMode), null, i);
+      }
+      // sp.add("Disabled", "hiit is not active", WhatHiitt.HiitDisabled);
+      // sp.add("Minimal", "hiit minimized", WhatHiitt.HiitWhenActive);
+      // sp.add("Normal", "hiit full screen", WhatHiitt.HiitAlwaysOn);
 
       sp.setOnSelected(self, :onSelectedSelection, item);
       sp.show();
@@ -306,10 +309,13 @@ class GeneralMenuDelegate extends WatchUi.Menu2InputDelegate {
     }
     if (id instanceof String && id.equals("hiit_sound")) {
       var sp = new selectionMenuPicker("Hiit sound", id as String);
-      sp.add("No sound", null, WhatHiitt.NoSound);
-      sp.add("Start only", null, WhatHiitt.StartOnlySound);
-      sp.add("Low", "low noise", WhatHiitt.LowNoise);
-      sp.add("Loud", "loud noise", WhatHiitt.LoudNoise);
+      for(var i = 0; i < 4; i++) {
+        sp.add($.getHiittSoundText(i as WhatHiitt.HiitSound), null, i);
+      }
+      // sp.add("No sound", null, WhatHiitt.NoSound);
+      // sp.add("Start only", null, WhatHiitt.StartOnlySound);
+      // sp.add("Low", "low noise", WhatHiitt.LowNoise);
+      // sp.add("Loud", "loud noise", WhatHiitt.LoudNoise);
 
       sp.setOnSelected(self, :onSelectedSelection, item);
       sp.show();
@@ -330,9 +336,12 @@ class GeneralMenuDelegate extends WatchUi.Menu2InputDelegate {
 
     if (id.equals("large_field_zen") || id.equals("wide_field_zen") || id.equals("small_field_zen")) {
       var sp = new selectionMenuPicker("Zen mode", id as String);
-      sp.add("Off", null, ZMOff);
-      sp.add("On", null, ZMOn);
-      sp.add("When moving", null, ZMWhenMoving);
+      for(var i = 0; i < 3; i++) {
+        sp.add($.getZenModeAsString(i as ZenMode), null, i);
+      }
+      // sp.add("Off", null, ZMOff);
+      // sp.add("On", null, ZMOn);
+      // sp.add("When moving", null, ZMWhenMoving);
 
       sp.setOnSelected(self, :onSelectedSelection, item);
       sp.show();
@@ -522,10 +531,10 @@ function getShowTimerText(value as Number) as String {
 
 function getHiittModeText(value as WhatHiitt.HiitMode) as String {
   switch (value) {
-    case WhatHiitt.HiitMinimal:
-      return "minimal";
-    case WhatHiitt.HiitNormal:
-      return "normal";
+    case WhatHiitt.HiitWhenActive:
+      return "when active";
+    case WhatHiitt.HiitAlwaysOn:
+      return "always on";
     default:
       return "disabled";
   }
