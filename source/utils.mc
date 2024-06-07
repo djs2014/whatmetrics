@@ -304,6 +304,17 @@ const PERC_COLORS_RED =
     [100, 255, 0, 0],
   ] as Array<Array<Number> >;
 
+const PERC_COLORS_GREEN_RED =
+  [
+    [0, 234, 250, 241],
+    [20, 46, 204, 113],
+    [40, 241, 196, 15],
+    [60, 243, 156, 18],
+    [80, 230, 116, 341],
+    [90, 211, 84, 0],
+    [100, 255, 0, 0],
+  ] as Array<Array<Number> >;
+
 const PERC_COLORS_SCHEME =
   [
     [0, 244, 244, 244],
@@ -472,4 +483,28 @@ function pointOnCircle_x(x as Number, y as Number, radius as Number, angleInDegr
 function pointOnCircle_y(x as Number, y as Number, radius as Number, angleInDegrees as Number) as Number {
   // Convert from degrees to radians
   return (radius * Math.sin(deg2rad(angleInDegrees)) + y).toNumber();
+}
+
+function convertToNumber(value as String, defaultValue as Number) as Number {
+  var converted = value.toNumber();
+  if (converted == null) {
+    return defaultValue;
+  }
+  return converted;
+}
+
+// o (one), l (large), w (wide), s (small)
+function getDisplaySize(width as Number, height as Number) as String {
+  var display = "s";
+
+  if (width >= 246) {
+    display = "w";
+    if (height >= 322) {
+      display = "o";
+    } else if (height >= 100) {
+      display = "l";
+    }
+  }
+
+  return display;
 }

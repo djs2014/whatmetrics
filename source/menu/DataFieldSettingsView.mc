@@ -54,36 +54,47 @@ class DataFieldSettingsDelegate extends WatchUi.BehaviorDelegate {
     menu.addItem(mi);
     mi = new WatchUi.MenuItem("Gradient", null, "gradient", null);
     menu.addItem(mi);
-    mi = new WatchUi.MenuItem("Show pressure", null, "pressure", null);
-    menu.addItem(mi);
     
+    mi = new WatchUi.MenuItem("Large field", null, "large_field", null);
+    menu.addItem(mi);
+    mi = new WatchUi.MenuItem("Wide field", null, "wide_field", null);
+    menu.addItem(mi);
+    mi = new WatchUi.MenuItem("Small field", null, "small_field", null);
+    menu.addItem(mi);
+
+    mi = new WatchUi.MenuItem("Graphic field", null, "graphic_fields", null);
+    menu.addItem(mi);
+
+    mi = new WatchUi.MenuItem("Fallback fields", null, "fallbacks", null);
+    menu.addItem(mi);
+    mi = new WatchUi.MenuItem("Fallback triggers", null, "fallbackstriggers", null);
+    menu.addItem(mi);
+
+
     var boolean = false;
 
     boolean = Storage.getValue("show_colors") ? true : false;
     menu.addItem(new WatchUi.ToggleMenuItem("Colors", null, "show_colors", boolean, null));
 
+    // @@TODO?? nope, on paused, always (in details)
+    boolean = Storage.getValue("show_average") ? true : false;
+    menu.addItem(new WatchUi.ToggleMenuItem("Average on pause", null, "show_average", boolean, null));
+    
+    // boolean = Storage.getValue("show_graphic_fields") ? true : false;
+    // menu.addItem(new WatchUi.ToggleMenuItem("Graphic fields", null, "show_graphic_fields", boolean, null));
+
+    boolean = Storage.getValue("resetDefaults") ? true : false;
+    menu.addItem(new WatchUi.ToggleMenuItem("Reset to defaults", null, "resetDefaults", boolean, null));
+
     boolean = Storage.getValue("show_grid") ? true : false;
     menu.addItem(new WatchUi.ToggleMenuItem("Grid lines", null, "show_grid", boolean, null));
 
-    mi = new WatchUi.MenuItem("Timer", null, "show_timer", null);
-    var value = getStorageValue(mi.getId() as String, $.gShowTimer) as Number;
-    mi.setSubLabel($.getShowTimerText(value));
+    mi = new WatchUi.MenuItem("Demo fields", null, "demofieldsmenu", null);
     menu.addItem(mi);
-
-    // boolean = Storage.getValue("show_timer") ? true : false;
-    // mi = new WatchUi.ToggleMenuItem("Timer", null, "show_timer", boolean, null);
-    // mi.setSubLabel($.subMenuToggleMenuItem(mi.getId() as String));
-    // menu.addItem(mi);
-  
-    // @@QND
-    // boolean = Storage.getValue("wf_toggle_heading") ? true : false;
-    // mi = new WatchUi.ToggleMenuItem("Field 2 (small)", null, "wf_toggle_heading", boolean, null);
-    // mi.setSubLabel($.subMenuToggleMenuItem(mi.getId() as String));
-    // menu.addItem(mi);
-   //  gWideFieldShowDistance = getStorageValue("wf_toggle_heading", gWideFieldShowDistance) as Boolean;
-
+    
     boolean = Storage.getValue("debug") ? true : false;
     menu.addItem(new WatchUi.ToggleMenuItem("Debug", null, "debug", boolean, null));
+
 
     var view = new $.DataFieldSettingsView();
     WatchUi.pushView(menu, new $.DataFieldSettingsMenuDelegate(view), WatchUi.SLIDE_IMMEDIATE);
@@ -97,23 +108,6 @@ class DataFieldSettingsDelegate extends WatchUi.BehaviorDelegate {
   }
 }
 
-
-
-
-function subMenuToggleMenuItem(key as String) as String {
-  // if (key.equals("show_timer")) {
-  //   if (Storage.getValue(key) ? true : false) {
-  //     return "timer time";
-  //   } else {
-  //     return "elapsed time";
-  //   }
-  // } 
-  // else if (key.equals("wf_toggle_heading")) {
-  //   if (Storage.getValue(key) ? true : false) {
-  //     return "distance (next)";
-  //   } else {
-  //     return "heading";
-  //   }
-  // }
+function subMenuToggleMenuItem(key as String) as String {  
   return "";
 }

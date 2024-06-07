@@ -7,9 +7,7 @@ import Toybox.AntPlus;
 
 class WhatMetrics {
   hidden var a_info as Activity.Info?;
-  // @@ hidden var cadence_target as Number = 30;
-  // @@ targets ?? in view
-
+  hidden var mPaused as Boolean = true;
   // grade
   hidden var mCurrentGrade as Double = 0.0d;
   hidden var gradeWindowSize as Number = 4;
@@ -28,10 +26,21 @@ class WhatMetrics {
   hidden var mPowerPerSec as Number = 3;
   hidden var mPowerDataPerSec as Array<Number> = [] as Array<Number>;
   hidden var mPowerBalance as PowerBalance? = null;
-  hidden var userWeightKg as Float = 0.0f;
 
+  hidden var mUserWeightKg as Float = 0.0f;
+  hidden var mUserFTP as Number = 0;
+
+  // Normalized power
+  hidden var mPowerDataPer30Sec as Array<Number> = [] as Array<Number>;
+  hidden var mAvgPowerToFourthPer30Sec as Array<Decimal> = [] as Array<Decimal>;
+  hidden var mNPSkipZero as Boolean = false;
+  hidden var mPowerTicks as Number = 0;
+  hidden var mCurrentNP as Double = 0.0d;
+
+  
   // detect if l/r power is not 0 for x seconds
   hidden var mPowerDualSecFallback as Number = 0;
+  hidden var mPowerTimesTwo as Boolean = false;
   hidden var mFailingPowerPedalsCounter as Number = 0;
   hidden var mHasFailingDualpower as Boolean = false;
 
@@ -39,26 +48,39 @@ class WhatMetrics {
   hidden var mHrZones as Lang.Array<Lang.Number> = [] as Lang.Array<Lang.Number>;
   function initialize() {}
 
-  function initPowerBalance(powerDualSecFallback as Number) as Void {
+  // function reset() as Void {
+  //   resetAverageNP();
+  // }
+  function initPowerBalance(powerDualSecFallback as Number, powerTimesTwo as Boolean) as Void {
     if (mPowerBalance == null) {
       mPowerBalance = new PowerBalance();
     }
     mPowerDualSecFallback = powerDualSecFallback;
     mHasFailingDualpower = false;
+    mPowerTimesTwo = powerTimesTwo;
   }
 
   function initWeight() as Void {
     var profile = UserProfile.getProfile();
-    userWeightKg = 0.0f;
+    mUserWeightKg = 0.0f;
     if (profile.weight == null) {
       return;
     }
     var weight = profile.weight as Number;
-    userWeightKg = weight / 1000.0;
+    mUserWeightKg = weight / 1000.0;
   }
 
   function initHrZones(zones as Lang.Array<Lang.Number>) as Void {
     mHrZones = zones;
+  }
+
+  // @@TODO initPwrZones
+
+  function initNP(skipZeroPower as Boolean) as Void {
+    mNPSkipZero = skipZeroPower;
+  }
+  function setFTP(ftp as Number) as Void {
+    mUserFTP = ftp;
   }
 
   function setPowerPerSec(seconds as Number) as Void {
@@ -105,12 +127,12 @@ class WhatMetrics {
     return getActivityValue(a_info, :totalDescent, 0.0f) as Float;
   }
 
-  // pressure
+  // pressure hPa
   function getAmbientPressure() as Float {
-    return getActivityValue(a_info, :ambientPressure, 0.0f) as Float;
+    return (getActivityValue(a_info, :ambientPressure, 0.0f) as Float) / 100.0;
   }
   function getMeanSeaLevelPressure() as Float {
-    return getActivityValue(a_info, :meanSeaLevelPressure, 0.0f) as Float;
+    return (getActivityValue(a_info, :meanSeaLevelPressure, 0.0f) as Float) / 100.0;
   }
 
   // heartrate, bpm
@@ -123,11 +145,16 @@ class WhatMetrics {
   function getMaxHeartRate() as Number {
     return getActivityValue(a_info, :maxHeartRate, 0) as Number;
   }
-  function getHeartRateZone() as Number {
+  function getHeartRateZone(showAverage as Boolean) as Number {
     if (mHrZones.size() == 0) {
       return 0;
     }
-    var heartRate = getHeartRate();
+    var heartRate = 0;
+    if (showAverage) {
+      heartRate = getAverageHeartRate();
+    } else {
+      heartRate = getHeartRate();
+    }
     if (heartRate < mHrZones[0]) {
       return 0;
     }
@@ -137,6 +164,9 @@ class WhatMetrics {
       }
     }
     return mHrZones.size();
+  }
+  function getMaxHeartRateZone() as Number {
+    return mHrZones.size() - 1; // Zone 0 to 5
   }
 
   // distance, meters
@@ -150,16 +180,22 @@ class WhatMetrics {
     return getActivityValue(a_info, :distanceToDestination, 0.0f) as Float;
   }
 
-  // gear /Index, Max and Size -> calc ratio Index values range from from 1 to the rearDerailleurMax. @@ 2/7 == 50:17
+  // size of chainring
   function getFrontDerailleurSize() as Number {
-    // return getActivityValue(a_info, :frontDerailleurIndex, 0) as Number;
     return getActivityValue(a_info, :frontDerailleurSize, 0) as Number;
   }
   function getRearDerailleurSize() as Number {
-    // return getActivityValue(a_info, :rearDerailleurIndex, 0) as Number;
     return getActivityValue(a_info, :rearDerailleurSize, 0) as Number;
   }
+  // index of chainring
+  function getFrontDerailleurIndex() as Number {
+    return getActivityValue(a_info, :frontDerailleurIndex, 0) as Number;
+  }
+  function getRearDerailleurIndex() as Number {
+    return getActivityValue(a_info, :rearDerailleurIndex, 0) as Number;
+  }
 
+  // % grade
   function getGrade() as Double {
     return mCurrentGrade;
   }
@@ -198,7 +234,7 @@ class WhatMetrics {
   }
   // power watts / x seconds
   function getPower() as Number {
-    if (mHasFailingDualpower) {
+    if (mHasFailingDualpower || mPowerTimesTwo) {
       // Compensate for 1 failing pedal
       return mCurrentPowerPerX * 2;
     }
@@ -211,12 +247,47 @@ class WhatMetrics {
     return getActivityValue(a_info, :maxPower, 0) as Number;
   }
   function getPowerPerWeight() as Float {
-    if (userWeightKg == 0) {
+    if (mUserWeightKg == 0) {
       return 0.0f;
     }
-    return getPower() / userWeightKg.toFloat();
+    return getPower() / mUserWeightKg.toFloat();
+  }
+  function getAveragePowerPerWeight() as Float {
+    if (mUserWeightKg == 0) {
+      return 0.0f;
+    }
+    return getAveragePower() / mUserWeightKg.toFloat();
   }
 
+  function getNormalizedPower() as Number {
+    return mCurrentNP.toNumber();
+  }
+
+  function getUserFTP() as Number {
+    return mUserFTP;
+  }
+
+  function getIntensityFactor() as Float {
+    if (mUserFTP == 0) {
+      return 0.0f;
+    }
+    return getNormalizedPower() / mUserFTP.toFloat();
+  }
+
+  function getTrainingStressScore() as Float {
+    if (mUserFTP == 0) {
+      return 0.0f;
+    }
+    // TSS = (sec × NP × IF) / (FTP × 3600) × 100
+    var seconds = getTimerTime() / 1000.0;
+    var fraction = mUserFTP.toFloat() * 3600.0f;
+    if (fraction == 0) {
+      return 0.0f;
+    }
+    return ((seconds * getNormalizedPower() * getIntensityFactor()) / fraction) * 100.0f;
+  }
+
+  // % power balance left
   function getPowerBalanceLeft() as Number {
     if (mPowerBalance != null) {
       return (mPowerBalance as PowerBalance).getLeft();
@@ -230,6 +301,7 @@ class WhatMetrics {
     return 0.0d;
   }
 
+  // one of the power pedals is not working .. @@ experimental
   function getHasFailingDualpower() as Boolean {
     return mHasFailingDualpower;
   }
@@ -256,19 +328,29 @@ class WhatMetrics {
   // time of day, timer, elapsed time, date dd-month
   // elapsed time in millisec
   function getElapsedTime() as Number {
-    return getActivityValue(a_info, :elapsedTime, 0) as Number;
+    return $.getActivityValue(a_info, :elapsedTime, 0) as Number;
   }
   // current timer value in millisec
   function getTimerTime() as Number {
-    return getActivityValue(a_info, :timerTime, 0) as Number;
+    return $.getActivityValue(a_info, :timerTime, 0) as Number;
   }
   // start time of activity
   function getStartTime() as Time.Moment {
-    return getActivityValue(a_info, :startTime, 0) as Time.Moment;
+    return $.getActivityValue(a_info, :startTime, 0) as Time.Moment;
   }
 
   // called per second
   function compute(info as Activity.Info) as Void {
+    var previousState = $.getActivityValue(a_info, :timerState, Activity.TIMER_STATE_OFF);
+    var currentState = $.getActivityValue(info, :timerState, Activity.TIMER_STATE_OFF);
+    mPaused = currentState == Activity.TIMER_STATE_PAUSED or currentState == Activity.TIMER_STATE_OFF;
+    if (previousState == Activity.TIMER_STATE_OFF && currentState == Activity.TIMER_STATE_ON) {
+      resetAverageNP();
+    }
+    // if (info has :timerState) {
+    //   mPaused = info.timerState == Activity.TIMER_STATE_PAUSED or info.timerState == Activity.TIMER_STATE_OFF;
+    // }
+
     var intermediateAltitude = getAltitude();
     if (previousAltitude == 0.0f) {
       previousAltitude = intermediateAltitude;
@@ -289,16 +371,23 @@ class WhatMetrics {
 
   hidden function calculateMetrics(intermediateAltitude as Float, intermediateDistance as Float) as Void {
     mCurrentGrade = calculateGrade(intermediateAltitude, intermediateDistance);
-    mCurrentPowerPerX = calculatePower();
-  }
 
-  hidden function calculatePower() as Number {
     var power = getActivityValue(a_info, :currentPower, 0) as Number;
 
-    if (mPowerDualSecFallback > 0 && mPowerBalance != null) {
-      checkForFalingDualPower();
-    }
+    checkForFalingDualPower();
+    mCurrentPowerPerX = calculatePower(power);
 
+    if (!mPaused) {
+      if (power > 0 || (!mNPSkipZero && power == 0)) {
+        var currentNP = calculateNormalizedPower(calculatePower30(power));
+        if (currentNP > 0) {
+          mCurrentNP = addAverageNP(mCurrentNP, currentNP);
+        }
+      }
+    }
+  }
+
+  hidden function calculatePower(power as Number) as Number {
     if (mPowerDataPerSec.size() >= mPowerPerSec) {
       mPowerDataPerSec = mPowerDataPerSec.slice(1, mPowerPerSec);
     }
@@ -310,18 +399,51 @@ class WhatMetrics {
     return Math.mean(mPowerDataPerSec as Array<Number>).toNumber();
   }
 
-  hidden function checkForFalingDualPower() as Void {
-    var pedal = mPowerBalance.getActivePowerPedals();
+  hidden function calculatePower30(power as Number) as Number {
+    if (mPowerDataPer30Sec.size() >= 30) {
+      mPowerDataPer30Sec = mPowerDataPer30Sec.slice(1, 30);
+    }
+    mPowerDataPer30Sec.add(power);
 
-    if (pedal == "L" || pedal == "R") {
+    if (mPowerDataPer30Sec.size() == 0) {
+      return 0;
+    }
+    return Math.mean(mPowerDataPer30Sec as Array<Number>).toNumber();
+  }
+
+  hidden function calculateNormalizedPower(PowerPer30 as Number) as Number {
+    if (mAvgPowerToFourthPer30Sec.size() >= 30) {
+      mAvgPowerToFourthPer30Sec = mAvgPowerToFourthPer30Sec.slice(1, 30);
+    }
+
+    mAvgPowerToFourthPer30Sec.add(Math.pow(PowerPer30, 4));
+
+    if (mAvgPowerToFourthPer30Sec.size() < 30) {
+      return 0;
+    }
+    var avg = Math.mean(mAvgPowerToFourthPer30Sec as Array<Decimal>).toDouble();
+    return Math.pow(avg, 0.25).toNumber();
+  }
+
+  hidden function checkForFalingDualPower() as Void {
+    if (mPowerBalance == null) {
+      return;
+    }
+    if (mPowerDualSecFallback == 0) {
+      return;
+    }
+
+    var pedal = (mPowerBalance as PowerBalance).getActivePowerPedals();
+
+    if (pedal == "L" || pedal == "R" || pedal == "") {
       mFailingPowerPedalsCounter = mFailingPowerPedalsCounter + 1;
     } else {
       mFailingPowerPedalsCounter = 0;
     }
     mHasFailingDualpower = mFailingPowerPedalsCounter > mPowerDualSecFallback;
-    System.println(
-      "FailingPowerPedalsCounter " + mFailingPowerPedalsCounter + " mHasFailingDualpower " + mHasFailingDualpower
-    );
+    // System.println(
+    //   "FailingPowerPedalsCounter " + mFailingPowerPedalsCounter + " mHasFailingDualpower " + mHasFailingDualpower
+    // );
   }
 
   hidden function calculateGrade(intermediateAltitude as Float, intermediateDistance as Float) as Double {
@@ -368,6 +490,19 @@ class WhatMetrics {
       return 0.0d;
     }
     return Math.mean(arrGrade as Array<Float>);
+  }
+
+  hidden function resetAverageNP() as Void {
+    mPowerTicks = 0;
+    mCurrentNP = 0.0d;
+  }
+  hidden function addAverageNP(averagePower as Double, power as Number) as Double {
+    // [ avg' * (n-1) + x ] / n
+    mPowerTicks = mPowerTicks + 1;
+    averagePower = (averagePower * (mPowerTicks - 1) + power) / mPowerTicks.toDouble();
+    
+    System.println(Lang.format("p $1$ ticks $2$ avg $3$", [power, mPowerTicks, averagePower]));
+    return averagePower;
   }
 }
 

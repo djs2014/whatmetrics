@@ -4,9 +4,8 @@ import Toybox.WatchUi;
 import Toybox.UserProfile;
 
 class whatmetricsApp extends Application.AppBase {
-  
   function initialize() {
-    AppBase.initialize();   
+    AppBase.initialize();
   }
 
   // onStart() is called on application start up
@@ -16,21 +15,32 @@ class whatmetricsApp extends Application.AppBase {
   function onStop(state as Dictionary?) as Void {}
 
   //! Return the initial view of your application here
-  function getInitialView() as Array<Views or InputDelegates>? {
+  function getInitialView() as [WatchUi.Views] or [WatchUi.Views, WatchUi.InputDelegates] {
     onSettingsChanged();
-    return [new whatmetricsView()] as Array<Views or InputDelegates>;
+    return [new whatmetricsView()];
   }
 
   //! Return the settings view and delegate for the app
   //! @return Array Pair [View, Delegate]
-  function getSettingsView() as Array<Views or InputDelegates>? {
-    return [new $.DataFieldSettingsView(), new $.DataFieldSettingsDelegate()] as Array<Views or InputDelegates>;
+  function getSettingsView() as [WatchUi.Views] or [WatchUi.Views, WatchUi.InputDelegates] or Null {
+    return [new $.DataFieldSettingsView(), new $.DataFieldSettingsDelegate()];
   }
   function onSettingsChanged() {
     var hiitt = getHiitt();
     hiitt.updateProfile();
-    if (Storage.getValue("hiit_mode") == null) {
-      Storage.setValue("hiit_mode", WhatHiitt.HiitDisabled);
+
+    var version = getStorageValue("version", "") as String;
+    if (!version.equals("1.0.4")) {
+      Storage.clearValues();
+      Storage.setValue("version", "1.0.4");
+      Storage.setValue("resetDefaults", true);
+    }
+
+    var reset = Storage.getValue("resetDefaults");
+    if (reset == null || (reset as Boolean)) {
+      Storage.setValue("resetDefaults", false);
+
+      Storage.setValue("hiit_mode", WhatHiitt.HiitWhenActive);
       Storage.setValue("hiit_sound", WhatHiitt.StartOnlySound);
       Storage.setValue("hiit_startperc", 150);
       Storage.setValue("hiit_stopperc", 100);
@@ -39,40 +49,81 @@ class whatmetricsApp extends Application.AppBase {
       Storage.setValue("hiit_valid_sec", 30);
       Storage.setValue("hiit_recovery_sec", 300);
 
-      Storage.setValue("target_ftp", gTargetFtp);
-      Storage.setValue("target_speed", gTargetSpeed);
-      Storage.setValue("target_cadence", gTargetCadence);
-      Storage.setValue("target_calories", gTargetCalories);
-      Storage.setValue("target_grade", gTargetGrade);
-      Storage.setValue("target_altitude", gTargetAltitude);
-      Storage.setValue("target_hrzone", 4);
-
       Storage.setValue("metric_ppersec", 3);
       Storage.setValue("metric_gradews", 4);
       Storage.setValue("metric_grademinrise", 0);
       Storage.setValue("metric_grademinrun", 20);
 
-      Storage.setValue("debug", gDebug);
-      Storage.setValue("show_colors", gShowColors);
-      Storage.setValue("show_grid", gShowGrid);
-      Storage.setValue("show_timer", gShowTimer);
-      Storage.setValue("show_powerbalance", gShowPowerBalance);
-      Storage.setValue("show_powerbattery", gShowPowerBattery);
-      Storage.setValue("show_powerbatterytime", gShowPowerBattTime);
-      Storage.setValue("show_powerperweight", gShowPowerPerWeight);
-      Storage.setValue("show_poweraverage", gShowPowerAverage);
+      Storage.setValue("debug", $.gDebug);
+      Storage.setValue("show_colors", $.gShowColors);
+      Storage.setValue("show_grid", $.gShowGrid);
+      Storage.setValue("show_average", true);
+      Storage.setValue("show_np_as_avg", $.gShowNPasAverage);
+      Storage.setValue("np_skip_zero", false);
+
+      // @@
+      // Storage.setValue("show_powerbalance", $.gShowPowerBalance);
+      Storage.setValue("show_powerbattery", $.gShowPowerBattery);
+
       Storage.setValue("power_dual_sec_fallback", 0);
+      Storage.setValue("power_times_two", false);
 
-      Storage.setValue("metric_pbattmaxhour", gPowerBattMaxSeconds);
+      Storage.setValue("altitude_start_fb", $.gAltitudeFallbackStart);
+      Storage.setValue("altitude_end_fb", $.gAltitudeFallbackEnd);
+      Storage.setValue("grade_start_fb", $.gGradeFallbackStart);
+      Storage.setValue("grade_end_fb", $.gGradeFallbackEnd);
+      Storage.setValue("power_countdowntofb", 10);
+      Storage.setValue("cadence_countdowntofb", 30);
 
-      Storage.setValue("pressure_altmin", gHideAltitudeMin);
-      Storage.setValue("pressure_altmax", gHideAltitudeMax);
+      $.gLargeField =
+        [FL8Fields, FTGrade, FTBearing, FTHeartRate, FTPower, FTSpeed, FTAltitude, FTCadence, FTHiit] as Array<Number>;
+      $.gWideField =
+        [FL6Fields, FTGrade, FTDistanceNext, FTHeartRate, FTPower, FTSpeed, FTAltitude, FTCadence, FTHiit] as
+        Array<Number>;
+      $.gSmallField =
+        [FL4Fields, FTSpeed, FTPower, FTHeartRate, FTCadence, FTGrade, FTAltitude, FTCadence, FTHiit] as Array<Number>;
+      Storage.setValue("large_field", $.gLargeField);
+      Storage.setValue("wide_field", $.gWideField);
+      Storage.setValue("small_field", $.gSmallField);
+
+      Storage.setValue("large_field_zen", ZMWhenMoving);
+      Storage.setValue("wide_field_zen", ZMWhenMoving);
+      Storage.setValue("small_field_zen", ZMOn);
+
+      $.gFallbackFields = [];
+      setFallbackField(FTDistanceNext, FTDistanceDest);
+      setFallbackField(FTDistanceDest, FTDistance);
+      setFallbackField(FTPower, FTDistance);
+      setFallbackField(FTPowerPerWeight, FTDistance);
+      setFallbackField(FTHeartRate, FTClock);
+      setFallbackField(FTHeartRateZone, FTClock);
+      setFallbackField(FTHiit, FTTimer);
+      setFallbackField(FTAltitude, FTPressureAtSea);
+      setFallbackField(FTCadence, FTAverageSpeed);
+      setFallbackField(FTNormalizedPower, FTTimeElapsed);
+
+      Storage.setValue("fields_fallback", $.gFallbackFields);
+
+      $.gGraphic_fields = [FTTrainingStressScore, FTHeartRateZone, FTUnknown, FTUnknown, FTUnknown] as Array<Number>;
+      Storage.setValue("graphic_fields", $.gGraphic_fields);
+      Storage.setValue("gf_line_width", 7);
+      Storage.setValue("gf_zones", 5);
+      Storage.setValue("show_graphic_fields", true);
+
+      Storage.setValue("demofields", false);
+      Storage.setValue("demofields_wait", 2);
+      Storage.setValue("demofields_roundtrip", 1);
     }
 
     hiitt.setMode(getStorageValue("hiit_mode", WhatHiitt.HiitDisabled) as WhatHiitt.HiitMode);
     hiitt.setSound(getStorageValue("hiit_sound", WhatHiitt.StartOnlySound) as WhatHiitt.HiitSound);
     hiitt.setStartOnPerc(getStorageValue("hiit_startperc", 0) as Number);
     hiitt.setStopOnPerc(getStorageValue("hiit_stopperc", 0) as Number);
+    var percs = hiitt.checkPerc();
+    if (percs.size() == 2) {
+      Storage.setValue("hiit_startperc", percs[0]);
+      Storage.setValue("hiit_stopperc", percs[1]);
+    }
     hiitt.setStartCountDownSeconds(getStorageValue("hiit_countdown", 3) as Number);
     hiitt.setStopCountDownSeconds(getStorageValue("hiit_inactivity", 10) as Number);
     hiitt.setMinimalElapsedSeconds(getStorageValue("hiit_valid_sec", 30) as Number);
@@ -84,56 +135,106 @@ class whatmetricsApp extends Application.AppBase {
     metrics.setGradeMinimalRise(getStorageValue("metric_grademinrise", 0) as Number);
     metrics.setGradeMinimalRun(getStorageValue("metric_grademinrun", 20) as Number);
 
-    gTargetFtp = getStorageValue("target_ftp", 0) as Number;
-    gTargetSpeed = getStorageValue("target_speed", 0) as Number;
-    gTargetCadence = getStorageValue("target_cadence", 0) as Number;
-    gTargetCalories = getStorageValue("target_calories", 0) as Number;
-    gTargetGrade = getStorageValue("target_grade", 0) as Number;
-    gTargetAltitude = getStorageValue("target_altitude", 0) as Number;
-    var targetHrZone = getStorageValue("target_hrzone", 4) as Number;
+    if (getStorageValue("target_ftp", 0) as Number == 0) {
+      Storage.setValue("target_ftp", $.gTargetFtp);
+      Storage.setValue("target_speed", $.gTargetSpeed);
+      Storage.setValue("target_cadence", $.gTargetCadence);
+      Storage.setValue("target_calories", $.gTargetCalories);
+      Storage.setValue("target_grade", $.gTargetGrade);
+      Storage.setValue("target_altitude", $.gTargetAltitude);
+      Storage.setValue("target_hrzone", 4);
+      Storage.setValue("target_if", $.gTargetIF);
+      Storage.setValue("target_tss", $.gTargetTSS);
+    }
+    $.gTargetFtp = getStorageValue("target_ftp", $.gTargetFtp) as Number;
+    $.gTargetSpeed = getStorageValue("target_speed", $.gTargetSpeed) as Number;
+    $.gTargetCadence = getStorageValue("target_cadence", $.gTargetCadence) as Number;
+    $.gTargetCalories = getStorageValue("target_calories", $.gTargetCalories) as Number;
+    $.gTargetGrade = getStorageValue("target_grade", $.gTargetGrade) as Number;
+    $.gTargetAltitude = getStorageValue("target_altitude", $.gTargetAltitude) as Number;
+    $.gTargetIF = getStorageValue("target_if", $.gTargetIF) as Float;
+    $.gTargetTSS = getStorageValue("target_tss", $.gTargetTSS) as Number;
 
+    var targetHrZone = getStorageValue("target_hrzone", 4) as Number;
     var heartRateZones = UserProfile.getHeartRateZones(UserProfile.HR_ZONE_SPORT_BIKING);
     if (heartRateZones.size() > 0) {
       if (targetHrZone > 0 and targetHrZone < heartRateZones.size()) {
-        gTargetHeartRate = (heartRateZones[targetHrZone - 1] + heartRateZones[targetHrZone]) / 2;
+        $.gTargetHeartRate = (heartRateZones[targetHrZone - 1] + heartRateZones[targetHrZone]) / 2;
       } else {
-        gTargetHeartRate = heartRateZones[heartRateZones.size() - 1];
+        $.gTargetHeartRate = heartRateZones[heartRateZones.size() - 1];
       }
       metrics.initHrZones(heartRateZones);
     }
 
-    gDebug = getStorageValue("debug", gDebug) as Boolean;
-    gShowColors = getStorageValue("show_colors", gShowColors) as Boolean;
-    gShowGrid = getStorageValue("show_grid", gShowGrid) as Boolean;
-    gShowTimer = getStorageValue("show_timer", gShowTimer) as Number;
+    // @@ TODO init array fields size of 9
+    $.gLargeField = getStorageValue("large_field", $.gLargeField) as Array<Number>;
+    $.gWideField = getStorageValue("wide_field", $.gWideField) as Array<Number>;
+    $.gSmallField = getStorageValue("small_field", $.gSmallField) as Array<Number>;
 
-    // gWideFieldShowDistance = getStorageValue("wf_toggle_heading", gWideFieldShowDistance) as Boolean;
+    $.gLargeFieldZen = getStorageValue("large_field_zen", $.gLargeFieldZen) as ZenMode;
+    $.gWideFieldZen = getStorageValue("wide_field_zen", $.gWideFieldZen) as ZenMode;
+    $.gSmallFieldZen = getStorageValue("small_field_zen", $.gSmallFieldZen) as ZenMode;
 
-    gHideAltitudeMin = getStorageValue("pressure_altmin", 0) as Number;
-    gHideAltitudeMax = getStorageValue("pressure_altmax", 0) as Number;
-    gShowMeanSeaLevel = getStorageValue("pressure_show_meansealevel", gShowMeanSeaLevel) as Boolean;
+    $.gFallbackFields = getStorageValue("fields_fallback", $.gFallbackFields) as Array<Number>;
+    while ($.gFallbackFields.size() < $.FieldTypeCount) {
+      $.gFallbackFields.add(FTUnknown);
+    }
 
-    gShowPowerBalance = getStorageValue("show_powerbalance", gShowPowerBalance) as Boolean;
-    gShowPowerBattery = getStorageValue("show_powerbattery", gShowPowerBattery) as Boolean;
-    gShowPowerBattTime = getStorageValue("show_powerbatterytime", gShowPowerBattTime) as Boolean;
-    gShowPowerPerWeight = getStorageValue("show_powerperweight", gShowPowerPerWeight) as Boolean;
-    gShowPowerAverage = getStorageValue("show_poweraverage", gShowPowerAverage) as Boolean;
+    // @@TODO
+    // $.gLargeFieldGraphic = getStorageValue("large_field_g", $.gLargeFieldGraphic) as Array<Number>;
+    // $.gWideFieldGraphic = getStorageValue("wide_field_g", $.gWideFieldGraphic) as Array<Number>;
+    // $.gSmallFieldGraphic = getStorageValue("small_field_g", $.gSmallFieldGraphic) as Array<Number>;
 
+    // @@
+    $.gGraphic_fields = getStorageValue("graphic_fields", $.gGraphic_fields) as Array<Number>;
+    while ($.gGraphic_fields.size() < 5) {
+      $.gGraphic_fields.add(FTUnknown);
+    }
+    $.gShow_graphic_fields = getStorageValue("show_graphic_fields", $.gShow_graphic_fields) as Boolean;
+    $.gGraphic_fields_line_width = getStorageValue("gf_line_width", $.gGraphic_fields_line_width) as Number;
+    $.gGraphic_fields_zones = getStorageValue("gf_zones", $.gGraphic_fields_zones) as Number;
+
+    $.gDebug = getStorageValue("debug", $.gDebug) as Boolean;
+    $.gShowColors = getStorageValue("show_colors", $.gShowColors) as Boolean;
+    $.gShowGrid = getStorageValue("show_grid", $.gShowGrid) as Boolean;
+    $.gShowAverageWhenPaused = getStorageValue("show_average", $.gShowAverageWhenPaused) as Boolean;
+
+    $.gAltitudeFallbackStart = getStorageValue("altitude_start_fb", 0) as Number;
+    $.gAltitudeFallbackEnd = getStorageValue("altitude_end_fb", 0) as Number;
+    $.gGradeFallbackStart = getStorageValue("grade_start_fb", 0) as Number;
+    $.gGradeFallbackEnd = getStorageValue("grade_end_fb", 0) as Number;
+
+    $.gShowPowerBattery = getStorageValue("show_powerbattery", $.gShowPowerBattery) as Boolean;
+    $.gShowNPasAverage = getStorageValue("show_np_as_avg", $.gShowNPasAverage) as Boolean;
+    var NPSkipZero = getStorageValue("np_skip_zero", false) as Boolean;
+    metrics.initNP(NPSkipZero);
+    // @@ from user profile possible?
+    metrics.setFTP($.gTargetFtp);
+
+    // @@ TODO refactor
     var powerDualSecFallback = getStorageValue("power_dual_sec_fallback", 0) as Number;
-    gPowerCountdownToFallBack = getStorageValue("power_countdowntofallback", gPowerCountdownToFallBack) as Number;
+    var powerTimesTwo = getStorageValue("power_times_two", false) as Boolean;
+    $.gPowerCountdownToFallBack = getStorageValue("power_countdowntofb", $.gPowerCountdownToFallBack) as Number;
+    $.gCadenceCountdownToFallBack = getStorageValue("cadence_countdowntofb", $.gCadenceCountdownToFallBack) as Number;
+    metrics.initPowerBalance(powerDualSecFallback, powerTimesTwo);
 
-    var hours = getStorageValue("metric_pbattmaxhour", gPowerBattMaxSeconds / 3600) as Number;
-    if (hours > 0 and hours < 1000) {
-      gPowerBattMaxSeconds = hours * 60 * 60;
-    }
-    gPowerBattOperTimeCharched = getStorageValue("metric_pbattopertimecharched", 0) as Number;
-    gPowerBattFullyCharched = getStorageValue("metric_pbattfullycharched", gPowerBattFullyCharched) as Boolean;
-    gPowerBattSetRemainingHour = getStorageValue("metric_pbattsetremaininghour", 0) as Number;
-
-    if (gShowPowerBalance or gShowPowerBattery or (powerDualSecFallback>0)) {
-      metrics.initPowerBalance(powerDualSecFallback);
-    }
     metrics.initWeight();
+
+    var demoFields = getStorageValue("demofields", false) as Boolean;
+    if (demoFields) {
+      Storage.setValue("demofields", false);
+      $.gDemoFieldsWait = getStorageValue("demofields_wait", 2) as Number;
+      $.gDemoFieldsRoundTrip = getStorageValue("demofields_roundtrip", 1) as Number;
+    } else {
+      $.gDemoFieldsRoundTrip = 0;
+    }
+  }
+
+  hidden function setFallbackField(field as FieldType, fallback as FieldType) as Void {
+    while ($.gFallbackFields.size() < $.FieldTypeCount) {
+      $.gFallbackFields.add(FTUnknown);
+    }
+    $.gFallbackFields[field as Number] = fallback;
   }
 }
 
@@ -155,31 +256,55 @@ function getWhatMetrics() as WhatMetrics {
 }
 var gHiitt as WhatHiitt?;
 var gMetrics as WhatMetrics?;
+
 var gTargetFtp as Number = 250;
 var gTargetSpeed as Number = 30;
 var gTargetCadence as Number = 90;
-var gTargetCalories as Number = 2000;
+var gTargetCalories as Number = 4000;
 var gTargetGrade as Number = 8;
 var gTargetAltitude as Number = 1000;
 var gTargetHeartRate as Number = 200;
+var gTargetIF as Float = 1.2f;
+var gTargetTSS as Number = 450;
+
 var gDebug as Boolean = false;
+
+var gShow_graphic_fields as Boolean = true;
+var gGraphic_fields_line_width as Number = 7;
+var gGraphic_fields_zones as Number = 5;
+
 var gShowColors as Boolean = false;
 var gShowGrid as Boolean = true;
-var gShowTimer as Number = 0; // 0  = timer, 1 = elapsed time, 2 = clock
-var gShowPowerBalance as Boolean = true;
+var gShowAverageWhenPaused as Boolean = false;
+
+var gShowNPasAverage as Boolean = false;
+
+// @@ refactor
+// var gShowPowerBalance as Boolean = true;
 var gShowPowerBattery as Boolean = true;
-var gShowPowerPerWeight as Boolean = false;
-var gShowPowerAverage as Boolean = false;
 
-var gShowPowerBattTime as Boolean = false;
-var gPowerBattMaxSeconds as Number = 0;
-var gPowerBattOperTimeCharched as Number = 0;
-var gPowerBattFullyCharched as Boolean = false;
-var gPowerBattSetRemainingHour as Number = 0;
-
-// var gWideFieldShowDistance as Boolean = false;
-// var gWideFieldShowDistanceDestination as Boolean = false;
-var gHideAltitudeMin as Number = -10;
-var gHideAltitudeMax as Number = 10;
-var gShowMeanSeaLevel as Boolean = true;
 var gPowerCountdownToFallBack as Number = 10;
+var gCadenceCountdownToFallBack as Number = 30;
+
+var gAltitudeFallbackStart as Number = -10;
+var gAltitudeFallbackEnd as Number = 10;
+var gGradeFallbackStart as Number = -2;
+var gGradeFallbackEnd as Number = 2;
+
+var gLargeField as Array<Number> = [0, 0, 0, 0, 0, 0, 0, 0, 0] as Array<Number>;
+var gWideField as Array<Number> = [0, 0, 0, 0, 0, 0, 0, 0, 0] as Array<Number>;
+var gSmallField as Array<Number> = [0, 0, 0, 0, 0, 0, 0, 0, 0] as Array<Number>;
+
+// var gLargeFieldGraphic as Array<Number> = [0, 0, 0, 0, 0, 0, 0, 0] as Array<Number>;
+// var gWideFieldGraphic as Array<Number> = [0, 0, 0, 0, 0, 0, 0, 0] as Array<Number>;
+// var gSmallFieldGraphic as Array<Number> = [0, 0, 0, 0, 0, 0, 0, 0] as Array<Number>;
+var gGraphic_fields as Array<Number> = [] as Array<Number>;
+
+var gLargeFieldZen as ZenMode = ZMOff;
+var gWideFieldZen as ZenMode = ZMOff;
+var gSmallFieldZen as ZenMode = ZMOff;
+
+var gFallbackFields as Array<Number> = [] as Array<Number>;
+
+var gDemoFieldsWait as Number = 2;
+var gDemoFieldsRoundTrip as Number = 0;

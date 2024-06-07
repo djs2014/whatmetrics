@@ -1,3 +1,4 @@
+import Toybox.Application;
 import Toybox.Application.Storage;
 import Toybox.Lang;
 import Toybox.WatchUi;
@@ -36,28 +37,28 @@ class DataFieldSettingsMenuDelegate extends WatchUi.Menu2InputDelegate {
       mi.setSubLabel($.getHiittSoundText(value));
       hiitMenu.addItem(mi);
 
-      mi = new WatchUi.MenuItem("Start when % of target|0~500", null, "hiit_startperc", null);
-      mi.setSubLabel($.getStorageNumberAsString(mi.getId() as String));
+      mi = new WatchUi.MenuItem("Start when % of target|0~500 (%)", null, "hiit_startperc", null);
+      mi.setSubLabel($.getStorageNumberAsString(mi.getId() as String) + " %");
       hiitMenu.addItem(mi);
 
-      mi = new WatchUi.MenuItem("Stop when % of target|0~500", null, "hiit_stopperc", null);
-      mi.setSubLabel($.getStorageNumberAsString(mi.getId() as String));
+      mi = new WatchUi.MenuItem("Stop when % of target|0~500 (%)", null, "hiit_stopperc", null);
+      mi.setSubLabel($.getStorageNumberAsString(mi.getId() as String) + " %");
       hiitMenu.addItem(mi);
 
-      mi = new WatchUi.MenuItem("Sec countdown to start|0~30", null, "hiit_countdown", null);
-      mi.setSubLabel($.getStorageNumberAsString(mi.getId() as String));
+      mi = new WatchUi.MenuItem("Sec countdown to start|0~30 (sec)", null, "hiit_countdown", null);
+      mi.setSubLabel($.getStorageNumberAsString(mi.getId() as String) + " sec");
       hiitMenu.addItem(mi);
 
-      mi = new WatchUi.MenuItem("Sec inactivity until stop|0~60", null, "hiit_inactivity", null);
-      mi.setSubLabel($.getStorageNumberAsString(mi.getId() as String));
+      mi = new WatchUi.MenuItem("Sec inactivity until stop|0~60 (sec)", null, "hiit_inactivity", null);
+      mi.setSubLabel($.getStorageNumberAsString(mi.getId() as String) + " sec");
       hiitMenu.addItem(mi);
 
-      mi = new WatchUi.MenuItem("Sec valid hiit", null, "hiit_valid_sec", null);
-      mi.setSubLabel($.getStorageNumberAsString(mi.getId() as String));
+      mi = new WatchUi.MenuItem("Sec valid hiit| (sec)", null, "hiit_valid_sec", null);
+      mi.setSubLabel($.getStorageNumberAsString(mi.getId() as String) + " sec");
       hiitMenu.addItem(mi);
 
-      mi = new WatchUi.MenuItem("Sec recovery", null, "hiit_recovery_sec", null);
-      mi.setSubLabel($.getStorageNumberAsString(mi.getId() as String));
+      mi = new WatchUi.MenuItem("Sec recovery| (sec)", null, "hiit_recovery_sec", null);
+      mi.setSubLabel($.getStorageNumberAsString(mi.getId() as String) + " sec");
       hiitMenu.addItem(mi);
 
       WatchUi.pushView(hiitMenu, new $.GeneralMenuDelegate(self, hiitMenu), WatchUi.SLIDE_UP);
@@ -83,6 +84,12 @@ class DataFieldSettingsMenuDelegate extends WatchUi.Menu2InputDelegate {
       mi.setSubLabel($.getStorageNumberAsString(mi.getId() as String));
       targetMenu.addItem(mi);
       mi = new WatchUi.MenuItem("Target altitude meters", null, "target_altitude", null);
+      mi.setSubLabel($.getStorageNumberAsString(mi.getId() as String));
+      targetMenu.addItem(mi);
+      mi = new WatchUi.MenuItem("Target IF|0.0~1.2", null, "target_if", null);
+      mi.setSubLabel($.getStorageFloatAsString(mi.getId() as String));
+      targetMenu.addItem(mi);
+      mi = new WatchUi.MenuItem("Target TSS|0~600", null, "target_tss", null);
       mi.setSubLabel($.getStorageNumberAsString(mi.getId() as String));
       targetMenu.addItem(mi);
 
@@ -116,64 +123,143 @@ class DataFieldSettingsMenuDelegate extends WatchUi.Menu2InputDelegate {
       mi.setSubLabel($.getStorageNumberAsString(mi.getId() as String));
       powerMenu.addItem(mi);
 
-      var boolean = Storage.getValue("show_powerbalance") ? true : false;
-      powerMenu.addItem(new WatchUi.ToggleMenuItem("Power balance", null, "show_powerbalance", boolean, null));
+      var boolean;
+      //  boolean = Storage.getValue("show_powerbalance") ? true : false;
+      // powerMenu.addItem(new WatchUi.ToggleMenuItem("Balance", null, "show_powerbalance", boolean, null));
 
       boolean = Storage.getValue("show_powerbattery") ? true : false;
-      powerMenu.addItem(new WatchUi.ToggleMenuItem("Power batt. level", null, "show_powerbattery", boolean, null));
+      powerMenu.addItem(new WatchUi.ToggleMenuItem("Batt. level", null, "show_powerbattery", boolean, null));
 
-      mi = new WatchUi.MenuItem("Sec. to fallback distance", null, "power_countdowntofallback", null);
-      mi.setSubLabel($.getStorageNumberAsString(mi.getId() as String));
-      powerMenu.addItem(mi);
+      boolean = Storage.getValue("show_np_as_avg") ? true : false;
+      powerMenu.addItem(new WatchUi.ToggleMenuItem("NP for avg", null, "show_np_as_avg", boolean, null));
 
-      boolean = Storage.getValue("show_powerbatterytime") ? true : false;
-      powerMenu.addItem(new WatchUi.ToggleMenuItem("Power batt. time", null, "show_powerbatterytime", boolean, null));
-
-      mi = new WatchUi.MenuItem("Power battery max hour", null, "metric_pbattmaxhour", null);
-      mi.setSubLabel($.getStorageNumberAsString(mi.getId() as String));
-      powerMenu.addItem(mi);
-
-      mi = new WatchUi.MenuItem("Power set remain hour", null, "metric_pbattsetremaininghour", null);
-      mi.setSubLabel($.getStorageNumberAsString(mi.getId() as String));
-      powerMenu.addItem(mi);
-
-      boolean = Storage.getValue("show_powerperweight") ? true : false;
-      powerMenu.addItem(new WatchUi.ToggleMenuItem("Power per weight", null, "show_powerperweight", boolean, null));
-
-      boolean = Storage.getValue("show_poweraverage") ? true : false;
-      powerMenu.addItem(new WatchUi.ToggleMenuItem("Power average", null, "show_poweraverage", boolean, null));
+      boolean = Storage.getValue("np_skip_zero") ? true : false;
+      powerMenu.addItem(new WatchUi.ToggleMenuItem("NP skip zeros", null, "np_skip_zero", boolean, null));
 
       mi = new WatchUi.MenuItem("Dualpwr sec fallback", null, "power_dual_sec_fallback", null);
       mi.setSubLabel($.getStorageNumberAsString(mi.getId() as String));
       powerMenu.addItem(mi);
 
+      boolean = Storage.getValue("power_times_two") ? true : false;
+      powerMenu.addItem(new WatchUi.ToggleMenuItem("Power*2 (pedal fail)", null, "power_times_two", boolean, null));
+
       WatchUi.pushView(powerMenu, new $.GeneralMenuDelegate(self, powerMenu), WatchUi.SLIDE_LEFT);
       return;
     }
-    if (id instanceof String && id.equals("pressure")) {
-      var pressMenu = new WatchUi.Menu2({ :title => "Pressure or altitude" });
 
-      var mi = new WatchUi.MenuItem("Min altitude", null, "pressure_altmin", null);
-      mi.setSubLabel($.getStorageNumberAsString(mi.getId() as String));
-      pressMenu.addItem(mi);
-      mi = new WatchUi.MenuItem("Max altitude", null, "pressure_altmax", null);
-      mi.setSubLabel($.getStorageNumberAsString(mi.getId() as String));
-      pressMenu.addItem(mi);
+    if (id instanceof String && (id.equals("large_field") || id.equals("wide_field") || id.equals("small_field"))) {
+      var label = item.getLabel();
+      var prefix = id.toString();
+      var fieldMenu = new WatchUi.Menu2({ :title => label + " items" });
 
-      var boolean = Storage.getValue("pressure_show_meansealevel") ? true : false;
-      pressMenu.addItem(new WatchUi.ToggleMenuItem("Mean sealevel", null, "pressure_show_meansealevel", boolean, null));
+      // Layout
+      var mi = new WatchUi.MenuItem("Layout", null, prefix + "|0", null);
+      mi.setSubLabel($.getLayoutByIndex(prefix, 0));
+      fieldMenu.addItem(mi);
+      // Fields
+      for (var i = 1; i < 9; i++) {
+        mi = new WatchUi.MenuItem("Field " + i, null, prefix + "|" + i.format("%d"), null);
+        mi.setSubLabel($.getFieldByIndex(prefix, i));
+        fieldMenu.addItem(mi);
+      }
+      // Zenmode
+      var idzen = prefix + "_zen";
+      mi = new WatchUi.MenuItem("Zen mode", null, idzen, null);
+      var zm = $.getStorageValue(idzen, ZMOff) as ZenMode;
+      mi.setSubLabel($.getZenModeAsString(zm));
+      fieldMenu.addItem(mi);
 
-      WatchUi.pushView(pressMenu, new $.GeneralMenuDelegate(self, pressMenu), WatchUi.SLIDE_LEFT);
+      WatchUi.pushView(fieldMenu, new $.GeneralMenuDelegate(self, fieldMenu), WatchUi.SLIDE_UP);
       return;
     }
 
-    if (id instanceof String && id.equals("show_timer")) {
-      var sp = new selectionMenuPicker("Show time(r)", id as String);
-      for (var i = 0; i <= 2; i++) {
-        sp.add($.getShowTimerText(i), null, i);
+    // @@ TODO show large / wide / small
+    if (id instanceof String && id.equals("graphic_fields")) {
+      var label = item.getLabel();
+      var prefix = "graphic_fields";
+      var gfieldMenu = new WatchUi.Menu2({ :title => label + " items" });
+
+      var boolean = Storage.getValue("show_graphic_fields") ? true : false;
+      gfieldMenu.addItem(new WatchUi.ToggleMenuItem("Visible", null, "show_graphic_fields", boolean, null));
+
+      var mi = new WatchUi.MenuItem("Line width|1~10", null, "gf_line_width", null);
+      mi.setSubLabel($.getStorageNumberAsString(mi.getId() as String));
+      gfieldMenu.addItem(mi);
+
+      mi = new WatchUi.MenuItem("Zones|0~12", null, "gf_zones", null);
+      mi.setSubLabel($.getStorageNumberAsString(mi.getId() as String));
+      gfieldMenu.addItem(mi);
+      // Fields
+      for (var i = 0; i < 5; i++) {
+        mi = new WatchUi.MenuItem("Field " + i, null, prefix + "|" + i.format("%d"), null);
+        mi.setSubLabel($.getFieldByIndex(prefix, i));
+        gfieldMenu.addItem(mi);
       }
-      sp.setOnSelected(self, :onSelectedSelection, item);
-      sp.show();
+
+      WatchUi.pushView(gfieldMenu, new $.GeneralMenuDelegate(self, gfieldMenu), WatchUi.SLIDE_UP);
+      return;
+    }
+
+    if (id instanceof String && id.equals("demofieldsmenu")) {
+      var demMenu = new WatchUi.Menu2({ :title => "Cycle through fields" });
+
+      var boolean = Storage.getValue("demofields") ? true : false;
+      demMenu.addItem(new WatchUi.ToggleMenuItem("Show demo", null, "demofields", boolean, null));
+
+      var mi = new WatchUi.MenuItem("Wait seconds|0~60 (sec)", null, "demofields_wait", null);
+      mi.setSubLabel($.getStorageNumberAsString(mi.getId() as String) + " sec");
+      demMenu.addItem(mi);
+
+      mi = new WatchUi.MenuItem("Roundtrips|0~60 (sec)", null, "demofields_roundtrip", null);
+      mi.setSubLabel($.getStorageNumberAsString(mi.getId() as String) + " sec");
+      demMenu.addItem(mi);
+
+      WatchUi.pushView(demMenu, new $.GeneralMenuDelegate(self, demMenu), WatchUi.SLIDE_UP);
+      return;
+    }
+    if (id instanceof String && id.equals("fallbacks")) {
+      var fbMenu = new WatchUi.Menu2({ :title => "Fallback for field" });
+
+      // Fields, skip 0 (field Unknown)
+      for (var i = 1; i < $.FieldTypeCount; i++) {
+        if ($.fieldHasFallback(i)) {
+          var field = i as FieldType;
+          var mi = new WatchUi.MenuItem($.getFieldTypeAsString(field), null, "fields_fallback|" + i.format("%d"), null);
+          mi.setSubLabel($.getFieldByIndex("fields_fallback", i));
+          fbMenu.addItem(mi);
+        }
+      }
+
+      WatchUi.pushView(fbMenu, new $.GeneralMenuDelegate(self, fbMenu), WatchUi.SLIDE_UP);
+      return;
+    }
+
+    if (id instanceof String && id.equals("fallbackstriggers")) {
+      var fbtMenu = new WatchUi.Menu2({ :title => "Fallback triggers" });
+
+      var mi = new WatchUi.MenuItem("Sec. 0 power", null, "power_countdowntofb", null);
+      mi.setSubLabel($.getStorageNumberAsString(mi.getId() as String));
+      fbtMenu.addItem(mi);
+      mi = new WatchUi.MenuItem("Sec. 0 cadence", null, "cadence_countdowntofb", null);
+      mi.setSubLabel($.getStorageNumberAsString(mi.getId() as String));
+      fbtMenu.addItem(mi);
+
+      // !! fb_ in key already used
+      mi = new WatchUi.MenuItem("Altitude start", null, "altitude_start_fb", null);
+      mi.setSubLabel($.getStorageNumberAsString(mi.getId() as String));
+      fbtMenu.addItem(mi);
+      mi = new WatchUi.MenuItem("Altitude end", null, "altitude_end_fb", null);
+      mi.setSubLabel($.getStorageNumberAsString(mi.getId() as String));
+      fbtMenu.addItem(mi);
+
+      mi = new WatchUi.MenuItem("Grade start", null, "grade_start_fb", null);
+      mi.setSubLabel($.getStorageNumberAsString(mi.getId() as String));
+      fbtMenu.addItem(mi);
+      mi = new WatchUi.MenuItem("Grade end", null, "grade_end_fb", null);
+      mi.setSubLabel($.getStorageNumberAsString(mi.getId() as String));
+      fbtMenu.addItem(mi);
+
+      WatchUi.pushView(fbtMenu, new $.GeneralMenuDelegate(self, fbtMenu), WatchUi.SLIDE_UP);
       return;
     }
 
@@ -184,15 +270,14 @@ class DataFieldSettingsMenuDelegate extends WatchUi.Menu2InputDelegate {
     }
   }
 
-  function onSelectedSelection(value as Object, storageKey as String) as Void {
-    Storage.setValue(storageKey, value as Number);
+  function onSelectedSelection(storageKey as String, value as Application.PropertyValueType) as Void {
+    Storage.setValue(storageKey, value);
   }
 }
 
 class GeneralMenuDelegate extends WatchUi.Menu2InputDelegate {
   hidden var _delegate as DataFieldSettingsMenuDelegate;
   hidden var _item as MenuItem?;
-  hidden var _currentPrompt as String = "";
   hidden var _debug as Boolean = false;
 
   function initialize(delegate as DataFieldSettingsMenuDelegate, menu as WatchUi.Menu2) {
@@ -208,28 +293,35 @@ class GeneralMenuDelegate extends WatchUi.Menu2InputDelegate {
       Storage.setValue(id as String, item.isEnabled());
       item.setSubLabel($.subMenuToggleMenuItem(id as String));
       return;
-    } else if (id instanceof String && id.equals("hiit_mode")) {
-      var sp = new selectionMenuPicker("Hiit mode", id as String);
-      sp.add("Disabled", "hiit is not active", WhatHiitt.HiitDisabled);
-      sp.add("Minimal", "hiit minimized", WhatHiitt.HiitMinimal);
-      sp.add("Normal", "hiit full screen", WhatHiitt.HiitNormal);
+    }
+    if (id instanceof String && id.equals("hiit_mode")) {
+      var sp = new selectionMenuPicker("Hiit mode, visible", id as String);
+      for(var i = 0; i < 3; i++) {
+        sp.add($.getHiittModeText(i as WhatHiitt.HiitMode), null, i);
+      }
+      // sp.add("Disabled", "hiit is not active", WhatHiitt.HiitDisabled);
+      // sp.add("Minimal", "hiit minimized", WhatHiitt.HiitWhenActive);
+      // sp.add("Normal", "hiit full screen", WhatHiitt.HiitAlwaysOn);
 
-      //sp.setOnSelected(self, :onSelectedHiitMode, item);
       sp.setOnSelected(self, :onSelectedSelection, item);
       sp.show();
       return;
-    } else if (id instanceof String && id.equals("hiit_sound")) {
+    }
+    if (id instanceof String && id.equals("hiit_sound")) {
       var sp = new selectionMenuPicker("Hiit sound", id as String);
-      sp.add("No sound", null, WhatHiitt.NoSound);
-      sp.add("Start only", null, WhatHiitt.StartOnlySound);
-      sp.add("Low", "low noise", WhatHiitt.LowNoise);
-      sp.add("Loud", "loud noise", WhatHiitt.LoudNoise);
+      for(var i = 0; i < 4; i++) {
+        sp.add($.getHiittSoundText(i as WhatHiitt.HiitSound), null, i);
+      }
+      // sp.add("No sound", null, WhatHiitt.NoSound);
+      // sp.add("Start only", null, WhatHiitt.StartOnlySound);
+      // sp.add("Low", "low noise", WhatHiitt.LowNoise);
+      // sp.add("Loud", "loud noise", WhatHiitt.LoudNoise);
 
-      //sp.setOnSelected(self, :onSelectedHiitSound, item);
       sp.setOnSelected(self, :onSelectedSelection, item);
       sp.show();
       return;
-    } else if (id.equals("target_hrzone")) {
+    }
+    if (id.equals("target_hrzone")) {
       var sp = new selectionMenuPicker("Target heartrate zone", id as String);
       sp.add("Zone 1", null, 1);
       sp.add("Zone 2", null, 2);
@@ -237,44 +329,117 @@ class GeneralMenuDelegate extends WatchUi.Menu2InputDelegate {
       sp.add("Zone 4", null, 4);
       sp.add("Zone 5", null, 5);
 
-      //sp.setOnSelected(self, :onSelectedHrZone, item);
       sp.setOnSelected(self, :onSelectedSelection, item);
       sp.show();
       return;
     }
 
-    _currentPrompt = item.getLabel();
-    var numericOptions = parseLabelToOptions(_currentPrompt);
+    if (id.equals("large_field_zen") || id.equals("wide_field_zen") || id.equals("small_field_zen")) {
+      var sp = new selectionMenuPicker("Zen mode", id as String);
+      for(var i = 0; i < 3; i++) {
+        sp.add($.getZenModeAsString(i as ZenMode), null, i);
+      }
+      // sp.add("Off", null, ZMOff);
+      // sp.add("On", null, ZMOn);
+      // sp.add("When moving", null, ZMWhenMoving);
 
-    var currentValue = $.getStorageValue(id as String, 0) as Numeric;
-    if (numericOptions.isFloat) {
-      currentValue = currentValue.toFloat();
+      sp.setOnSelected(self, :onSelectedSelection, item);
+      sp.show();
+      return;
     }
-    var view = new $.NumericInputView(_debug, _currentPrompt, currentValue);
-    view.processOptions(numericOptions);
 
+    // Fallback fields, storage in fields_fallback
+    if (id.find("fields_fallback|") != null) {
+      var prefix = stringLeft(id, "|", "");
+      var index = stringRight(id, "|", "").toNumber();
+      if (prefix == "" || index == null) {
+        return;
+      }
+      var idx = index as Number;
+      var label = "Set fallback: " + $.getFieldTypeAsString(idx as FieldType);
+      var sp = new selectionMenuPicker(label, id as String);
+      for (var i = 0; i < $.FieldTypeCount; i++) {
+        sp.add($.getFieldTypeAsString(i as FieldType), null, i);
+      }
+      sp.setOnSelected(self, :onSelectedField, item);
+      sp.show();
+      return;
+    }
+
+    // Graphic fields, storage in graphic_fields
+    if (id.find("graphic_fields|") != null) {
+      var prefix = stringLeft(id, "|", "");
+      var index = stringRight(id, "|", "").toNumber();
+      if (prefix == "" || index == null) {
+        return;
+      }
+      var idx = index as Number;
+      var label = "Line: " + $.getFieldTypeAsString(idx as FieldType);
+      var sp = new selectionMenuPicker(label, id as String);
+      for (var i = 0; i < $.FieldTypeCount; i++) {
+        if ($.fieldHasGraphic(i)) {
+          sp.add($.getFieldTypeAsString(i as FieldType), null, i);
+        }
+      }
+      sp.setOnSelected(self, :onSelectedField, item);
+      sp.show();
+      return;
+    }
+
+    if (id.find("|") != null) {
+      var prefix = stringLeft(id, "|", "");
+      var index = stringRight(id, "|", "").toNumber();
+      if (prefix == "" || index == null) {
+        return;
+      }
+      var idx = index as Number;
+      if (idx == 0) {
+        var sp = new selectionMenuPicker("Field layout", id as String);
+        for (var i = 0; i < $.FieldLayoutCount; i++) {
+          sp.add($.getFieldLayoutAsString(i as FieldLayout), null, i);
+        }
+        sp.setOnSelected(self, :onSelectedField, item);
+        sp.show();
+        return;
+      }
+
+      var sp = new selectionMenuPicker("Field " + idx, id as String);
+      for (var i = 0; i < $.FieldTypeCount; i++) {
+        sp.add($.getFieldTypeAsString(i as FieldType), null, i);
+      }
+      sp.setOnSelected(self, :onSelectedField, item);
+      sp.show();
+      return;
+    }
+
+    // Fallback fields
+    if (id.find("fb_") != null) {
+      var sp = new selectionMenuPicker("Fallback for " + item.getLabel(), id as String);
+      for (var i = 0; i < $.FieldTypeCount; i++) {
+        sp.add($.getFieldTypeAsString(i as FieldType), null, i);
+      }
+      sp.setOnSelected(self, :onSelectedSelection, item);
+      sp.show();
+      return;
+    }
+
+    // Numeric input
+    var prompt = item.getLabel();
+    var value = $.getStorageValue(id as String, 0) as Numeric;
+    var view = $.getNumericInputView(prompt, value);
     view.setOnAccept(self, :onAcceptNumericinput);
     view.setOnKeypressed(self, :onNumericinput);
 
     Toybox.WatchUi.pushView(view, new $.NumericInputDelegate(_debug, view), WatchUi.SLIDE_RIGHT);
   }
 
-  function onAcceptNumericinput(value as Numeric) as Void {
+  function onAcceptNumericinput(value as Numeric, subLabel as String) as Void {
     try {
       if (_item != null) {
         var storageKey = _item.getId() as String;
-        Storage.setValue(storageKey, value);
 
-        switch (value) {
-          case instanceof Long:
-          case instanceof Number:
-            (_item as MenuItem).setSubLabel(value.format("%.0d"));
-            break;
-          case instanceof Float:
-          case instanceof Double:
-            (_item as MenuItem).setSubLabel(value.format("%.2f"));
-            break;
-        }
+        Storage.setValue(storageKey, value);
+        (_item as MenuItem).setSubLabel(subLabel);
       }
     } catch (ex) {
       ex.printStackTrace();
@@ -290,7 +455,7 @@ class GeneralMenuDelegate extends WatchUi.Menu2InputDelegate {
   ) as Void {
     // Hack to refresh screen
     WatchUi.popView(WatchUi.SLIDE_IMMEDIATE);
-    var view = new $.NumericInputView(_debug, _currentPrompt, 0);
+    var view = new $.NumericInputView("", 0);
     view.processOptions(opt);
     view.setEditData(editData, cursorPos, insert, negative);
     view.setOnAccept(self, :onAcceptNumericinput);
@@ -313,33 +478,39 @@ class GeneralMenuDelegate extends WatchUi.Menu2InputDelegate {
 
   // --
 
-  function onSelectedSelection(value as Object, storageKey as String) as Void {
-    Storage.setValue(storageKey, value as Number);
+  function onSelectedSelection(storageKey as String, value as Application.PropertyValueType) as Void {
+    Storage.setValue(storageKey, value);
   }
 
-  // function onSelectedHiitMode(value as Object, storageKey as String) as Void {
-  //   var HiitMode = value as WhatHiitt.HiitMode;
-  //   Storage.setValue(storageKey, HiitMode);
-  //   if (_item != null) {
-  //     (_item as MenuItem).setSubLabel($.getHiittModeText(HiitMode));
-  //   }
-  // }
+  function onSelectedFieldLayout(storageKey as String, value as Application.PropertyValueType) as Void {
+    // storageKey large_field|0  (key and field index) value = 1 (field type)
+    var key = stringLeft(storageKey, "|", "");
+    var index = 0;
+    if (key == "" || index == null) {
+      return;
+    }
+    var idx = index as Number;
+    var fields = getStorageValue(key, [0, 0, 0, 0, 0, 0, 0, 0, 0]) as Array<Number>;
+    if (idx < fields.size()) {
+      fields[idx] = value as Number;
+      Storage.setValue(key, fields);
+    }
+  }
 
-  // function onSelectedHiitSound(value as Object, storageKey as String) as Void {
-  //   var HiitSound = value as WhatHiitt.HiitSound;
-  //   Storage.setValue(storageKey, HiitSound);
-  //   if (_item != null) {
-  //     (_item as MenuItem).setSubLabel($.getHiittSoundText(HiitSound));
-  //   }
-  // }
-
-  // function onSelectedHrZone(value as Object, storageKey as String) as Void {
-  //   var zone = value as Number;
-  //   Storage.setValue(storageKey, zone);
-  //   if (_item != null) {
-  //     (_item as MenuItem).setSubLabel("zone " + zone.format("%0d"));
-  //   }
-  // }
+  function onSelectedField(storageKey as String, value as Application.PropertyValueType) as Void {
+    // storageKey large_field|0  (key and field index) value = 1 (field type)
+    var key = stringLeft(storageKey, "|", "");
+    var index = stringRight(storageKey, "|", "").toNumber();
+    if (key == "" || index == null) {
+      return;
+    }
+    var idx = index as Number;
+    var fields = getStorageValue(key, [0, 0, 0, 0, 0, 0, 0, 0, 0]) as Array<Number>;
+    if (idx < fields.size()) {
+      fields[idx] = value as Number;
+      Storage.setValue(key, fields);
+    }
+  }
 }
 
 // global
@@ -360,10 +531,10 @@ function getShowTimerText(value as Number) as String {
 
 function getHiittModeText(value as WhatHiitt.HiitMode) as String {
   switch (value) {
-    case WhatHiitt.HiitMinimal:
-      return "minimal";
-    case WhatHiitt.HiitNormal:
-      return "normal";
+    case WhatHiitt.HiitWhenActive:
+      return "when active";
+    case WhatHiitt.HiitAlwaysOn:
+      return "always on";
     default:
       return "disabled";
   }
@@ -381,6 +552,180 @@ function getHiittSoundText(value as WhatHiitt.HiitSound) as String {
   }
 }
 
+// Content array: [layout, field 1 .. field 8 ]
+function getLayoutByIndex(key as String, index as Number) as String {
+  var fields = getStorageValue(key, []) as Array<Number>;
+  if (index < 0 || index >= fields.size()) {
+    return "--";
+  }
+  return $.getFieldLayoutAsString(fields[index] as FieldLayout);
+}
+
+// Content array: [layout, field 1 .. field 8 ]
+function getFieldByIndex(key as String, index as Number) as String {
+  var fields = getStorageValue(key, []) as Array<Number>;
+  if (index < 0 || index >= fields.size()) {
+    return "--";
+  }
+
+  var field = fields[index] as FieldType;
+  return $.getFieldTypeAsString(field);
+}
+
+function getGraphicInfoByIndex(key as String, index as Number) as String or Boolean {
+  var fields = getStorageValue(key, []) as Array<Number>;
+  if (index < 0 || index >= fields.size()) {
+    return "--";
+  }
+  if (index == 0) {
+    // Boolean: 0, 1, show line
+    return fields[index] == 1;
+  }
+  if (index == 1) {
+    // Number, width
+    return fields[index].format("%0d");
+  }
+  var field = fields[index] as FieldType;
+  return $.getFieldTypeAsString(field);
+}
+
+function getZenModeAsString(zenMode as ZenMode) as String {
+  switch (zenMode) {
+    case ZMOff:
+      return "off";
+    case ZMOn:
+      return "on";
+    case ZMWhenMoving:
+      return "when moving";
+    default:
+      return "--";
+  }
+}
+
+function getFieldLayoutAsString(fieldLayout as FieldLayout) as String {
+  switch (fieldLayout) {
+    case FL8Fields:
+      return "8 fields";
+    case FL6Fields:
+      return "6 fields";
+    case FL4Fields:
+      return "4 fields";
+    default:
+      return "unknown";
+  }
+}
+function getFieldTypeAsString(fieldType as FieldType) as String {
+  switch (fieldType) {
+    case FTUnknown:
+      return "unknown";
+    case FTDistance:
+      return "distance";
+    case FTDistanceNext:
+      return "distance next";
+    case FTDistanceDest:
+      return "distance dest";
+    case FTGrade:
+      return "grade";
+    case FTClock:
+      return "clock";
+    case FTHeartRate:
+      return "heartrate";
+    case FTPower:
+      return "power";
+    case FTBearing:
+      return "bearing";
+    case FTSpeed:
+      return "speed";
+    case FTAltitude:
+      return "altitude";
+    case FTPressureAtSea:
+      return "pressure at sea";
+    case FTPressure:
+      return "pressure";
+    case FTCadence:
+      return "cadence";
+    case FTHiit:
+      return "hiit";
+    case FTTimer:
+      return "timer";
+    case FTTimeElapsed:
+      return "time elapsed";
+    case FTGearCombo:
+      return "gear combo";
+    case FTPowerPerWeight:
+      return "power per weight";
+    case FTPowerBalance:
+      return "power balance";
+    case FTHeartRateZone:
+      return "heartrate zone";
+    case FTGearIndex:
+      return "gear index";
+    case FTAverageSpeed:
+      return "avg speed";
+    case FTAverageHeartRate:
+      return "avg heartrate";
+    case FTAveragePower:
+      return "avg power";
+    case FTAverageCadence:
+      return "avg cadence";
+    case FTNormalizedPower:
+      return "normalized power";
+    case FTIntensityFactor:
+      return "intensity factor";
+    case FTTrainingStressScore:
+      return "training stress score";
+    case FTCalories:
+      return "calories";
+    default:
+      return "unknown";
+  }
+}
+
 function getStorageNumberAsString(key as String) as String {
-  return (getStorageValue(key, 0) as Number).format("%.0d");
+  return (getStorageValue(key, 0) as Number).format("%0d");
+}
+
+function getStorageFloatAsString(key as String) as String {
+  return (getStorageValue(key, 0) as Float).format("%.1f");
+}
+
+function fieldHasFallback(idx as Number) as Boolean {
+  return (
+    [
+      FTDistanceNext,
+      FTDistanceDest,
+      FTGrade,
+      FTHeartRate,
+      FTPower,
+      FTAltitude,
+      FTCadence,
+      FTGearCombo,
+      FTPowerPerWeight,
+      FTPowerBalance,
+      FTHeartRateZone,
+      FTGearIndex,
+      FTAverageHeartRate,
+      FTAveragePower,
+      FTAverageCadence,
+      FTNormalizedPower,
+      FTIntensityFactor,
+      FTTrainingStressScore,
+    ].indexOf(idx) > -1
+  );
+}
+
+function fieldHasGraphic(idx as Number) as Boolean {
+  return (
+    [
+      FTUnknown,
+      FTHeartRateZone,
+      FTNormalizedPower,
+      FTIntensityFactor,
+      FTTrainingStressScore,
+      FTSpeed,
+      FTCadence,
+      FTHeartRate,
+      FTCalories,
+    ].indexOf(idx) > -1
+  );
 }

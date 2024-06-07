@@ -1,44 +1,142 @@
-field A,B,C/D,E,F/G,H,I
-- props
-fallback 
-  Seconds to detect:
-  HR related: 0 for x sec
-  Power related:  0 for x sec
-fallback when paused:
+hiit show when paused an has hits
+center text/value fields
+ongoing vo2max?
+hiit alwasy visible layout
 
-one field
-: nr fields 3/6/9  
-large field
-wide field
-small field
 
-show timer/elapsed or time
+<!-- default:  hiit when start/active/cooldown - back timer
+hitt cooling down -> recovery time ...? -->
+-- show vo2 max score ..
+ // var yBase = y + (height / 2) - (dims_number_or_text[1] / 2); @@ TODO center text/values and rest valign center?
+
+ function onSelectedSelection(value as Object, storageKey as String) as Void {
+    Storage.setValue(storageKey, value as Number);
+  }
+Number -> Numeric ??
+
+https://cyklopedia.cc/cycling-tips/normalized-power-and-variability-index/
+hrv
+show_graphic_fields
+graphic_fields
+gf_zones
+$.gGraphic_fields
+
+check array length when reset/setting
+per large_field, wide ... etc.
+  + graphics field def
+  + height, ft, ..
+
+// var gShow_graphic_fields as Boolean = true;
+// var gGraphic_fields_line_width as Number = 7;
+// var gGraphic_fields_zones as Number = 6;
+
+
+TODO
+      mi = new WatchUi.MenuItem("Target grade %", null, "target_grade", null);
+      mi.setSubLabel($.getStorageNumberAsString(mi.getId() as String));
+      targetMenu.addItem(mi);
+      mi = new WatchUi.MenuItem("Target altitude meters", null, "target_altitude", null);
+      mi.setSubLabel($.getStorageNumberAsString(mi.getId() as String));
+
+target if
+target tts
+target np == ftp?
+target speed 
+
+graphical info - levels / color/bar
+IF 
+TSS
+HR zone
+Pwr zone
+
+[optional]
+if ---
+tss ---
+hr 
+pwr 
+
+[avg fields bar]
+
+power zones -> profile
+layout -> option extra small fields below normal layout?
+for avg values/ balance ??
+
+show_powerbalance -> not needed?
+-> if field active
+
+
+normalized power
+https://www.trainingpeaks.com/coach-blog/normalized-power-how-coaches-use/
+TSS
+https://www.cyclistshub.com/tools/tss-calculator/
+https://www.trainingpeaks.com/learn/articles/normalized-power-intensity-factor-training-stress/
+
+readme
+fallback hiit / indien geen -- 
+
+gShowPowerBalance
+-> wanneer veld aanwezig is?
+of include in power field?
++ check powerpedal fix 
+
+build optimized niet ok
+
+
+  // @@ TODO special field by index
+        // if (mMetrics.getFrontDerailleurSize() > 0) {
+        //   text_middleright = mMetrics.getFrontDerailleurSize().format("%0d");
+        // }
+
+ // @@ extra details in field .. option antizen mode
+        // if (gShowPowerAverage) {
+        //   text_botleft = "avg " + mMetrics.getAveragePower().format("%0d");
+        // } else {
+        //   text_botleft = mMetrics.getPowerPerWeight().format("%0.1f") + "/kg";
+        // }
+
+// @@ TODO, keep bottom information / stats field
+        // available  = mHiitt.isHiitInProgress
+
+size of 9
+
+settings
+ - define field in middle like gearcombo now
+ - 
+- Power battery time (o = operating time when max battery time is not configured, r = remaining time), format hh:mm
+  
+hiit 
+TODO disabled when no power
 
 fields:
-grade
-distance
-clock
-timer
-elapsed time
-power
-power/kg
-altitude
-cadence
-speed
-hiit
 vo2max
-heartrate
-hr zone
+calories
+energyExpenditure
+total ascent
+total descent
+trainingeffect
+
+---
+average fields
+  cadence
+  heartrate
+  power
+  speed
+  
+
 
 option: 
   show averages
+  show battery heartrate
+  x show battery powermeter
+
+Fallback large field
+Fallback wide field
 
 
 
 
-
-
-
+key large_field|0 value = 1
+-> [1, ..]
 
 ------
 option
@@ -97,13 +195,6 @@ wide field under map:
 option heading -> distance or distance to next (when not null).
 option timer -> - distance to destination (ipv timer)
 
-------------------
-winter:
-- config field per cel 1.1, 1.2, etc..
-- define grid per: large / medium / wide / small field
-- fallback for hr related fields (easy to left at home)
-- fallback for powermeter -> @@ 
-- 
 
 
 -------------------
@@ -166,5 +257,34 @@ menu:
   - x enabled, minimal, normal
   - x sound:
   - x hit start perc / stop perc
-  - x hitt countdown start, cooldown
+  - x hiit countdown start, cooldown
 
+--------------------
+https://www.trainingpeaks.com/learn/articles/normalized-power-intensity-factor-training-stress/
+
+This TSS calculator calculates TSS based on the following formula:
+TSS = (sec × NP × IF) / (FTP × 3600) × 100
+Where
+• sec is the workout duration in seconds
+• NP is Normalized Power
+• IF is the Intensity Factor calculated as the percentage of your FTP
+• FTP is Functional Threshold Power
+• 3600 is the number of seconds in an hour.
+
+IF = FTP /  cur power * 100
+
+3600 sec
+NP 200
+FTP 250
+TSS == 64
+
+0-50 low
+50 - 150 moderate
+150+ high
+
+(60 * 200 * IF) / (250 * 3600) * 100
+
+IF = NP / FTP 200/250  == 0.8 
+
+== 1,3
+IF = 250 / 200 == 1,25
