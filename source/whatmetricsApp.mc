@@ -113,6 +113,8 @@ class whatmetricsApp extends Application.AppBase {
       Storage.setValue("demofields", false);
       Storage.setValue("demofields_wait", 2);
       Storage.setValue("demofields_roundtrip", 1);
+
+      Storage.setValue("show_icon", true);
     }
 
     hiitt.setMode(getStorageValue("hiit_mode", WhatHiitt.HiitDisabled) as WhatHiitt.HiitMode);
@@ -204,6 +206,8 @@ class whatmetricsApp extends Application.AppBase {
     $.gGradeFallbackStart = getStorageValue("grade_start_fb", 0) as Number;
     $.gGradeFallbackEnd = getStorageValue("grade_end_fb", 0) as Number;
 
+    $.gShowIcon = getStorageValue("show_icon", $.gShowIcon) as Boolean;
+
     $.gShowPowerBattery = getStorageValue("show_powerbattery", $.gShowPowerBattery) as Boolean;
     $.gShowNPasAverage = getStorageValue("show_np_as_avg", $.gShowNPasAverage) as Boolean;
     var NPSkipZero = getStorageValue("np_skip_zero", false) as Boolean;
@@ -282,6 +286,7 @@ var gShowNPasAverage as Boolean = false;
 // @@ refactor
 // var gShowPowerBalance as Boolean = true;
 var gShowPowerBattery as Boolean = true;
+var gShowIcon as Boolean = true;
 
 var gPowerCountdownToFallBack as Number = 10;
 var gCadenceCountdownToFallBack as Number = 30;

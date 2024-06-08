@@ -8,6 +8,8 @@ using Toybox.Time;
 using Toybox.Time.Gregorian;
 
 class whatmetricsView extends WatchUi.DataField {
+  const COLOR_LT_GRAY = 0xeeeeee;
+
   hidden var mFieldSize as String;
   hidden var mYoffsetFix as Number = 0;
 
@@ -21,14 +23,14 @@ class whatmetricsView extends WatchUi.DataField {
   hidden var mGrid as Array<Array<Array<Number> > > = [] as Array<Array<Array<Number> > >;
   hidden var mFontColor as Graphics.ColorType = Graphics.COLOR_BLACK;
   hidden var mReverseColor as Boolean = false;
-  hidden var mDecimalsColor as Graphics.ColorType = Graphics.COLOR_BLACK;
-  hidden var mDecimalsColorDay as Graphics.ColorType = Graphics.COLOR_BLACK;
+  hidden var mDecimalsColor as Graphics.ColorType = Graphics.COLOR_DK_GRAY;
+  hidden var mDecimalsColorDay as Graphics.ColorType = Graphics.COLOR_DK_GRAY;
   hidden var mDecimalsColorNight as Graphics.ColorType = Graphics.COLOR_WHITE;
-  hidden var mUnitsColor as Graphics.ColorType = Graphics.COLOR_BLACK;
-  hidden var mUnitsColorDay as Graphics.ColorType = Graphics.COLOR_BLACK;
+  hidden var mUnitsColor as Graphics.ColorType = Graphics.COLOR_DK_GRAY;
+  hidden var mUnitsColorDay as Graphics.ColorType = Graphics.COLOR_DK_GRAY;
   hidden var mUnitsColorNight as Graphics.ColorType = Graphics.COLOR_WHITE;
-  hidden var mIconColor as Graphics.ColorType = Graphics.COLOR_BLACK;
-  hidden var mIconColorDay as Graphics.ColorType = Graphics.COLOR_BLACK;
+  hidden var mIconColor as Graphics.ColorType = Graphics.COLOR_LT_GRAY;
+  hidden var mIconColorDay as Graphics.ColorType = Graphics.COLOR_LT_GRAY;
   hidden var mIconColorNight as Graphics.ColorType = Graphics.COLOR_WHITE;
   hidden var mFontsNumbers as Array = [
     Graphics.FONT_XTINY,
@@ -81,6 +83,10 @@ class whatmetricsView extends WatchUi.DataField {
 
       mIconColorDay = Graphics.createColor(255, 220, 220, 220);
       mIconColorNight = Graphics.createColor(255, 100, 100, 100);
+    } else {
+      mDecimalsColorDay = COLOR_LT_GRAY;
+      mUnitsColorDay = COLOR_LT_GRAY;
+      mIconColorDay = COLOR_LT_GRAY;
     }
   }
 
@@ -346,7 +352,10 @@ class whatmetricsView extends WatchUi.DataField {
           // }
           var ePerc = $.percentageOf(efi.rawValue, efi.maxValue);
           var darker = 0;
-          var eColor = $.percentageToColor(ePerc, 255, $.PERC_COLORS_GREEN_RED, darker);
+          var eColor = Graphics.COLOR_DK_GRAY;
+          if ($.gCreateColors) {
+            eColor = $.percentageToColor(ePerc, 255, $.PERC_COLORS_GREEN_RED, darker);
+          }
           drawPercentageLine(dc, 1, ey, eMaxWidth, ePerc, mGraphicLineHeight, eColor);
         }
         ey = ey + mGraphicLineHeight;
@@ -652,7 +661,7 @@ class whatmetricsView extends WatchUi.DataField {
             (mMetrics.getPower() > 0 and (mPowerFallbackCountdown > 0 or $.gPowerCountdownToFallBack == 0));
           fi.title = "hiit";
           var showHiitIcon = 1;
-          var vo2max = mHiitt.getVo2Max();          
+          var vo2max = mHiitt.getVo2Max();
           var recovery = mHiitt.getRecoveryElapsedSeconds();
           if (recovery > 0) {
             showHiitIcon = 0;
@@ -672,16 +681,15 @@ class whatmetricsView extends WatchUi.DataField {
                 fi.text = secondsToCompactTimeString(hiitElapsed, "({m}:{s})");
                 if (mHiitt.wasValidHiit()) {
                   fi.iconColor = Graphics.COLOR_GREEN;
-                }                
+                }
               }
             }
           }
           if (vo2max > 30) {
-            fi.decimals = vo2max.format("%0.0f");            
+            fi.decimals = vo2max.format("%0.0f");
           }
 
           if (mPaused) {
-            
             fi.decimals = "";
           }
           fi.iconParam = showHiitIcon;
@@ -1058,8 +1066,8 @@ class whatmetricsView extends WatchUi.DataField {
       }
 
       var xSplit = (x + (width - dims_number_or_text[0] - dims_decimals[0]) / 2 + dims_number_or_text[0]).toNumber();
-      //var yBase = y + (height - dims_number_or_text[1]) / 2; 
-      var yBase = y + (height / 2) - (dims_number_or_text[1] / 2); // @@ TODO center text/values and rest valign center?
+      //var yBase = y + (height - dims_number_or_text[1]) / 2;
+      var yBase = y + height / 2 - dims_number_or_text[1] / 2; // @@ TODO center text/values and rest valign center?
       // dc.setColor(Graphics.COLOR_BLACK, Graphics.COLOR_GREEN);
       dc.drawText(xSplit, yBase + mYoffsetFix, font, number_or_text, Graphics.TEXT_JUSTIFY_RIGHT);
 
@@ -1178,7 +1186,7 @@ class whatmetricsView extends WatchUi.DataField {
 
   hidden function getIconColor(value as Numeric, maxValue as Numeric) as Graphics.ColorType {
     mReverseColor = false;
-    if (gShowColors and gCreateColors) {
+    if ($.gShowColors and $.gCreateColors) {
       var perc = percentageOf(value, maxValue);
       var darker = 0;
       if (getBackgroundColor() == Graphics.COLOR_BLACK) {
@@ -1208,17 +1216,21 @@ class whatmetricsView extends WatchUi.DataField {
     color as ColorType,
     hrZone as Number
   ) as Void {
-    var r = (height / 3.85).toNumber();
+    if (!gShowIcon) {return;}
+
+    // var r = (height / 3.85).toNumber();
+    var r = (height / 5).toNumber();
     var x0 = (x + width / 2).toNumber();
     var y1 = (y + 1.5 * r).toNumber();
-    var x1 = (x0 - 0.9 * r).toNumber();
-    var x2 = (x1 + 1.8 * r).toNumber();
+    var x1 = (x0 - 0.8 * r).toNumber();
+    var x2 = (x1 + 1.6 * r).toNumber();
 
     var xc1 = pointOnCircle_x(x1, y1, r, 135);
     var yc1 = pointOnCircle_y(x1, y1, r, 135);
     var xc2 = pointOnCircle_x(x2, y1, r, 45);
     var yc2 = pointOnCircle_y(x2, y1, r, 45);
-    var y3 = (y + height - 0.5 * r).toNumber();
+    // var y3 = (y + height - 0.5 * r).toNumber();
+    var y3 = (y + height - r).toNumber();
 
     setColorFillStroke(dc, color);
 
@@ -1255,6 +1267,8 @@ class whatmetricsView extends WatchUi.DataField {
     color as ColorType,
     grade as Double
   ) as Void {
+    if (!gShowIcon) {return;}
+
     var m = height / 8;
     x = x + m;
     y = y + m;
@@ -1336,6 +1350,8 @@ class whatmetricsView extends WatchUi.DataField {
     height as Number,
     color as ColorType
   ) as Void {
+    if (!gShowIcon) {return;}
+
     var my = height / 5;
     var mx = width / 8;
 
@@ -1363,6 +1379,8 @@ class whatmetricsView extends WatchUi.DataField {
     height as Number,
     color as ColorType
   ) as Void {
+    if (!gShowIcon) {return;}
+
     var my = height / 8;
     var mx = width / 5;
 
@@ -1403,6 +1421,8 @@ class whatmetricsView extends WatchUi.DataField {
     height as Number,
     color as ColorType
   ) as Void {
+    if (!gShowIcon) {return;}
+
     var my = height / 8;
     var mx = width / 4;
 
@@ -1438,6 +1458,8 @@ class whatmetricsView extends WatchUi.DataField {
     height as Number,
     color as ColorType
   ) as Void {
+    if (!gShowIcon) {return;}
+
     var my = height / 8;
     var mx = width / 4;
 
@@ -1476,6 +1498,8 @@ class whatmetricsView extends WatchUi.DataField {
     height as Number,
     color as ColorType
   ) as Void {
+    if (!gShowIcon) {return;}
+
     var my = (height / 5).toNumber();
     var mx = (width / 6).toNumber();
 
@@ -1583,6 +1607,8 @@ class whatmetricsView extends WatchUi.DataField {
     height as Number,
     color as ColorType
   ) as Void {
+    if (!gShowIcon) {return;}
+
     var r = height / 3;
     if (width < height) {
       r = width / 3;
@@ -1606,6 +1632,8 @@ class whatmetricsView extends WatchUi.DataField {
     timeInMilliSeconds as Number,
     hourPart as Number
   ) as Void {
+    if (!gShowIcon) {return;}
+
     var r = height / 3;
     if (width < height) {
       r = width / 3;
@@ -1656,6 +1684,8 @@ class whatmetricsView extends WatchUi.DataField {
     height as Number,
     color as ColorType
   ) as Void {
+    if (!gShowIcon) {return;}
+
     var m = (height / 5).toNumber();
     var d = (width / 6).toNumber();
     var x1 = x + d;
@@ -1689,6 +1719,8 @@ class whatmetricsView extends WatchUi.DataField {
     height as Number,
     color as ColorType
   ) as Void {
+    if (!gShowIcon) {return;}
+
     var m0 = height / 8;
 
     var m = (height / 5).toNumber();
@@ -1728,6 +1760,8 @@ class whatmetricsView extends WatchUi.DataField {
     height as Number,
     color as ColorType
   ) as Void {
+    if (!gShowIcon) {return;}
+    
     var m0 = height / 8;
 
     var m = (height / 5).toNumber();

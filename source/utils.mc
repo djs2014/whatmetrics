@@ -473,7 +473,7 @@ function stringRight(str as String, marker as String, dflt as String) as String 
   if (index == null || index + 1 >= str.length()) {
     return dflt;
   }
-  return str.substring(index + 1, null) as String;
+  return str.substring(index + 1, str.length()) as String;
 }
 
 function pointOnCircle_x(x as Number, y as Number, radius as Number, angleInDegrees as Number) as Number {

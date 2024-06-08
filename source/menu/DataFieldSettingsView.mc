@@ -76,6 +76,9 @@ class DataFieldSettingsDelegate extends WatchUi.BehaviorDelegate {
     boolean = Storage.getValue("show_colors") ? true : false;
     menu.addItem(new WatchUi.ToggleMenuItem("Colors", null, "show_colors", boolean, null));
 
+    boolean = Storage.getValue("show_icon") ? true : false;
+    menu.addItem(new WatchUi.ToggleMenuItem("Icons", null, "show_icon", boolean, null));
+
     // @@TODO?? nope, on paused, always (in details)
     boolean = Storage.getValue("show_average") ? true : false;
     menu.addItem(new WatchUi.ToggleMenuItem("Average on pause", null, "show_average", boolean, null));
