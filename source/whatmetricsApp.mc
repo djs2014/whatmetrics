@@ -82,13 +82,16 @@ class whatmetricsApp extends Application.AppBase {
         Array<Number>;
       $.gSmallField =
         [FL4Fields, FTSpeed, FTPower, FTHeartRate, FTCadence, FTGrade, FTAltitude, FTCadence, FTHiit] as Array<Number>;
-      Storage.setValue("large_field", $.gLargeField);
-      Storage.setValue("wide_field", $.gWideField);
-      Storage.setValue("small_field", $.gSmallField);
+      Storage.setValue("large_field", $.gLargeField as Lang.Array<Application.PropertyValueType>);
+      Storage.setValue("wide_field", $.gWideField as Lang.Array<Application.PropertyValueType>);
+      Storage.setValue("small_field", $.gSmallField as Lang.Array<Application.PropertyValueType>);
 
       Storage.setValue("large_field_zen", ZMWhenMoving);
       Storage.setValue("wide_field_zen", ZMWhenMoving);
       Storage.setValue("small_field_zen", ZMOn);
+      Storage.setValue("large_field_bp", BPBottom);
+      Storage.setValue("wide_field_bp", BPTop);
+      Storage.setValue("small_field_bp", BPOff);
 
       $.gFallbackFields = [];
       setFallbackField(FTDistanceNext, FTDistanceDest);
@@ -102,10 +105,10 @@ class whatmetricsApp extends Application.AppBase {
       setFallbackField(FTCadence, FTAverageSpeed);
       setFallbackField(FTNormalizedPower, FTTimeElapsed);
 
-      Storage.setValue("fields_fallback", $.gFallbackFields);
+      Storage.setValue("fields_fallback", $.gFallbackFields as Lang.Array<Application.PropertyValueType>);
 
       $.gGraphic_fields = [FTTrainingStressScore, FTHeartRateZone, FTUnknown, FTUnknown, FTUnknown] as Array<Number>;
-      Storage.setValue("graphic_fields", $.gGraphic_fields);
+      Storage.setValue("graphic_fields", $.gGraphic_fields as Lang.Array<Application.PropertyValueType>);
       Storage.setValue("gf_line_width", 7);
       Storage.setValue("gf_zones", 5);
       Storage.setValue("show_graphic_fields", true);
@@ -137,7 +140,7 @@ class whatmetricsApp extends Application.AppBase {
     metrics.setGradeMinimalRise(getStorageValue("metric_grademinrise", 0) as Number);
     metrics.setGradeMinimalRun(getStorageValue("metric_grademinrun", 20) as Number);
 
-    if (getStorageValue("target_ftp", 0) as Number == 0) {
+    if ((getStorageValue("target_ftp", 0) as Number) == 0) {
       Storage.setValue("target_ftp", $.gTargetFtp);
       Storage.setValue("target_speed", $.gTargetSpeed);
       Storage.setValue("target_cadence", $.gTargetCadence);
@@ -147,6 +150,8 @@ class whatmetricsApp extends Application.AppBase {
       Storage.setValue("target_hrzone", 4);
       Storage.setValue("target_if", $.gTargetIF);
       Storage.setValue("target_tss", $.gTargetTSS);
+      Storage.setValue("target_distance", $.gTargetDistance);
+      Storage.setValue("target_distance_route", $.gTargetDistanceUseRoute);
     }
     $.gTargetFtp = getStorageValue("target_ftp", $.gTargetFtp) as Number;
     $.gTargetSpeed = getStorageValue("target_speed", $.gTargetSpeed) as Number;
@@ -156,6 +161,8 @@ class whatmetricsApp extends Application.AppBase {
     $.gTargetAltitude = getStorageValue("target_altitude", $.gTargetAltitude) as Number;
     $.gTargetIF = getStorageValue("target_if", $.gTargetIF) as Float;
     $.gTargetTSS = getStorageValue("target_tss", $.gTargetTSS) as Number;
+    $.gTargetDistance = getStorageValue("target_distance", $.gTargetDistance) as Number;
+    $.gTargetDistanceUseRoute = getStorageValue("target_distance_route", $.gTargetDistanceUseRoute) as Boolean;
 
     var targetHrZone = getStorageValue("target_hrzone", 4) as Number;
     var heartRateZones = UserProfile.getHeartRateZones(UserProfile.HR_ZONE_SPORT_BIKING);
@@ -169,30 +176,46 @@ class whatmetricsApp extends Application.AppBase {
     }
 
     // @@ TODO init array fields size of 9
-    $.gLargeField = getStorageValue("large_field", $.gLargeField) as Array<Number>;
-    $.gWideField = getStorageValue("wide_field", $.gWideField) as Array<Number>;
-    $.gSmallField = getStorageValue("small_field", $.gSmallField) as Array<Number>;
+    $.gLargeField =
+      getStorageValue("large_field", $.gLargeField as Lang.Array<Application.PropertyValueType>) as Array<Number>;
+    $.gWideField =
+      getStorageValue("wide_field", $.gWideField as Lang.Array<Application.PropertyValueType>) as Array<Number>;
+    $.gSmallField =
+      getStorageValue("small_field", $.gSmallField as Lang.Array<Application.PropertyValueType>) as Array<Number>;
 
     $.gLargeFieldZen = getStorageValue("large_field_zen", $.gLargeFieldZen) as ZenMode;
     $.gWideFieldZen = getStorageValue("wide_field_zen", $.gWideFieldZen) as ZenMode;
     $.gSmallFieldZen = getStorageValue("small_field_zen", $.gSmallFieldZen) as ZenMode;
 
-    $.gFallbackFields = getStorageValue("fields_fallback", $.gFallbackFields) as Array<Number>;
+    $.gFallbackFields =
+      getStorageValue("fields_fallback", $.gFallbackFields as Lang.Array<Application.PropertyValueType>) as
+      Array<Number>;
     while ($.gFallbackFields.size() < $.FieldTypeCount) {
       $.gFallbackFields.add(FTUnknown);
     }
 
-    // @@TODO
-    // $.gLargeFieldGraphic = getStorageValue("large_field_g", $.gLargeFieldGraphic) as Array<Number>;
-    // $.gWideFieldGraphic = getStorageValue("wide_field_g", $.gWideFieldGraphic) as Array<Number>;
-    // $.gSmallFieldGraphic = getStorageValue("small_field_g", $.gSmallFieldGraphic) as Array<Number>;
+    // @@TODO refactor + barpostion   
+    // $.gLargeFieldGraphic = getStorageValue("large_field_bar", $.gLargeFieldGraphic) as Array<Number>;
+    // $.gWideFieldGraphic = getStorageValue("wide_field_bar", $.gWideFieldGraphic) as Array<Number>;
+    // $.gSmallFieldGraphic = getStorageValue("small_field_bar", $.gSmallFieldGraphic) as Array<Number>;
 
     // @@
-    $.gGraphic_fields = getStorageValue("graphic_fields", $.gGraphic_fields) as Array<Number>;
+    $.gGraphic_fields =
+      getStorageValue("graphic_fields", $.gGraphic_fields as Lang.Array<Application.PropertyValueType>) as
+      Array<Number>;
     while ($.gGraphic_fields.size() < 5) {
       $.gGraphic_fields.add(FTUnknown);
     }
     $.gShow_graphic_fields = getStorageValue("show_graphic_fields", $.gShow_graphic_fields) as Boolean;
+    if ($.gShow_graphic_fields) {
+      $.gLargeFieldBp = getStorageValue("large_field_bp", $.gLargeFieldBp) as BarPosition;
+      $.gWideFieldBp = getStorageValue("wide_field_bp", $.gWideFieldBp) as BarPosition;
+      $.gSmallFieldBp = getStorageValue("small_field_bp", $.gSmallFieldBp) as BarPosition;
+    } else {
+      $.gLargeFieldBp = BPOff;
+      $.gWideFieldBp = BPOff;
+      $.gSmallFieldBp = BPOff;
+    }
     $.gGraphic_fields_line_width = getStorageValue("gf_line_width", $.gGraphic_fields_line_width) as Number;
     $.gGraphic_fields_zones = getStorageValue("gf_zones", $.gGraphic_fields_zones) as Number;
 
@@ -232,6 +255,7 @@ class whatmetricsApp extends Application.AppBase {
     } else {
       $.gDemoFieldsRoundTrip = 0;
     }
+    $.gPause_x_offset = getStorageValue("pause_x_offset", 10) as Number;
   }
 
   hidden function setFallbackField(field as FieldType, fallback as FieldType) as Void {
@@ -270,6 +294,8 @@ var gTargetAltitude as Number = 1000;
 var gTargetHeartRate as Number = 200;
 var gTargetIF as Float = 1.2f;
 var gTargetTSS as Number = 450;
+var gTargetDistance as Number = 0;
+var gTargetDistanceUseRoute as Boolean = true;
 
 var gDebug as Boolean = false;
 
@@ -309,7 +335,13 @@ var gLargeFieldZen as ZenMode = ZMOff;
 var gWideFieldZen as ZenMode = ZMOff;
 var gSmallFieldZen as ZenMode = ZMOff;
 
+var gLargeFieldBp as BarPosition = BPBottom;
+var gWideFieldBp as BarPosition = BPTop;
+var gSmallFieldBp as BarPosition = BPOff;
+
 var gFallbackFields as Array<Number> = [] as Array<Number>;
 
 var gDemoFieldsWait as Number = 2;
 var gDemoFieldsRoundTrip as Number = 0;
+
+var gPause_x_offset as Number = 10;

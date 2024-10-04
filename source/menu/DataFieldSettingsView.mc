@@ -94,6 +94,9 @@ class DataFieldSettingsDelegate extends WatchUi.BehaviorDelegate {
 
     mi = new WatchUi.MenuItem("Demo fields", null, "demofieldsmenu", null);
     menu.addItem(mi);
+
+    mi = new WatchUi.MenuItem("Advanced", null, "advancedmenu", null);
+    menu.addItem(mi);
     
     boolean = Storage.getValue("debug") ? true : false;
     menu.addItem(new WatchUi.ToggleMenuItem("Debug", null, "debug", boolean, null));

@@ -9,6 +9,7 @@ using Toybox.Time.Gregorian;
 
 class whatmetricsView extends WatchUi.DataField {
   const COLOR_LT_GRAY = 0xeeeeee;
+  const COLOR_LT_BLUE = 0xade6e6;
 
   hidden var mFieldSize as String;
   hidden var mYoffsetFix as Number = 0;
@@ -32,6 +33,10 @@ class whatmetricsView extends WatchUi.DataField {
   hidden var mIconColor as Graphics.ColorType = Graphics.COLOR_LT_GRAY;
   hidden var mIconColorDay as Graphics.ColorType = Graphics.COLOR_LT_GRAY;
   hidden var mIconColorNight as Graphics.ColorType = Graphics.COLOR_WHITE;
+  
+  hidden var mBarColorDay as Graphics.ColorType = Graphics.COLOR_DK_GRAY;
+  hidden var mBarColorNight as Graphics.ColorType = Graphics.COLOR_WHITE;
+    
   hidden var mFontsNumbers as Array = [
     Graphics.FONT_XTINY,
     Graphics.FONT_TINY,
@@ -56,6 +61,7 @@ class whatmetricsView extends WatchUi.DataField {
   hidden var mFields as Array<Number> = [] as Array<Number>;
   hidden var mFieldLayout as FieldLayout = FL8Fields;
   hidden var mZenMode as ZenMode = ZMOff;
+  hidden var mBarPosition as BarPosition = BPOff;
   hidden var mDisplaySize as String = "s";
 
   hidden var mDemoFields_FieldIndex as Number = $.FieldTypeCount;
@@ -84,9 +90,12 @@ class whatmetricsView extends WatchUi.DataField {
       mIconColorDay = Graphics.createColor(255, 220, 220, 220);
       mIconColorNight = Graphics.createColor(255, 100, 100, 100);
     } else {
-      mDecimalsColorDay = COLOR_LT_GRAY;
-      mUnitsColorDay = COLOR_LT_GRAY;
-      mIconColorDay = COLOR_LT_GRAY;
+      mDecimalsColorDay = 0x323232; 	// 50,50,50
+      mDecimalsColorNight = 0x969696; // 150,150,150
+      mUnitsColorDay = 0x646464; 		// 100,100,100
+      mUnitsColorNight = 0xDCDCDC; 	// 220,220,220
+      mIconColorDay = 0xDCDCDC; 		// 220,220,220
+      mIconColorNight = 0x646464; 	// 100,100,100
     }
   }
 
@@ -103,6 +112,7 @@ class whatmetricsView extends WatchUi.DataField {
     if (mDisplaySize.equals("s")) {
       mFields = $.gSmallField as Array<Number>;
       mZenMode = $.gSmallFieldZen;
+      mBarPosition = $.gSmallFieldBp;
       // @@QND
       if (mGraphicLineHeight > 2) {
         mGraphicLineHeight = 2;
@@ -110,22 +120,24 @@ class whatmetricsView extends WatchUi.DataField {
     } else if (mDisplaySize.equals("w")) {
       mFields = $.gWideField as Array<Number>;
       mZenMode = $.gWideFieldZen;
+      mBarPosition = $.gWideFieldBp;
       if (mGraphicLineHeight > 4) {
         mGraphicLineHeight = 4;
       }
     } else {
       mFields = $.gLargeField as Array<Number>;
       mZenMode = $.gLargeFieldZen;
+      mBarPosition = $.gLargeFieldBp;
     }
     mFieldLayout = mFields[0] as FieldLayout;
 
     mGraphicFieldHeight = 0;
-    if ($.gShow_graphic_fields) {
-      // reserve space for extra graphical fields
+    if ($.gShow_graphic_fields && mBarPosition != BPOff) {
+      // reserve space for extra graphical fields on top / bottom
       var divider = 0;
       for (var e = 0; e < $.gGraphic_fields.size(); e++) {
         var eft = $.gGraphic_fields[e] as FieldType;
-        if (eft != FTUnknown) {
+        if (eft != FTUnknown && targetDataAvailable(eft)) {
           if (divider > 1) {
             // Add divider
             mGraphicFieldHeight = mGraphicFieldHeight + 1;
@@ -225,12 +237,12 @@ class whatmetricsView extends WatchUi.DataField {
     }
 
     // @@TEST
-    var tss = mMetrics.getTrainingStressScore();
-    var ifactor = mMetrics.getIntensityFactor();
-    var np = mMetrics.getNormalizedPower();
-    var tt = mMetrics.getTimerTime();
-    var timerTime = millisecondsToShortTimeString(tt, "{h}.{m}:{s}");
-    System.println("tt " + timerTime + " tt " + tt + "np " + np + " if " + ifactor + " tss " + tss);
+    // var tss = mMetrics.getTrainingStressScore();
+    // var ifactor = mMetrics.getIntensityFactor();
+    // var np = mMetrics.getNormalizedPower();
+    // var tt = mMetrics.getTimerTime();
+    // var timerTime = millisecondsToShortTimeString(tt, "{h}.{m}:{s}");
+    // System.println("tt " + timerTime + " tt " + tt + "np " + np + " if " + ifactor + " tss " + tss);
   }
 
   function onUpdate(dc as Dc) as Void {
@@ -240,6 +252,8 @@ class whatmetricsView extends WatchUi.DataField {
       $.gExitedMenu = false;
     }
 
+    var hasGraphicFields = $.gShow_graphic_fields && mBarPosition != BPOff && $.gGraphic_fields.size() > 0;
+
     mBackgroundColor = getBackgroundColor();
     dc.setColor(mBackgroundColor, mBackgroundColor);
     dc.clear();
@@ -248,11 +262,14 @@ class whatmetricsView extends WatchUi.DataField {
     mDecimalsColor = mDecimalsColorDay;
     mUnitsColor = mUnitsColorDay;
     mIconColor = mIconColorDay;
+    var barColor = mBarColorDay;
+    var barDividerColor = mBackgroundColor;
     if (mBackgroundColor == Graphics.COLOR_BLACK) {
       mFontColor = Graphics.COLOR_WHITE;
       mDecimalsColor = mDecimalsColorNight;
       mUnitsColor = mUnitsColorNight;
       mIconColor = mIconColorNight;
+      barColor = mBarColorNight;      
     }
     dc.setColor(mFontColor, Graphics.COLOR_TRANSPARENT);
 
@@ -270,6 +287,10 @@ class whatmetricsView extends WatchUi.DataField {
     }
 
     var y = 0;
+    if (hasGraphicFields && mBarPosition == BPTop) {
+      // Reserve space for the graphic bar
+      y = mGraphicFieldHeight;
+    }
     // Note, index 0 is field layout
     var f = 1;
     var rowCount = mGrid.size();
@@ -319,9 +340,15 @@ class whatmetricsView extends WatchUi.DataField {
       y = y + h;
     }
 
-    if ($.gShow_graphic_fields && $.gGraphic_fields.size() > 0) {
+    if (hasGraphicFields) {
+      // Draw on top or at bottom
       var eMaxWidth = dc.getWidth() - 2;
-      var ey = dc.getHeight() - mGraphicFieldHeight;
+      var ey = 0;
+      if (mBarPosition == BPBottom) {
+        ey = dc.getHeight() - mGraphicFieldHeight;
+      } else {
+        ey = 0;
+      }
       var tagX = 1;
       var divider = 0;
       for (var e = 0; e < $.gGraphic_fields.size(); e++) {
@@ -352,9 +379,9 @@ class whatmetricsView extends WatchUi.DataField {
           // }
           var ePerc = $.percentageOf(efi.rawValue, efi.maxValue);
           var darker = 0;
-          var eColor = Graphics.COLOR_DK_GRAY;
+          var eColor = barColor;
           if ($.gCreateColors) {
-            eColor = $.percentageToColor(ePerc, 255, $.PERC_COLORS_GREEN_RED, darker);
+            eColor = $.percentageToColor(ePerc, 255, $.PERC_COLORS_GREEN_RED, darker);            
           }
           drawPercentageLine(dc, 1, ey, eMaxWidth, ePerc, mGraphicLineHeight, eColor);
         }
@@ -364,7 +391,7 @@ class whatmetricsView extends WatchUi.DataField {
         var zoneWidth = dc.getWidth() / $.gGraphic_fields_zones;
         var zoneY = dc.getHeight();
         for (var z = 1; z < $.gGraphic_fields_zones; z++) {
-          dc.setColor(Graphics.COLOR_WHITE, Graphics.COLOR_TRANSPARENT);
+          dc.setColor(mBackgroundColor, Graphics.COLOR_TRANSPARENT);
           dc.setPenWidth(3);
           dc.drawLine(z * zoneWidth, zoneY, z * zoneWidth, zoneY - mGraphicFieldHeight);
           dc.setPenWidth(1);
@@ -437,6 +464,17 @@ class whatmetricsView extends WatchUi.DataField {
           fi.decimals = stringRight(fi.value, ".", "");
           fi.units = getUnitsInMeterOrKm(dist);
         }
+        fi.rawValue = dist / 1000; // in km
+        fi.maxValue = $.gTargetDistance; // in km
+        if ($.gTargetDistanceUseRoute && mMetrics.getDistanceToDestination() > 0) {
+          // Use total possible distance in km
+          fi.maxValue = (dist +  mMetrics.getDistanceToDestination()) / 1000;
+        }
+        // @@TEST
+        // System.println([fi.maxValue, fi.rawValue]);
+        if (fi.maxValue > 0) {
+          fi.iconColor = getIconColor(fi.rawValue, fi.maxValue);
+        }        
         return fi;
 
       case FTDistanceNext:
@@ -650,6 +688,7 @@ class whatmetricsView extends WatchUi.DataField {
         return fi;
 
       case FTHiit:
+        // @@TODO compare score with profile vo2maxCycling -> color +
         fi.available = false;
         if (mHiitt.isEnabled()) {
           // Force display hiit stats info
@@ -667,7 +706,15 @@ class whatmetricsView extends WatchUi.DataField {
             showHiitIcon = 0;
             fi.text = secondsToCompactTimeString(recovery, "({m}:{s})");
             if (mHiitt.wasValidHiit()) {
-              fi.iconColor = Graphics.COLOR_BLUE;
+              // fi.iconColor = Graphics.COLOR_BLUE;
+              fi.iconColor = COLOR_LT_BLUE;
+            }
+            if (mHiitt.isStartOfRecovery(10)) {
+              fi.decimals = "";
+              // TODO display the latest score
+              fi.text = vo2max.format("%0.0f");
+              // Not showing on decimals
+              vo2max = 0;
             }
           } else {
             var counter = mHiitt.getCounter();
@@ -701,13 +748,18 @@ class whatmetricsView extends WatchUi.DataField {
           var scores = mHiitt.getHitScores();
           if (scores.size() > 0) {
             var sCounter = 0;
-
             for (var sIdx = scores.size() - 1; sIdx >= 0 and sCounter < 4; sIdx--) {
               var score = scores[sIdx] as Float;
 
               fi.text_botright = fi.text_botright + " " + score.format("%0.0f");
               sCounter++;
             }
+            // if (mPaused) {
+            //   // @@ Correction for the pause border
+            //   fi.text_botright = fi.text_botright + " ";
+            //   // Show last score
+            //   // fi.text = (scores[scores.size() - 1] as Float).format("%0.0f");
+            // }
           }
         }
         return fi;
@@ -962,6 +1014,34 @@ class whatmetricsView extends WatchUi.DataField {
     var text_middleright = fieldInfo.text_middleright;
     // var text_middletop = fieldInfo.text_middletop;
 
+    var x_offset_left = 0;
+    var x_offset_right = 0;
+    if (mPaused) {
+      switch (mFieldLayout) {
+        case FL8Fields:
+          if (fieldInfo.index == 1 || fieldInfo.index == 5 || fieldInfo.index == 8) {
+            x_offset_right = $.gPause_x_offset;
+          } else if (fieldInfo.index == 1 || fieldInfo.index == 4 || fieldInfo.index == 6) {
+            x_offset_left = $.gPause_x_offset;
+          }
+          break;
+        case FL6Fields:
+          if (fieldInfo.index == 3 || fieldInfo.index == 6) {
+            x_offset_right = $.gPause_x_offset;
+          } else if (fieldInfo.index == 1 || fieldInfo.index == 4) {
+            x_offset_left = $.gPause_x_offset;
+          }
+          break;
+        case FL4Fields:
+          if (fieldInfo.index == 2 || fieldInfo.index == 4) {
+            x_offset_right = $.gPause_x_offset;
+          } else if (fieldInfo.index == 1 || fieldInfo.index == 3) {
+            x_offset_left = $.gPause_x_offset;
+          }
+          break;
+      }
+    }
+
     var hideDetails = false;
     if (fieldInfo.type != FTHiit) {
       if (mZenMode == ZMOn) {
@@ -980,7 +1060,7 @@ class whatmetricsView extends WatchUi.DataField {
     }
 
     // small fields, no decimals and units
-    // System.println([height, width]);
+    System.println([fieldInfo.index, height, width, -1, number, decimals]);
     var font_text_bot = Graphics.FONT_SMALL;
     var fontUnits = Graphics.FONT_SYSTEM_XTINY;
     if (height > 60 and height < 100) {
@@ -991,12 +1071,12 @@ class whatmetricsView extends WatchUi.DataField {
       font_text_bot = Graphics.FONT_XTINY;
     }
     if (height < 30) {
-      decimals = "";
-      units = "";
       text_botright = "";
       text_botleft = "";
     }
     if (width <= 70) {
+      decimals = "";
+      units = "";
       text_botright = "";
       text_botleft = "";
       text_middleleft = "";
@@ -1144,7 +1224,7 @@ class whatmetricsView extends WatchUi.DataField {
       if (text_botright.length() > 0) {
         dc.setColor(mDecimalsColor, Graphics.COLOR_TRANSPARENT);
         dc.drawText(
-          x + width - 1,
+          x + width - 1 - x_offset_right,
           y + height - dc.getFontHeight(font_text_bot),
           font_text_bot,
           text_botright,
@@ -1154,7 +1234,7 @@ class whatmetricsView extends WatchUi.DataField {
       if (text_botleft.length() > 0) {
         dc.setColor(mDecimalsColor, Graphics.COLOR_TRANSPARENT);
         dc.drawText(
-          x + 1,
+          x + 1 + x_offset_left,
           y + height - dc.getFontHeight(font_text_bot),
           font_text_bot,
           text_botleft,
@@ -1171,11 +1251,17 @@ class whatmetricsView extends WatchUi.DataField {
     }
 
     if (text_middleleft.length() > 0) {
-      dc.drawText(x + 1, y + height / 4, Graphics.FONT_SYSTEM_TINY, text_middleleft, Graphics.TEXT_JUSTIFY_LEFT);
+      dc.drawText(
+        x + 1 + x_offset_left,
+        y + height / 4,
+        Graphics.FONT_SYSTEM_TINY,
+        text_middleleft,
+        Graphics.TEXT_JUSTIFY_LEFT
+      );
     }
     if (text_middleright.length() > 0) {
       dc.drawText(
-        x + width - 1,
+        x + width - 1 - x_offset_right,
         y + height / 4,
         Graphics.FONT_SYSTEM_TINY,
         text_middleright,
@@ -1216,7 +1302,9 @@ class whatmetricsView extends WatchUi.DataField {
     color as ColorType,
     hrZone as Number
   ) as Void {
-    if (!gShowIcon) {return;}
+    if (!gShowIcon) {
+      return;
+    }
 
     // var r = (height / 3.85).toNumber();
     var r = (height / 5).toNumber();
@@ -1267,7 +1355,9 @@ class whatmetricsView extends WatchUi.DataField {
     color as ColorType,
     grade as Double
   ) as Void {
-    if (!gShowIcon) {return;}
+    if (!gShowIcon) {
+      return;
+    }
 
     var m = height / 8;
     x = x + m;
@@ -1350,7 +1440,9 @@ class whatmetricsView extends WatchUi.DataField {
     height as Number,
     color as ColorType
   ) as Void {
-    if (!gShowIcon) {return;}
+    if (!gShowIcon) {
+      return;
+    }
 
     var my = height / 5;
     var mx = width / 8;
@@ -1379,7 +1471,9 @@ class whatmetricsView extends WatchUi.DataField {
     height as Number,
     color as ColorType
   ) as Void {
-    if (!gShowIcon) {return;}
+    if (!gShowIcon) {
+      return;
+    }
 
     var my = height / 8;
     var mx = width / 5;
@@ -1421,7 +1515,9 @@ class whatmetricsView extends WatchUi.DataField {
     height as Number,
     color as ColorType
   ) as Void {
-    if (!gShowIcon) {return;}
+    if (!gShowIcon) {
+      return;
+    }
 
     var my = height / 8;
     var mx = width / 4;
@@ -1458,7 +1554,9 @@ class whatmetricsView extends WatchUi.DataField {
     height as Number,
     color as ColorType
   ) as Void {
-    if (!gShowIcon) {return;}
+    if (!gShowIcon) {
+      return;
+    }
 
     var my = height / 8;
     var mx = width / 4;
@@ -1498,7 +1596,9 @@ class whatmetricsView extends WatchUi.DataField {
     height as Number,
     color as ColorType
   ) as Void {
-    if (!gShowIcon) {return;}
+    if (!gShowIcon) {
+      return;
+    }
 
     var my = (height / 5).toNumber();
     var mx = (width / 6).toNumber();
@@ -1607,7 +1707,9 @@ class whatmetricsView extends WatchUi.DataField {
     height as Number,
     color as ColorType
   ) as Void {
-    if (!gShowIcon) {return;}
+    if (!gShowIcon) {
+      return;
+    }
 
     var r = height / 3;
     if (width < height) {
@@ -1632,7 +1734,9 @@ class whatmetricsView extends WatchUi.DataField {
     timeInMilliSeconds as Number,
     hourPart as Number
   ) as Void {
-    if (!gShowIcon) {return;}
+    if (!gShowIcon) {
+      return;
+    }
 
     var r = height / 3;
     if (width < height) {
@@ -1684,7 +1788,9 @@ class whatmetricsView extends WatchUi.DataField {
     height as Number,
     color as ColorType
   ) as Void {
-    if (!gShowIcon) {return;}
+    if (!gShowIcon) {
+      return;
+    }
 
     var m = (height / 5).toNumber();
     var d = (width / 6).toNumber();
@@ -1719,7 +1825,9 @@ class whatmetricsView extends WatchUi.DataField {
     height as Number,
     color as ColorType
   ) as Void {
-    if (!gShowIcon) {return;}
+    if (!gShowIcon) {
+      return;
+    }
 
     var m0 = height / 8;
 
@@ -1760,8 +1868,10 @@ class whatmetricsView extends WatchUi.DataField {
     height as Number,
     color as ColorType
   ) as Void {
-    if (!gShowIcon) {return;}
-    
+    if (!gShowIcon) {
+      return;
+    }
+
     var m0 = height / 8;
 
     var m = (height / 5).toNumber();
@@ -1901,5 +2011,13 @@ class whatmetricsView extends WatchUi.DataField {
         [xm, y + height],
       ] as Array<Point2D>
     );
+  }
+
+  hidden function targetDataAvailable(eft as FieldType) as Boolean {
+    if (eft == FTDistance) {
+      return $.gTargetDistance > 0 || ($.gTargetDistanceUseRoute && mMetrics.getDistanceToDestination() > 0);
+    }
+    // @@ TODO, calc during activity
+    return true;
   }
 }

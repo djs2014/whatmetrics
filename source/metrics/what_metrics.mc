@@ -396,7 +396,7 @@ class WhatMetrics {
     if (mPowerDataPerSec.size() == 0) {
       return 0;
     }
-    return Math.mean(mPowerDataPerSec as Array<Number>).toNumber();
+    return Math.mean(mPowerDataPerSec as Array<Numeric>).toNumber();
   }
 
   hidden function calculatePower30(power as Number) as Number {
@@ -408,7 +408,7 @@ class WhatMetrics {
     if (mPowerDataPer30Sec.size() == 0) {
       return 0;
     }
-    return Math.mean(mPowerDataPer30Sec as Array<Number>).toNumber();
+    return Math.mean(mPowerDataPer30Sec as Array<Numeric>).toNumber();
   }
 
   hidden function calculateNormalizedPower(PowerPer30 as Number) as Number {
@@ -421,7 +421,7 @@ class WhatMetrics {
     if (mAvgPowerToFourthPer30Sec.size() < 30) {
       return 0;
     }
-    var avg = Math.mean(mAvgPowerToFourthPer30Sec as Array<Decimal>).toDouble();
+    var avg = Math.mean(mAvgPowerToFourthPer30Sec as Array<Numeric>).toDouble();
     return Math.pow(avg, 0.25).toNumber();
   }
 
@@ -489,7 +489,7 @@ class WhatMetrics {
     if (arrGrade.size() == 0) {
       return 0.0d;
     }
-    return Math.mean(arrGrade as Array<Float>);
+    return Math.mean(arrGrade as Array<Numeric>);
   }
 
   hidden function resetAverageNP() as Void {
@@ -501,7 +501,7 @@ class WhatMetrics {
     mPowerTicks = mPowerTicks + 1;
     averagePower = (averagePower * (mPowerTicks - 1) + power) / mPowerTicks.toDouble();
     
-    System.println(Lang.format("p $1$ ticks $2$ avg $3$", [power, mPowerTicks, averagePower]));
+    // System.println(Lang.format("p $1$ ticks $2$ avg $3$", [power, mPowerTicks, averagePower]));
     return averagePower;
   }
 }

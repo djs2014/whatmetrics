@@ -313,6 +313,7 @@ const PERC_COLORS_GREEN_RED =
     [80, 230, 116, 341],
     [90, 211, 84, 0],
     [100, 255, 0, 0],
+    [999, 0, 0, 0], 
   ] as Array<Array<Number> >;
 
 const PERC_COLORS_SCHEME =
@@ -333,7 +334,7 @@ const PERC_COLORS_SCHEME =
     [145, 215, 189, 226], // COLOR_WHITE_PURPLE_3
     [155, 210, 180, 222], // COLOR_WHITE_DK_PURPLE_3
     [165, 187, 143, 206], // COLOR_WHITE_DK_PURPLE_4
-    [999, 0, 0, 0], // COLOR_WHITE_DK_PURPLE_4
+    [999, 0, 0, 0], 
   ] as Array<Array<Number> >;
 
 // alpha, 255 is solid, 0 is transparent

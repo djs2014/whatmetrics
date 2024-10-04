@@ -92,10 +92,16 @@ class DataFieldSettingsMenuDelegate extends WatchUi.Menu2InputDelegate {
       mi = new WatchUi.MenuItem("Target TSS|0~600", null, "target_tss", null);
       mi.setSubLabel($.getStorageNumberAsString(mi.getId() as String));
       targetMenu.addItem(mi);
-
       mi = new WatchUi.MenuItem("Target heartrate zone", null, "target_hrzone", null);
       mi.setSubLabel("zone " + $.getStorageNumberAsString(mi.getId() as String));
       targetMenu.addItem(mi);
+
+      mi = new WatchUi.MenuItem("Target distance km", null, "target_distance", null);
+      mi.setSubLabel($.getStorageNumberAsString(mi.getId() as String));
+      targetMenu.addItem(mi);
+
+      var boolean = Storage.getValue("target_distance_route") ? true : false;
+      targetMenu.addItem(new WatchUi.ToggleMenuItem("Route as distance", null, "target_distance_route", boolean, null));
 
       WatchUi.pushView(targetMenu, new $.GeneralMenuDelegate(self, targetMenu), WatchUi.SLIDE_UP);
       return;
@@ -169,6 +175,13 @@ class DataFieldSettingsMenuDelegate extends WatchUi.Menu2InputDelegate {
       mi.setSubLabel($.getZenModeAsString(zm));
       fieldMenu.addItem(mi);
 
+      // Bar position
+      var idbar = prefix + "_bp";
+      mi = new WatchUi.MenuItem("Bar position", null, idbar, null);
+      var bp = $.getStorageValue(idbar, BPOff) as BarPosition;
+      mi.setSubLabel($.getBarPositionAsString(bp));
+      fieldMenu.addItem(mi);
+
       WatchUi.pushView(fieldMenu, new $.GeneralMenuDelegate(self, fieldMenu), WatchUi.SLIDE_UP);
       return;
     }
@@ -228,7 +241,7 @@ class DataFieldSettingsMenuDelegate extends WatchUi.Menu2InputDelegate {
           mi.setSubLabel($.getFieldByIndex("fields_fallback", i));
           fbMenu.addItem(mi);
         }
-      }
+      }      
 
       WatchUi.pushView(fbMenu, new $.GeneralMenuDelegate(self, fbMenu), WatchUi.SLIDE_UP);
       return;
@@ -260,6 +273,17 @@ class DataFieldSettingsMenuDelegate extends WatchUi.Menu2InputDelegate {
       fbtMenu.addItem(mi);
 
       WatchUi.pushView(fbtMenu, new $.GeneralMenuDelegate(self, fbtMenu), WatchUi.SLIDE_UP);
+      return;
+    }
+
+    if (id instanceof String && id.equals("advancedmenu")) {
+      var avMenu = new WatchUi.Menu2({ :title => "Advanced items" });
+
+      var mi = new WatchUi.MenuItem("Pause x offset|0~30", null, "pause_x_offset", null);
+      mi.setSubLabel($.getStorageNumberAsString(mi.getId() as String));
+      avMenu.addItem(mi);
+
+      WatchUi.pushView(avMenu, new $.GeneralMenuDelegate(self, avMenu), WatchUi.SLIDE_UP);
       return;
     }
 
@@ -339,10 +363,18 @@ class GeneralMenuDelegate extends WatchUi.Menu2InputDelegate {
       for(var i = 0; i < 3; i++) {
         sp.add($.getZenModeAsString(i as ZenMode), null, i);
       }
-      // sp.add("Off", null, ZMOff);
-      // sp.add("On", null, ZMOn);
-      // sp.add("When moving", null, ZMWhenMoving);
+      
+      sp.setOnSelected(self, :onSelectedSelection, item);
+      sp.show();
+      return;
+    }
 
+    if (id.equals("large_field_bp") || id.equals("wide_field_bp") || id.equals("small_field_bp")) {
+      var sp = new selectionMenuPicker("Bar position", id as String);
+      for(var i = 0; i < 3; i++) {
+        sp.add($.getBarPositionAsString(i as BarPosition), null, i);
+      }
+      
       sp.setOnSelected(self, :onSelectedSelection, item);
       sp.show();
       return;
@@ -493,7 +525,7 @@ class GeneralMenuDelegate extends WatchUi.Menu2InputDelegate {
     var fields = getStorageValue(key, [0, 0, 0, 0, 0, 0, 0, 0, 0]) as Array<Number>;
     if (idx < fields.size()) {
       fields[idx] = value as Number;
-      Storage.setValue(key, fields);
+      Storage.setValue(key, fields as Lang.Array<Application.PropertyValueType>);
     }
   }
 
@@ -508,7 +540,7 @@ class GeneralMenuDelegate extends WatchUi.Menu2InputDelegate {
     var fields = getStorageValue(key, [0, 0, 0, 0, 0, 0, 0, 0, 0]) as Array<Number>;
     if (idx < fields.size()) {
       fields[idx] = value as Number;
-      Storage.setValue(key, fields);
+      Storage.setValue(key, fields as Lang.Array<Application.PropertyValueType>);
     }
   }
 }
@@ -602,6 +634,19 @@ function getZenModeAsString(zenMode as ZenMode) as String {
   }
 }
 
+function getBarPositionAsString(barPosition as BarPosition) as String {
+  switch (barPosition) {
+    case BPOff:
+      return "off";
+    case BPTop:
+      return "top";
+    case BPBottom:
+      return "bottom";
+    default:
+      return "off";
+  }
+}
+
 function getFieldLayoutAsString(fieldLayout as FieldLayout) as String {
   switch (fieldLayout) {
     case FL8Fields:
@@ -689,7 +734,7 @@ function getStorageFloatAsString(key as String) as String {
   return (getStorageValue(key, 0) as Float).format("%.1f");
 }
 
-function fieldHasFallback(idx as Number) as Boolean {
+function fieldHasFallback(fieldId as Number) as Boolean {
   return (
     [
       FTDistanceNext,
@@ -710,11 +755,12 @@ function fieldHasFallback(idx as Number) as Boolean {
       FTNormalizedPower,
       FTIntensityFactor,
       FTTrainingStressScore,
-    ].indexOf(idx) > -1
+      FTHiit,
+    ].indexOf(fieldId) > -1
   );
 }
 
-function fieldHasGraphic(idx as Number) as Boolean {
+function fieldHasGraphic(fieldId as Number) as Boolean {
   return (
     [
       FTUnknown,
@@ -726,6 +772,7 @@ function fieldHasGraphic(idx as Number) as Boolean {
       FTCadence,
       FTHeartRate,
       FTCalories,
-    ].indexOf(idx) > -1
+      FTDistance
+    ].indexOf(fieldId) > -1
   );
 }

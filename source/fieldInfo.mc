@@ -3,9 +3,11 @@ import Toybox.System;
 
 class FieldInfo {
     var type as FieldType = FTDistance;
+    // 1-based index. !!
     var index as Number = 0;
 
     var available as Boolean = true;
+    // var targetAvailable as Boolean = true;
     var title as String = "";
     var tag as String = "";
     var value as String = "";
@@ -87,4 +89,10 @@ enum ZenMode {
     ZMOff = 0,
     ZMOn = 2,
     ZMWhenMoving = 3 // on when moving
+}
+
+enum BarPosition {
+    BPOff = 0,
+    BPTop = 1,
+    BPBottom = 2
 }

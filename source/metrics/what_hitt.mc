@@ -420,6 +420,15 @@ class WhatHiitt {
     return leftOver;
   }
 
+  // Determine if its first seconds of recovery
+  function isStartOfRecovery(endOfStartSeconds as Number) as Boolean {    
+    if (hiitElapsedRecoveryTime == null) {
+      return false;
+    }
+    var seconds = Time.now().value() - (hiitElapsedRecoveryTime as Time.Moment).value();
+    return seconds < endOfStartSeconds;
+  }
+
   function getNumberOfHits() as Number {
     return hiitPerformed;
   }
