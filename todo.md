@@ -1,7 +1,14 @@
+https://stackoverflow.com/questions/48692741/how-can-i-make-all-line-endings-eols-in-all-files-in-visual-studio-code-unix
+
+dark mode, graphics bar white when no color
+sun rise/under graphic
+ftp targer / profile?
+
+
+
 hiit show when paused an has hits
-center text/value fields
 ongoing vo2max?
-hiit alwasy visible layout
+hiit not active, fallback field show if bottom not filled, show from hiit?
 
 
 <!-- default:  hiit when start/active/cooldown - back timer
