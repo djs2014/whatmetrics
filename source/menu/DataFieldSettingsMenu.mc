@@ -721,6 +721,10 @@ function getFieldTypeAsString(fieldType as FieldType) as String {
       return "training stress score";
     case FTCalories:
       return "calories";
+    case FTETA:
+      return "ET Arrival";
+    case FTETR:
+      return "ET Remaining";
     default:
       return "unknown";
   }
@@ -756,6 +760,8 @@ function fieldHasFallback(fieldId as Number) as Boolean {
       FTIntensityFactor,
       FTTrainingStressScore,
       FTHiit,
+      FTETA,
+      FTETR
     ].indexOf(fieldId) > -1
   );
 }

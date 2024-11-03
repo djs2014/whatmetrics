@@ -37,7 +37,6 @@ class WhatMetrics {
   hidden var mPowerTicks as Number = 0;
   hidden var mCurrentNP as Double = 0.0d;
 
-  
   // detect if l/r power is not 0 for x seconds
   hidden var mPowerDualSecFallback as Number = 0;
   hidden var mPowerTimesTwo as Boolean = false;
@@ -337,6 +336,25 @@ class WhatMetrics {
   // start time of activity
   function getStartTime() as Time.Moment {
     return $.getActivityValue(a_info, :startTime, 0) as Time.Moment;
+  }  
+
+  // get estimated duration to destination in seconds (targetDistance in meters)
+  function getEstimatedDurationToDestination(targetDistance as Number, useRoute as Boolean) as Number {
+    var averageSpeed = getAverageSpeed();
+    if (averageSpeed == 0) {
+      return 0;
+    }
+    // TODO, avarage speed in last x seconds (optimistic)
+    
+    var distanceRemaining = targetDistance - getElapsedDistance();    
+    var dd = getDistanceToDestination();
+    if (useRoute && dd > 0) {
+      distanceRemaining = dd - getElapsedDistance();
+    }
+    if (distanceRemaining <= 0) {
+      return 0;
+    }
+    return (distanceRemaining / averageSpeed).toNumber();
   }
 
   // called per second

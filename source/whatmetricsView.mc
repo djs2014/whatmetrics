@@ -33,10 +33,10 @@ class whatmetricsView extends WatchUi.DataField {
   hidden var mIconColor as Graphics.ColorType = Graphics.COLOR_LT_GRAY;
   hidden var mIconColorDay as Graphics.ColorType = Graphics.COLOR_LT_GRAY;
   hidden var mIconColorNight as Graphics.ColorType = Graphics.COLOR_WHITE;
-  
+
   hidden var mBarColorDay as Graphics.ColorType = Graphics.COLOR_DK_GRAY;
   hidden var mBarColorNight as Graphics.ColorType = Graphics.COLOR_WHITE;
-    
+
   hidden var mFontsNumbers as Array = [
     Graphics.FONT_XTINY,
     Graphics.FONT_TINY,
@@ -90,12 +90,12 @@ class whatmetricsView extends WatchUi.DataField {
       mIconColorDay = Graphics.createColor(255, 220, 220, 220);
       mIconColorNight = Graphics.createColor(255, 100, 100, 100);
     } else {
-      mDecimalsColorDay = 0x323232; 	// 50,50,50
+      mDecimalsColorDay = 0x323232; // 50,50,50
       mDecimalsColorNight = 0x969696; // 150,150,150
-      mUnitsColorDay = 0x646464; 		// 100,100,100
-      mUnitsColorNight = 0xDCDCDC; 	// 220,220,220
-      mIconColorDay = 0xDCDCDC; 		// 220,220,220
-      mIconColorNight = 0x646464; 	// 100,100,100
+      mUnitsColorDay = 0x646464; // 100,100,100
+      mUnitsColorNight = 0xdcdcdc; // 220,220,220
+      mIconColorDay = 0xdcdcdc; // 220,220,220
+      mIconColorNight = 0x646464; // 100,100,100
     }
   }
 
@@ -269,7 +269,7 @@ class whatmetricsView extends WatchUi.DataField {
       mDecimalsColor = mDecimalsColorNight;
       mUnitsColor = mUnitsColorNight;
       mIconColor = mIconColorNight;
-      barColor = mBarColorNight;      
+      barColor = mBarColorNight;
     }
     dc.setColor(mFontColor, Graphics.COLOR_TRANSPARENT);
 
@@ -381,7 +381,7 @@ class whatmetricsView extends WatchUi.DataField {
           var darker = 0;
           var eColor = barColor;
           if ($.gCreateColors) {
-            eColor = $.percentageToColor(ePerc, 255, $.PERC_COLORS_GREEN_RED, darker);            
+            eColor = $.percentageToColor(ePerc, 255, $.PERC_COLORS_GREEN_RED, darker);
           }
           drawPercentageLine(dc, 1, ey, eMaxWidth, ePerc, mGraphicLineHeight, eColor);
         }
@@ -468,13 +468,13 @@ class whatmetricsView extends WatchUi.DataField {
         fi.maxValue = $.gTargetDistance; // in km
         if ($.gTargetDistanceUseRoute && mMetrics.getDistanceToDestination() > 0) {
           // Use total possible distance in km
-          fi.maxValue = (dist +  mMetrics.getDistanceToDestination()) / 1000;
+          fi.maxValue = (dist + mMetrics.getDistanceToDestination()) / 1000;
         }
         // @@TEST
         // System.println([fi.maxValue, fi.rawValue]);
         if (fi.maxValue > 0) {
           fi.iconColor = getIconColor(fi.rawValue, fi.maxValue);
-        }        
+        }
         return fi;
 
       case FTDistanceNext:
@@ -894,6 +894,46 @@ class whatmetricsView extends WatchUi.DataField {
         fi.rawValue = calories;
         fi.maxValue = $.gTargetCalories;
         return fi;
+
+      case FTETA:
+        fi.title = "eta";
+        fi.prefix = "~";
+        var estimatedDuration_a = mMetrics.getEstimatedDurationToDestination(
+          $.gTargetDistance * 1000,
+          $.gTargetDistanceUseRoute
+        );
+        fi.iconColor = mIconColor;
+        fi.available = estimatedDuration_a > 0;
+        if (fi.available) {
+
+          //System.println([estimatedDuration_a]);
+          var laterMoment = Time.now().add(new Time.Duration(estimatedDuration_a));
+
+          var laterDay = Gregorian.info(laterMoment, Time.FORMAT_MEDIUM);
+          fi.text = Lang.format("$1$:$2$", [laterDay.hour, laterDay.min.format("%02d")]);
+          fi.decimals = laterDay.sec.format("%02d");
+          fi.units = Lang.format("$1$ $2$ $3$", [laterDay.day_of_week, laterDay.day, laterDay.month]);
+          fi.iconParam = laterMoment.value() * 1000; // to mmsec          
+        } else {
+          fi.text = "--:--";
+        }
+        return fi;
+
+      case FTETR:
+        fi.title = "etr";
+        fi.prefix = "~";
+        var estimatedDuration_r = mMetrics.getEstimatedDurationToDestination(
+          $.gTargetDistance * 1000,
+          $.gTargetDistanceUseRoute
+        );
+        fi.iconColor = mIconColor;
+        fi.available = estimatedDuration_r > 0;
+        if (fi.available) {
+          fi.text = $.secondsToHourMinutes(estimatedDuration_r);
+        } else {
+          fi.text = "--:--";
+        }
+        return fi;
     }
 
     return fi;
@@ -986,6 +1026,14 @@ class whatmetricsView extends WatchUi.DataField {
     }
     if (fi.type == FTPowerBalance) {
       // @@ drawPowerBalanceIcon(dc, x, y, width, height, mIconColor);
+      return;
+    }
+    if (fi.type == FTETA) {
+      drawETAETRIcon(dc, x, y, width, height, fi.iconColor);
+      return;
+    }
+    if (fi.type == FTETR) {
+      drawETAETRIcon(dc, x, y, width, height, fi.iconColor);
       return;
     }
   }
@@ -1697,6 +1745,28 @@ class whatmetricsView extends WatchUi.DataField {
       var font = getMatchingFont(dc, mFonts, width, height, text) as FontType;
       dc.drawText(x1, y1, font, text, Graphics.TEXT_JUSTIFY_CENTER | Graphics.TEXT_JUSTIFY_VCENTER);
     }
+  }
+
+  hidden function drawETAETRIcon(
+    dc as Dc,
+    x as Number,
+    y as Number,
+    width as Number,
+    height as Number,
+    color as ColorType    
+  ) as Void {
+    var r = height / 3;
+    if (width < height) {
+      r = width / 3;
+    }
+    var x1 = x + width / 2;
+    var y1 = y + height / 2;
+
+    dc.setPenWidth(5);
+    setColorFillStroke(dc, color);
+    dc.drawCircle(x1, y1, r);
+    dc.drawCircle(x1, y1, r / 2);
+    dc.drawCircle(x1, y1, r / 3);    
   }
 
   hidden function drawCadenceIcon(

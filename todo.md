@@ -1,3 +1,15 @@
+# fields
+
+x - ETA / ETR, time / duration -> use current average speed
+- ETA, optimistic -> use average speed of last x minutes. (speed 0 -> normal avg)
+    - rolling average x minutes - default 10 minutes..
+  - icons for ETA/ETR
+avg: 20 m/s
+remaining distance : 2000 m
+duration: 2000 / 20 = 100 sec
+-> only when target distance > 0
+
+
 https://stackoverflow.com/questions/48692741/how-can-i-make-all-line-endings-eols-in-all-files-in-visual-studio-code-unix
 
 dark mode, graphics bar white when no color
