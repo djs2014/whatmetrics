@@ -897,26 +897,23 @@ class whatmetricsView extends WatchUi.DataField {
 
       case FTETA:
         fi.title = "eta";
-        fi.prefix = "~";
         var estimatedDuration_a = mMetrics.getEstimatedDurationToDestination(
           $.gTargetDistance * 1000,
           $.gTargetDistanceUseRoute
         );
         fi.iconColor = mIconColor;
         fi.available = estimatedDuration_a > 0;
+
+        var laterMoment = Time.now();
         if (fi.available) {
-
-          //System.println([estimatedDuration_a]);
-          var laterMoment = Time.now().add(new Time.Duration(estimatedDuration_a));
-
-          var laterDay = Gregorian.info(laterMoment, Time.FORMAT_MEDIUM);
-          fi.text = Lang.format("$1$:$2$", [laterDay.hour, laterDay.min.format("%02d")]);
-          fi.decimals = laterDay.sec.format("%02d");
-          fi.units = Lang.format("$1$ $2$ $3$", [laterDay.day_of_week, laterDay.day, laterDay.month]);
-          fi.iconParam = laterMoment.value() * 1000; // to mmsec          
-        } else {
-          fi.text = "--:--";
+          fi.prefix = "~";
+          laterMoment = laterMoment.add(new Time.Duration(estimatedDuration_a));
         }
+        var laterDay = Gregorian.info(laterMoment, Time.FORMAT_MEDIUM);
+        fi.text = Lang.format("$1$:$2$", [laterDay.hour, laterDay.min.format("%02d")]);
+        fi.decimals = laterDay.sec.format("%02d");
+        fi.units = Lang.format("$1$ $2$ $3$", [laterDay.day_of_week, laterDay.day, laterDay.month]);
+                
         return fi;
 
       case FTETR:
@@ -1753,7 +1750,7 @@ class whatmetricsView extends WatchUi.DataField {
     y as Number,
     width as Number,
     height as Number,
-    color as ColorType    
+    color as ColorType
   ) as Void {
     var r = height / 3;
     if (width < height) {
@@ -1766,7 +1763,7 @@ class whatmetricsView extends WatchUi.DataField {
     setColorFillStroke(dc, color);
     dc.drawCircle(x1, y1, r);
     dc.drawCircle(x1, y1, r / 2);
-    dc.drawCircle(x1, y1, r / 3);    
+    dc.drawCircle(x1, y1, r / 3);
   }
 
   hidden function drawCadenceIcon(

@@ -426,7 +426,7 @@ function secondsToHourMinutes(totalSeconds as Number) as String {
     var hours = (totalSeconds / (60 * 60)).toNumber(); // % 24;
     timeString = $.stringReplace(timeString, "{h}", hours.format("%01d"));
     var minutes = (totalSeconds / 60.0).toNumber() % 60;
-    timeString = $.stringReplace(timeString, "{m}", minutes.format("%01d"));
+    timeString = $.stringReplace(timeString, "{m}", minutes.format("%02d"));
 
     return timeString;
   }
