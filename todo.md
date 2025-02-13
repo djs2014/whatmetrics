@@ -2,6 +2,17 @@
 
 # fields
 
+https://www.cyclingweekly.com/fitness/what-is-vam-and-can-i-use-it-to-improve-my-climbing
+VAM = (vertical metres climbed X 60) / time 
+
+TrainingPeaks VAM
+VAM = (metres ascended/hour)/(Gradient Factor x 100)
+Gradient factor = 2 + (% grade/10)
+
+VAM avg x seconds
+https://pedallers.com/what-is-vam-in-cycling/
+Relative power output (watts/kg) = VAM (metres/hour) / (200 + 10 × % gradient)
+
 x - ETA / ETR, time / duration -> use current average speed
 x ETR 0:3 --> 0:03 leading zeros
 - ETA, optimistic -> use average speed of last x minutes. (speed 0 -> normal avg)

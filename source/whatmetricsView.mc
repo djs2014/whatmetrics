@@ -926,7 +926,13 @@ class whatmetricsView extends WatchUi.DataField {
         fi.iconColor = mIconColor;
         fi.available = estimatedDuration_r > 0;
         if (fi.available) {
-          fi.text = $.secondsToHourMinutes(estimatedDuration_r);
+          if (estimatedDuration_r <= 60) {
+            fi.text = estimatedDuration_r.format("%02d");  
+          } else {
+            fi.text = $.secondsToHourMinutes(estimatedDuration_r);
+            var secondsLeft = estimatedDuration_r.toNumber() % 60;
+            fi.decimals = secondsLeft.format("%02d");  
+          }
         } else {
           fi.text = "--:--";
         }
