@@ -895,7 +895,7 @@ class whatmetricsView extends WatchUi.DataField {
         fi.maxValue = $.gTargetCalories;
         return fi;
 
-      case FTETA:
+      case FTEta:
         fi.title = "eta";
         var estimatedDuration_a = mMetrics.getEstimatedDurationToDestination(
           $.gTargetDistance * 1000,
@@ -916,7 +916,7 @@ class whatmetricsView extends WatchUi.DataField {
                 
         return fi;
 
-      case FTETR:
+      case FTEtr:
         fi.title = "etr";
         fi.prefix = "~";
         var estimatedDuration_r = mMetrics.getEstimatedDurationToDestination(
@@ -1031,11 +1031,11 @@ class whatmetricsView extends WatchUi.DataField {
       // @@ drawPowerBalanceIcon(dc, x, y, width, height, mIconColor);
       return;
     }
-    if (fi.type == FTETA) {
+    if (fi.type == FTEta) {
       drawETAETRIcon(dc, x, y, width, height, fi.iconColor);
       return;
     }
-    if (fi.type == FTETR) {
+    if (fi.type == FTEtr) {
       drawETAETRIcon(dc, x, y, width, height, fi.iconColor);
       return;
     }

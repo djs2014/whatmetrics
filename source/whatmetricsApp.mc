@@ -104,6 +104,7 @@ class whatmetricsApp extends Application.AppBase {
       setFallbackField(FTAltitude, FTPressureAtSea);
       setFallbackField(FTCadence, FTAverageSpeed);
       setFallbackField(FTNormalizedPower, FTTimeElapsed);
+      setFallbackField(FTEta, FTAltitude);
 
       Storage.setValue("fields_fallback", $.gFallbackFields as Lang.Array<Application.PropertyValueType>);
 

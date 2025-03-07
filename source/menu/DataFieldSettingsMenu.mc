@@ -393,7 +393,7 @@ class GeneralMenuDelegate extends WatchUi.Menu2InputDelegate {
       for (var i = 0; i < $.FieldTypeCount; i++) {
         sp.add($.getFieldTypeAsString(i as FieldType), null, i);
       }
-      sp.setOnSelected(self, :onSelectedField, item);
+      sp.setOnSelected(self, :onSelectedFieldFallback, item);
       sp.show();
       return;
     }
@@ -538,6 +538,26 @@ class GeneralMenuDelegate extends WatchUi.Menu2InputDelegate {
     }
     var idx = index as Number;
     var fields = getStorageValue(key, [0, 0, 0, 0, 0, 0, 0, 0, 0]) as Array<Number>;
+    if (idx < fields.size()) {
+      fields[idx] = value as Number;
+      Storage.setValue(key, fields as Lang.Array<Application.PropertyValueType>);
+    }
+  }
+
+  function onSelectedFieldFallback(storageKey as String, value as Application.PropertyValueType) as Void {
+    // storageKey large_field|0  (key and field index) value = 1 (field type)
+    var key = stringLeft(storageKey, "|", "");
+    var index = stringRight(storageKey, "|", "").toNumber();
+    if (key == "" || index == null) {
+      return;
+    }
+    var idx = index as Number;
+   
+    var fields = getStorageValue(key, [0, 0, 0, 0, 0, 0, 0, 0, 0]) as Array<Number>;
+    // Array can get bigger
+    while (fields.size() < $.FieldTypeCount) {
+      fields.add(FTUnknown);
+    }
     if (idx < fields.size()) {
       fields[idx] = value as Number;
       Storage.setValue(key, fields as Lang.Array<Application.PropertyValueType>);
@@ -721,9 +741,9 @@ function getFieldTypeAsString(fieldType as FieldType) as String {
       return "training stress score";
     case FTCalories:
       return "calories";
-    case FTETA:
+    case FTEta:
       return "ET Arrival";
-    case FTETR:
+    case FTEtr:
       return "ET Remaining";
     default:
       return "unknown";
@@ -760,8 +780,8 @@ function fieldHasFallback(fieldId as Number) as Boolean {
       FTIntensityFactor,
       FTTrainingStressScore,
       FTHiit,
-      FTETA,
-      FTETR
+      FTEta,
+      FTEtr
     ].indexOf(fieldId) > -1
   );
 }

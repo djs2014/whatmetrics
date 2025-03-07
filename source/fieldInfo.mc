@@ -75,8 +75,8 @@ enum FieldType {
     FTIntensityFactor = 27,
     FTTrainingStressScore = 28,
     FTCalories = 29,
-    FTETA = 30, // Estimated Time of Arrival hh:mm
-    FTETR = 31, // Estimated Time Remaining   x hour, x min
+    FTEta = 30, // Estimated Time of Arrival hh:mm
+    FTEtr = 31, // Estimated Time Remaining   x hour, x min
 
     // @@ TODO
     // FTVo2Max = 22,
