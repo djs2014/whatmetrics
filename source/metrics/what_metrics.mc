@@ -344,16 +344,18 @@ class WhatMetrics {
     if (averageSpeed == 0) {
       return 0;
     }
-    // TODO, avarage speed in last x seconds (optimistic)
-    
-    var distanceRemaining = targetDistance - getElapsedDistance();    
-    var dd = getDistanceToDestination();
-    if (useRoute && dd > 0) {
-      distanceRemaining = dd - getElapsedDistance();
-    }
-    if (distanceRemaining <= 0) {
+    // No target and not using route
+    if (targetDistance == 0 && !useRoute) {
       return 0;
     }
+
+    var distanceRemaining = targetDistance - getElapsedDistance();    
+    var dd = getDistanceToDestination();
+    if (useRoute && dd <= 0) {
+      return 0;
+    }
+    distanceRemaining = dd;
+    
     return (distanceRemaining / averageSpeed).toNumber();
   }
 
