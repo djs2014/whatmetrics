@@ -98,12 +98,13 @@ class whatmetricsApp extends Application.AppBase {
       setFallbackField(FTDistanceDest, FTDistance);
       setFallbackField(FTPower, FTDistance);
       setFallbackField(FTPowerPerWeight, FTDistance);
-      setFallbackField(FTHeartRate, FTClock);
-      setFallbackField(FTHeartRateZone, FTClock);
-      setFallbackField(FTHiit, FTTimer);
+      setFallbackField(FTHeartRate, FTTimeElapsed);
+      setFallbackField(FTHeartRateZone, FTTimeElapsed);
+      setFallbackField(FTHiit, FTClock);
       setFallbackField(FTAltitude, FTPressureAtSea);
       setFallbackField(FTCadence, FTAverageSpeed);
       setFallbackField(FTNormalizedPower, FTTimeElapsed);
+      setFallbackField(FTEta, FTAltitude);
       setFallbackField(FTEta, FTAltitude);
 
       Storage.setValue("fields_fallback", $.gFallbackFields as Lang.Array<Application.PropertyValueType>);
