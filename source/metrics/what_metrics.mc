@@ -351,10 +351,12 @@ class WhatMetrics {
 
     var distanceRemaining = targetDistance - getElapsedDistance();    
     var dd = getDistanceToDestination();
-    if (useRoute && dd <= 0) {
-      return 0;
+    
+    //System.println([distanceRemaining, dd, useRoute, averageSpeed]);
+
+    if (useRoute && dd > 0) {      
+      distanceRemaining = dd;
     }
-    distanceRemaining = dd;
     
     return (distanceRemaining / averageSpeed).toNumber();
   }
