@@ -59,15 +59,16 @@ class WhatHiitt {
   hidden var calcVo2Max as Boolean = false;
   hidden var playTone as Boolean = true;
 
-  hidden var hiitScores as Array<Float> = [] as Array<Float>; //[50.5,30.5,60.4,50.4,60.4]; // @@ TEST
+  hidden var hiitScores as Array<Number> = [] as Array<Number>; //[50,30,60,50,61]; // @@ TEST
   hidden var hiitDurations as Array<Number> = [] as Array<Number>; //[30,31,30,35,40]; // @@ TEST
   hidden var currentDuration as Number = 0;
-  hidden var currentScore as Float = 0.0f;
+  hidden var currentScore as Number = 0;
 
   hidden var currentTimerState as Number = Activity.TIMER_STATE_OFF;
   hidden var userWeightKg as Float = 0.0f;
   hidden var powerTicks as Number = 0;
   hidden var avgPowerPerSec as Double = 0.0d;
+  hidden var userVo2maxCycling as Number = 0;
 
   function initialize() {}
 
@@ -76,6 +77,9 @@ class WhatHiitt {
     if (profile.weight != null) {
       var weight = profile.weight as Number;
       userWeightKg = weight / 1000.0;
+    }
+    if (profile.vo2maxCycling != null) {
+      userVo2maxCycling = profile.vo2maxCycling as Number;
     }
   }
   function setMode(hiitMode as HiitMode) as Void {
@@ -141,7 +145,7 @@ class WhatHiitt {
     return started;
   }
 
-  function getHitScores() as Array<Float> {
+  function getHitScores() as Array<Number> {
     return hiitScores;
   }
   function getHitDurations() as Array<Number> {
@@ -213,7 +217,7 @@ class WhatHiitt {
             hiitStatus = Active;
             hiitElapsedRecoveryTime = null;
             currentDuration = 0;
-            currentScore = 0.0f;
+            currentScore = 0;
             hiitElapsedTime = Time.now();
             hiitAttentionStart();
           }
@@ -245,7 +249,7 @@ class WhatHiitt {
               hiitStatus = InActive;
               hiitCounter = 0;
               hiitElapsedRecoveryTime = null;
-              currentScore = 0.0f;
+              currentScore = 0;
               currentDuration = 0;
             }
             hiitElapsedTime = null;
@@ -326,11 +330,11 @@ class WhatHiitt {
   }
 
   hidden function reset() as Void {
-    hiitScores = [] as Array<Float>;
+    hiitScores = [] as Array<Number>;
     hiitDurations = [] as Array<Number>;
     hiitPerformed = 0;
     currentDuration = 0;
-    currentScore = 0.0f;
+    currentScore = 0;
     hiitCounter = 0;
     hiitElapsedRecoveryTime = null;
     hiitElapsedTime = null;
@@ -439,11 +443,15 @@ class WhatHiitt {
 
   // vo2max = ((6min pow er * 10.8) / weight) + 7
   // https://www.michael-konczer.com/en/training/calculators/calculate-vo2max
-  function getVo2Max() as Float {
+  function getVo2Max() as Number {
     if (userWeightKg == 0.0f) {
-      return 0.0f;
+      return 0;
     }
     var pp6min = avgPowerPerSec.toNumber();
-    return (pp6min * 10.8) / userWeightKg + 7;
+    return ((pp6min * 10.8) / userWeightKg + 7).toNumber();
+  }
+
+  function getProfileVo2Max() as Number {
+    return userVo2maxCycling;
   }
 }

@@ -712,7 +712,7 @@ class whatmetricsView extends WatchUi.DataField {
             if (mHiitt.isStartOfRecovery(10)) {
               fi.decimals = "";
               // TODO display the latest score
-              fi.text = vo2max.format("%0.0f");
+              fi.text = vo2max.format("%0d");
               // Not showing on decimals
               vo2max = 0;
             }
@@ -749,9 +749,9 @@ class whatmetricsView extends WatchUi.DataField {
           if (scores.size() > 0) {
             var sCounter = 0;
             for (var sIdx = scores.size() - 1; sIdx >= 0 and sCounter < 4; sIdx--) {
-              var score = scores[sIdx] as Float;
+              var score = scores[sIdx] as Number;
 
-              fi.text_botright = fi.text_botright + " " + score.format("%0.0f");
+              fi.text_botright = fi.text_botright + " " + score.format("%0d");
               sCounter++;
             }
             // if (mPaused) {
@@ -937,6 +937,28 @@ class whatmetricsView extends WatchUi.DataField {
           fi.text = "--:--";
         }
         return fi;
+
+      case FTVo2Max:
+        fi.available = false;
+        fi.title = "vo2max";
+        fi.units = "vo2";
+        
+        var vo2max = mHiitt.getProfileVo2Max();        
+        if (mHiitt.isEnabled()) {
+          // TODO rolling vo2max
+          var vo2 = mHiitt.getVo2Max();                    
+          if (vo2 > 0) {
+            vo2max = vo2;
+            fi.units = "vo2";
+            fi.prefix = "~";
+          }
+        }  
+
+        fi.available = vo2max > 0;
+        fi.number = vo2max.format("%0d");
+        System.println([vo2max]);
+        return fi;
+
     }
 
     return fi;
@@ -1037,6 +1059,10 @@ class whatmetricsView extends WatchUi.DataField {
     }
     if (fi.type == FTEtr) {
       drawETAETRIcon(dc, x, y, width, height, fi.iconColor);
+      return;
+    }
+    if (fi.type == FTVo2Max) {
+      // TODO
       return;
     }
   }
@@ -2050,7 +2076,7 @@ class whatmetricsView extends WatchUi.DataField {
       Lang.format("Hiit: #$1$ $2$ $3$", [
         mHiitt.getNumberOfHits().format("%0.0d"),
         HiitElapsed.format("%0.0d"),
-        vo2max.format("%0.1f"),
+        vo2max.format("%0d"),
       ]),
       Graphics.TEXT_JUSTIFY_LEFT
     );

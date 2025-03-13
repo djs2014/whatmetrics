@@ -43,7 +43,7 @@ enum FieldLayout {
     FL4Fields = 2
 }
 
-const FieldTypeCount = 32; // incl the 0
+const FieldTypeCount = 33; // incl the 0
 enum FieldType {
     FTUnknown = 0,
     FTDistance = 1,
@@ -77,6 +77,7 @@ enum FieldType {
     FTCalories = 29,
     FTEta = 30, // Estimated Time of Arrival hh:mm
     FTEtr = 31, // Estimated Time Remaining   x hour, x min
+    FTVo2Max = 32,
 
     // @@ TODO
     // FTVo2Max = 22,

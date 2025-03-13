@@ -745,6 +745,8 @@ function getFieldTypeAsString(fieldType as FieldType) as String {
       return "ET Arrival";
     case FTEtr:
       return "ET Remaining";
+    case FTVo2Max:
+      return "Vo2Max";
     default:
       return "unknown";
   }
@@ -781,7 +783,8 @@ function fieldHasFallback(fieldId as Number) as Boolean {
       FTTrainingStressScore,
       FTHiit,
       FTEta,
-      FTEtr
+      FTEtr,
+      FTVo2Max,
     ].indexOf(fieldId) > -1
   );
 }
