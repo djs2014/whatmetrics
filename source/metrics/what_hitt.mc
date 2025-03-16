@@ -5,6 +5,7 @@ import Toybox.Activity;
 import Toybox.System;
 import Toybox.Attention;
 import Toybox.Time;
+import Toybox.Math;
 
 // Hiit
 // Start when enabled and x seconds power >= % of target -> show start counter / beep
@@ -81,6 +82,7 @@ class WhatHiitt {
     if (profile.vo2maxCycling != null) {
       userVo2maxCycling = profile.vo2maxCycling as Number;
     }
+    // TODO get sex / age -> get vo2max percentile
   }
   function setMode(hiitMode as HiitMode) as Void {
     self.hiitMode = hiitMode;
@@ -145,6 +147,13 @@ class WhatHiitt {
     return started;
   }
 
+  // Hiit vo2max
+  function getAverageHiitScore() as Number {
+    if (hiitScores.size()==0) {
+      return 0;
+    }
+    return Math.mean(hiitScores).toNumber();
+  }
   function getHitScores() as Array<Number> {
     return hiitScores;
   }

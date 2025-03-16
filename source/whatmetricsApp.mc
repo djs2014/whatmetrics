@@ -106,7 +106,8 @@ class whatmetricsApp extends Application.AppBase {
       setFallbackField(FTNormalizedPower, FTTimeElapsed);
       setFallbackField(FTEta, FTAltitude);
       setFallbackField(FTEta, FTAltitude);
-      setFallbackField(FTVo2Max, FTEta);
+      setFallbackField(FTVo2MaxHiit, FTHiit);
+      setFallbackField(FTVo2MaxProfile, FTEta);
 
       Storage.setValue("fields_fallback", $.gFallbackFields as Lang.Array<Application.PropertyValueType>);
 

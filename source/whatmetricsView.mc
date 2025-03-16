@@ -938,25 +938,32 @@ class whatmetricsView extends WatchUi.DataField {
         }
         return fi;
 
-      case FTVo2Max:
+      case FTVo2MaxHiit:
+      case FTVo2MaxProfile:
         fi.available = false;
         fi.title = "vo2max";
         fi.units = "vo2";
         
-        var vo2max = mHiitt.getProfileVo2Max();        
-        if (mHiitt.isEnabled()) {
+        var vo2maxProfile = mHiitt.getProfileVo2Max();        
+        var vo2maxHiit = mHiitt.getAverageHiitScore();                              
           // TODO rolling vo2max
-          var vo2 = mHiitt.getVo2Max();                    
-          if (vo2 > 0) {
-            vo2max = vo2;
-            fi.units = "vo2";
-            fi.prefix = "~";
-          }
-        }  
-
-        fi.available = vo2max > 0;
-        fi.number = vo2max.format("%0d");
-        System.println([vo2max]);
+         // TODO percentile info etc.  
+        if (fieldType == FTVo2MaxHiit) {
+           fi.available = vo2maxHiit > 7;  
+           fi.number = vo2maxHiit.format("%0d");
+           fi.prefix = "hiit";
+           if (vo2maxProfile > 0) {
+            fi.text_botright = "prof: " + vo2maxProfile.format("%0d");
+           }
+        } else {
+           // FTVo2MaxProfile
+           fi.available = vo2maxProfile > 0;
+           fi.number = vo2maxProfile.format("%0d");
+           if (vo2maxHiit > 7) {
+            fi.text_botright = "hiit: " + vo2maxHiit.format("%0d");
+           }
+        }
+      
         return fi;
 
     }
@@ -1061,8 +1068,8 @@ class whatmetricsView extends WatchUi.DataField {
       drawETAETRIcon(dc, x, y, width, height, fi.iconColor);
       return;
     }
-    if (fi.type == FTVo2Max) {
-      // TODO
+    if (fi.type == FTVo2MaxHiit) {
+      // TODO FTVo2MaxProfile
       return;
     }
   }
