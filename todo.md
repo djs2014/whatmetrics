@@ -1,4 +1,8 @@
-<!-- how many r's in strawberry -->
+vo2max
+rolling
+percentile stuff -> nr
+color indication
+https://biketips.com/what-is-a-good-vo2-max-by-age/
 
 # fields
 
@@ -8,6 +12,7 @@ VAM = (vertical metres climbed X 60) / time
 TrainingPeaks VAM
 VAM = (metres ascended/hour)/(Gradient Factor x 100)
 Gradient factor = 2 + (% grade/10)
+
 
 VAM avg x seconds
 https://pedallers.com/what-is-vam-in-cycling/

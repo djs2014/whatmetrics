@@ -6,7 +6,7 @@ import Toybox.System;
 import Toybox.Attention;
 import Toybox.Time;
 import Toybox.Math;
-
+import Toybox.Time.Gregorian;
 // Hiit
 // Start when enabled and x seconds power >= % of target -> show start counter / beep
 // Property Hiit started
@@ -70,6 +70,10 @@ class WhatHiitt {
   hidden var powerTicks as Number = 0;
   hidden var avgPowerPerSec as Double = 0.0d;
   hidden var userVo2maxCycling as Number = 0;
+  hidden var userGender as Number = 0;
+  hidden var userAge as Number = 0;
+  hidden var vo2MaxChart0 as Array<Array<Number>>  = [] as Array<Array<Number>>;
+  hidden var vo2MaxChart1 as Array<Array<Number>>  = [] as Array<Array<Number>>;
 
   function initialize() {}
 
@@ -83,7 +87,22 @@ class WhatHiitt {
       userVo2maxCycling = profile.vo2maxCycling as Number;
     }
     // TODO get sex / age -> get vo2max percentile
+    userGender = 1; // 0 female, 1 male
+    if (profile.gender != null) {
+      userGender = profile.gender as Number;
+      if (userGender != 0) { userGender = 1; }
+    }
+    userAge = 0;
+    if (profile.birthYear != null) {
+      var birthYear = profile.birthYear as Number;
+      if (birthYear > 0) {
+        var today = Gregorian.info(Time.now(), Time.FORMAT_MEDIUM);
+        userAge = today.year - birthYear;
+      }
+      // System.println(["age",userAge,"birthyear",birthYear]);
+    }
   }
+
   function setMode(hiitMode as HiitMode) as Void {
     self.hiitMode = hiitMode;
     soundEnabled = (self.hiitSound as HiitSound) != NoSound && hiitMode != HiitDisabled;    
@@ -152,7 +171,7 @@ class WhatHiitt {
     if (hiitScores.size()==0) {
       return 0;
     }
-    return Math.mean(hiitScores).toNumber();
+    return Math.mean(hiitScores as Lang.Array<Lang.Numeric>).toNumber();
   }
   function getHitScores() as Array<Number> {
     return hiitScores;
@@ -462,5 +481,92 @@ class WhatHiitt {
 
   function getProfileVo2Max() as Number {
     return userVo2maxCycling;
+  }
+
+  function getVo2MaxPercentile(vo2max as Number) as Number {
+    if (userAge == 0) { return 0; }
+    var chart;
+    if (userGender == 0) {
+      chart = getVo2MaxChart0();
+    } else {
+      chart = getVo2MaxChart1();
+    }
+    
+    // System.println(["vo2", userGender, userAge]);
+
+    var ageAndPerc = [] as Array<Number>;
+    var i = chart.size() - 1;
+    while (i >= 0) {
+      ageAndPerc = chart[i] as Array<Number>;
+      // System.println([i, ageAndPerc]);
+      if (userAge > ageAndPerc[0]) {
+        // Found age row
+        break;
+      }
+      i--;
+    }
+    
+    // System.println([userAge, ageAndPerc]);
+
+    if (ageAndPerc.size() < 5) {
+      return 0;
+    }
+
+    if (vo2max > ageAndPerc[4] as Number) {
+      // superior
+      return 95;
+    }
+
+    if (vo2max > ageAndPerc[3] as Number) {
+      // excellent  
+      return 80;
+    }
+
+    if (vo2max > ageAndPerc[2] as Number) {
+      // Good
+      return 60;
+    }
+
+    if (vo2max > ageAndPerc[1] as Number) {
+      // Fair
+      return 40;
+    }    
+    // Poor
+    return 20;
+  }
+
+  // https://www.cyclistshub.com/tools/vo2-max-calculator/
+  function getVo2MaxChart0() as Array<Array<Number>> {
+    // Female
+    if (vo2MaxChart0.size() == 0) {
+      vo2MaxChart0 = [
+        // xx, poor, fair, good, excellent, superior
+        // age, <40%, 40%, 60%, 80%, 95%
+        // 20-29, <=35, 36-39, 40-43, 44-49, 50+
+        [29, 35, 39, 43, 49], // 999],
+        [39, 33, 36, 40, 45],
+        [49, 31, 34, 38, 44],
+        [59, 24, 28, 30, 34],
+        [69, 25, 28, 31, 35],
+        [79, 23, 26, 29, 35]
+      ] as Array<Array<Number>>; 
+    }
+    return vo2MaxChart0;
+  }
+
+  function getVo2MaxChart1() as Array<Array<Number>> {
+    // male
+    if (vo2MaxChart1.size() == 0) {
+      vo2MaxChart1 = [
+        // age, <40%, 40%, 60%, 80%, 95%
+        [29, 41, 45, 50, 55], // 999],
+        [39, 40, 43, 47, 53],
+        [49, 37, 41, 45, 52],
+        [59, 34, 37, 42, 49],
+        [69, 30, 34, 38, 45],
+        [79, 27, 30, 35, 41]
+      ] as Array<Array<Number>>; 
+    }
+    return vo2MaxChart1;
   }
 }
