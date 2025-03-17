@@ -748,7 +748,7 @@ function getFieldTypeAsString(fieldType as FieldType) as String {
     case FTVo2MaxHiit:
       return "Vo2Max hiit";
     case FTVo2MaxProfile:
-      return "Vo2Max";
+      return "Vo2Max prof";
     default:
       return "unknown";
   }
