@@ -766,19 +766,22 @@ class whatmetricsView extends WatchUi.DataField {
           nrHiit > 0 ||
           (mMetrics.getPower() > 0 and
             (mPowerFallbackCountdown > 0 or $.gPowerCountdownToFallBack == 0));
-        // if (!fi.available) {
-        //   return fi;
-        // }
+        if (!fi.available) {
+          return fi;
+        }
 
         fi.title = "hiit";
         var showHiitIcon = 1;
         var vo2max = mHiitt.getVo2Max();
         var recovery = mHiitt.getRecoveryElapsedSeconds();
+        var percentile = 0;
         if (recovery > 0) {
           showHiitIcon = 0;
           fi.text = secondsToCompactTimeString(recovery, "({m}:{s})");
           if (mHiitt.wasValidHiit()) {
             fi.iconColor = COLOR_LT_BLUE;
+            percentile = mHiitt.getVo2MaxPercentile(vo2max);
+            fi.iconColor = getIconColorRedToGreen(percentile, 100);
           }
           if (mHiitt.isStartOfRecovery(10)) {
             fi.decimals = "";
@@ -798,7 +801,9 @@ class whatmetricsView extends WatchUi.DataField {
               showHiitIcon = 0;
               fi.text = secondsToCompactTimeString(hiitElapsed, "({m}:{s})");
               if (mHiitt.wasValidHiit()) {
-                fi.iconColor = Graphics.COLOR_GREEN;
+                //fi.iconColor = Graphics.COLOR_GREEN;
+                percentile = mHiitt.getVo2MaxPercentile(vo2max);
+                fi.iconColor = getIconColorRedToGreen(percentile, 100);
               }
             }
           }
@@ -839,7 +844,7 @@ class whatmetricsView extends WatchUi.DataField {
         fi.iconParam2 = 0;
         var vo2maxProfile = mHiitt.getProfileVo2Max();
         var vo2maxHiit = mHiitt.getVo2Max();
-        System.println(["hiit", vo2maxProfile, vo2maxHiit]);
+        //System.println(["hiit", vo2maxProfile, vo2maxHiit]);
         if (vo2maxProfile > 0 && vo2maxHiit > 0) {
           if (vo2maxHiit < vo2maxProfile) {
             fi.iconParam2 = -1;
@@ -2022,26 +2027,22 @@ class whatmetricsView extends WatchUi.DataField {
     var x1 = x + width / 2;
     var y1 = y + height / 2;
 
-    dc.setColor(color, Graphics.COLOR_TRANSPARENT);
-    dc.fillRectangle(x, y, width, height);
+    // dc.fillRectangle(x, y, width, height);
 
     var r = width / 3;
     if (width > height) {
       r = height / 3;
     }
 
-    if (color == Graphics.COLOR_TRANSPARENT || color == mBackgroundColor) {
-      dc.setColor(Graphics.COLOR_LT_GRAY, Graphics.COLOR_TRANSPARENT);
-    } else {
-      dc.setColor(mBackgroundColor, Graphics.COLOR_TRANSPARENT);
-    }
+    
+    dc.setColor(color, Graphics.COLOR_TRANSPARENT);
 
     if (improving == 0) {
       dc.fillCircle(x1, y1, r);
     } else if (improving > 0) {
       var triangleUp =
         [
-          [x1, y1 - r],
+          [x1, y1 - r], 
           [x1 - r, y1 + r],
           [x1 + r, y1 + r],
         ] as Array<Graphics.Point2D>;
@@ -2058,12 +2059,19 @@ class whatmetricsView extends WatchUi.DataField {
 
     if (showText > 0) {
       // @@TODO draw very faint, hiit/vo2max text
-      // reversed..
+
       if (color == Graphics.COLOR_TRANSPARENT || color == mBackgroundColor) {
-        dc.setColor(mBackgroundColor, Graphics.COLOR_TRANSPARENT);
-      } else {
         dc.setColor(Graphics.COLOR_LT_GRAY, Graphics.COLOR_TRANSPARENT);
+      } else {
+        dc.setColor(mBackgroundColor, Graphics.COLOR_TRANSPARENT);
       }
+
+      // reversed..
+      // if (color == Graphics.COLOR_TRANSPARENT || color == mBackgroundColor) {
+      //   dc.setColor(mBackgroundColor, Graphics.COLOR_TRANSPARENT);
+      // } else {
+      //   dc.setColor(Graphics.COLOR_LT_GRAY, Graphics.COLOR_TRANSPARENT);
+      // }
 
       var text = "HIIT";
       var font = getMatchingFont(dc, mFonts, width, height, text) as FontType;
