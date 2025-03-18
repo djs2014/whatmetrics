@@ -72,9 +72,9 @@ class WhatHiitt {
   hidden var userVo2maxCycling as Number = 0;
   hidden var userGender as Number = 0;
   hidden var userAge as Number = 0;
-  hidden var vo2MaxChart0 as Array<Array<Number>>  = [] as Array<Array<Number>>;
-  hidden var vo2MaxChart1 as Array<Array<Number>>  = [] as Array<Array<Number>>;
-
+  hidden var vo2MaxChartKey as String = "";
+  hidden var vo2MaxChart as Array<Number>  = [] as Array<Number>;
+  
   function initialize() {}
 
   function updateProfile() as Void {
@@ -485,49 +485,57 @@ class WhatHiitt {
 
   function getVo2MaxPercentile(vo2max as Number) as Number {
     if (userAge == 0) { return 0; }
-    var chart;
-    if (userGender == 0) {
-      chart = getVo2MaxChart0();
-    } else {
-      chart = getVo2MaxChart1();
+
+// vo2MaxChartKey
+    var chartKey = Lang.format("$1$:$2$",[userAge,userGender]);
+
+    // age and gender won't change during a ride, so cache result.
+    if (!chartKey.equals(vo2MaxChartKey)) {
+      var chart;
+      if (userGender == 0) {
+        chart = getVo2MaxChart0();
+      } else {
+        chart = getVo2MaxChart1();
+      }
+      var i = chart.size() - 1;
+      while (i >= 0) {
+        vo2MaxChart = chart[i] as Array<Number>;
+        // System.println(["search", i, vo2MaxChart]);
+        if (userAge > vo2MaxChart[0]) {
+          // Found age row
+          break;
+        }
+        i--;
+      }
+
+      vo2MaxChartKey = chartKey;
     }
     
-    // System.println(["vo2", userGender, userAge]);
+    // System.println(["vo2", chartKey, vo2MaxChart]);
 
-    var ageAndPerc = [] as Array<Number>;
-    var i = chart.size() - 1;
-    while (i >= 0) {
-      ageAndPerc = chart[i] as Array<Number>;
-      // System.println([i, ageAndPerc]);
-      if (userAge > ageAndPerc[0]) {
-        // Found age row
-        break;
-      }
-      i--;
-    }
     
     // System.println([userAge, ageAndPerc]);
 
-    if (ageAndPerc.size() < 5) {
+    if (vo2MaxChart.size() < 5) {
       return 0;
     }
 
-    if (vo2max > ageAndPerc[4] as Number) {
+    if (vo2max > vo2MaxChart[4] as Number) {
       // superior
       return 95;
     }
 
-    if (vo2max > ageAndPerc[3] as Number) {
+    if (vo2max > vo2MaxChart[3] as Number) {
       // excellent  
       return 80;
     }
 
-    if (vo2max > ageAndPerc[2] as Number) {
+    if (vo2max > vo2MaxChart[2] as Number) {
       // Good
       return 60;
     }
 
-    if (vo2max > ageAndPerc[1] as Number) {
+    if (vo2max > vo2MaxChart[1] as Number) {
       // Fair
       return 40;
     }    
@@ -538,8 +546,7 @@ class WhatHiitt {
   // https://www.cyclistshub.com/tools/vo2-max-calculator/
   function getVo2MaxChart0() as Array<Array<Number>> {
     // Female
-    if (vo2MaxChart0.size() == 0) {
-      vo2MaxChart0 = [
+    return [
         // xx, poor, fair, good, excellent, superior
         // age, <40%, 40%, 60%, 80%, 95%
         // 20-29, <=35, 36-39, 40-43, 44-49, 50+
@@ -549,15 +556,12 @@ class WhatHiitt {
         [59, 24, 28, 30, 34],
         [69, 25, 28, 31, 35],
         [79, 23, 26, 29, 35]
-      ] as Array<Array<Number>>; 
-    }
-    return vo2MaxChart0;
+      ] as Array<Array<Number>>;       
   }
 
   function getVo2MaxChart1() as Array<Array<Number>> {
     // male
-    if (vo2MaxChart1.size() == 0) {
-      vo2MaxChart1 = [
+    return [
         // age, <40%, 40%, 60%, 80%, 95%
         [29, 41, 45, 50, 55], // 999],
         [39, 40, 43, 47, 53],
@@ -566,7 +570,6 @@ class WhatHiitt {
         [69, 30, 34, 38, 45],
         [79, 27, 30, 35, 41]
       ] as Array<Array<Number>>; 
-    }
-    return vo2MaxChart1;
   }
 }
+
