@@ -1,9 +1,6 @@
-vo2max
-rolling
-percentile stuff -> nr
-color indication
+vo2max rolling
 https://biketips.com/what-is-a-good-vo2-max-by-age/
-icon -> circle right-top: color status or check mark..
+
 # fields
 
 https://www.cyclingweekly.com/fitness/what-is-vam-and-can-i-use-it-to-improve-my-climbing

@@ -384,14 +384,13 @@ class whatmetricsView extends WatchUi.DataField {
           //   efi.rawValue = efi.rawValue + 1;
           // }
           var ePerc = $.percentageOf(efi.rawValue, efi.maxValue);
-          var darker = 0;
           var eColor = barColor;
           if ($.gCreateColors) {
             eColor = $.percentageToColor(
               ePerc,
               255,
               $.PERC_COLORS_GREEN_RED,
-              darker
+              0
             );
           }
           drawPercentageLine(
@@ -756,82 +755,96 @@ class whatmetricsView extends WatchUi.DataField {
       case FTHiit:
         // @@TODO compare score with profile vo2maxCycling -> color +
         fi.available = false;
-        if (mHiitt.isEnabled()) {
-          // Force display hiit stats info
-          fi.text = " ";
-          // Hiit needs power data
-          var nrHiit = mHiitt.getNumberOfHits();
-          fi.available =
-            nrHiit > 0 ||
-            (mMetrics.getPower() > 0 and
-              (mPowerFallbackCountdown > 0 or
-                $.gPowerCountdownToFallBack == 0));
-          fi.title = "hiit";
-          var showHiitIcon = 1;
-          var vo2max = mHiitt.getVo2Max();
-          var recovery = mHiitt.getRecoveryElapsedSeconds();
-          if (recovery > 0) {
+        if (!mHiitt.isEnabled()) {
+          return fi;
+        }
+        // Force display hiit stats info
+        fi.text = " ";
+        // Hiit needs power data
+        var nrHiit = mHiitt.getNumberOfHits();
+        fi.available =
+          nrHiit > 0 ||
+          (mMetrics.getPower() > 0 and
+            (mPowerFallbackCountdown > 0 or $.gPowerCountdownToFallBack == 0));
+        // if (!fi.available) {
+        //   return fi;
+        // }
+
+        fi.title = "hiit";
+        var showHiitIcon = 1;
+        var vo2max = mHiitt.getVo2Max();
+        var recovery = mHiitt.getRecoveryElapsedSeconds();
+        if (recovery > 0) {
+          showHiitIcon = 0;
+          fi.text = secondsToCompactTimeString(recovery, "({m}:{s})");
+          if (mHiitt.wasValidHiit()) {
+            fi.iconColor = COLOR_LT_BLUE;
+          }
+          if (mHiitt.isStartOfRecovery(10)) {
+            fi.decimals = "";
+            // TODO display the latest score
+            fi.text = vo2max.format("%0d");
+            // Not showing on decimals
+            vo2max = 0;
+          }
+        } else {
+          var counter = mHiitt.getCounter();
+          if (counter > 0) {
             showHiitIcon = 0;
-            fi.text = secondsToCompactTimeString(recovery, "({m}:{s})");
-            if (mHiitt.wasValidHiit()) {
-              // fi.iconColor = Graphics.COLOR_BLUE;
-              fi.iconColor = COLOR_LT_BLUE;
-            }
-            if (mHiitt.isStartOfRecovery(10)) {
-              fi.decimals = "";
-              // TODO display the latest score
-              fi.text = vo2max.format("%0d");
-              // Not showing on decimals
-              vo2max = 0;
-            }
+            fi.text = "(" + counter.format("%01d") + ")";
           } else {
-            var counter = mHiitt.getCounter();
-            if (counter > 0) {
+            var hiitElapsed = mHiitt.getElapsedSeconds();
+            if (hiitElapsed > 0) {
               showHiitIcon = 0;
-              fi.text = "(" + counter.format("%01d") + ")";
-            } else {
-              var hiitElapsed = mHiitt.getElapsedSeconds();
-              if (hiitElapsed > 0) {
-                showHiitIcon = 0;
-                fi.text = secondsToCompactTimeString(hiitElapsed, "({m}:{s})");
-                if (mHiitt.wasValidHiit()) {
-                  fi.iconColor = Graphics.COLOR_GREEN;
-                }
+              fi.text = secondsToCompactTimeString(hiitElapsed, "({m}:{s})");
+              if (mHiitt.wasValidHiit()) {
+                fi.iconColor = Graphics.COLOR_GREEN;
               }
             }
           }
-          if (vo2max > 30) {
-            fi.decimals = vo2max.format("%0.0f");
+        }
+        if (vo2max > 30) {
+          fi.decimals = vo2max.format("%0.0f");
+        }
+
+        if (mPaused) {
+          fi.decimals = "";
+        }
+        fi.iconParam = showHiitIcon;
+
+        if (nrHiit > 0) {
+          fi.text_botleft = "H " + nrHiit.format("%0.0d");
+        }
+
+        var scores = mHiitt.getHitScores();
+        if (scores.size() > 0) {
+          var sCounter = 0;
+          for (
+            var sIdx = scores.size() - 1;
+            sIdx >= 0 and sCounter < 4;
+            sIdx--
+          ) {
+            var score = scores[sIdx] as Number;
+
+            fi.text_botright = fi.text_botright + " " + score.format("%0d");
+            sCounter++;
           }
-
-          if (mPaused) {
-            fi.decimals = "";
-          }
-          fi.iconParam = showHiitIcon;
-
-          if (nrHiit > 0) {
-            fi.text_botleft = "H " + nrHiit.format("%0.0d");
-          }
-
-          var scores = mHiitt.getHitScores();
-          if (scores.size() > 0) {
-            var sCounter = 0;
-            for (
-              var sIdx = scores.size() - 1;
-              sIdx >= 0 and sCounter < 4;
-              sIdx--
-            ) {
-              var score = scores[sIdx] as Number;
-
-              fi.text_botright = fi.text_botright + " " + score.format("%0d");
-              sCounter++;
-            }
-            // if (mPaused) {
-            //   // @@ Correction for the pause border
-            //   fi.text_botright = fi.text_botright + " ";
-            //   // Show last score
-            //   // fi.text = (scores[scores.size() - 1] as Float).format("%0.0f");
-            // }
+          // if (mPaused) {
+          //   // @@ Correction for the pause border
+          //   fi.text_botright = fi.text_botright + " ";
+          //   // Show last score
+          //   // fi.text = (scores[scores.size() - 1] as Float).format("%0.0f");
+          // }
+        }
+        fi.iconParam2 = 0;
+        var vo2maxProfile = mHiitt.getProfileVo2Max();
+        var vo2maxHiit = mHiitt.getVo2Max();
+        System.println(["hiit", vo2maxProfile, vo2maxHiit]);
+        if (vo2maxProfile > 0 && vo2maxHiit > 0) {
+          if (vo2maxHiit < vo2maxProfile) {
+            fi.iconParam2 = -1;
+          } else if (vo2maxHiit > 0 && vo2maxHiit > vo2maxProfile) {
+            fi.iconParam2 = 1;
           }
         }
         return fi;
@@ -1051,6 +1064,9 @@ class whatmetricsView extends WatchUi.DataField {
         // TODO percentile info etc.
         if (fieldType == FTVo2MaxHiit) {
           fi.available = vo2maxHiit > 7;
+          if (!fi.available) {
+            return fi;
+          }
           fi.number = vo2maxHiit.format("%0d");
           percentile = mHiitt.getVo2MaxPercentile(vo2maxHiit);
           if (percentile > 0) {
@@ -1062,6 +1078,9 @@ class whatmetricsView extends WatchUi.DataField {
         } else {
           // FTVo2MaxProfile
           fi.available = vo2maxProfile > 0;
+          if (!fi.available) {
+            return fi;
+          }
           fi.number = vo2maxProfile.format("%0d");
           percentile = mHiitt.getVo2MaxPercentile(vo2maxProfile);
           if (percentile > 0) {
@@ -1073,7 +1092,15 @@ class whatmetricsView extends WatchUi.DataField {
         }
         fi.maxValue = 100;
         fi.rawValue = percentile;
-        // fi.iconColor = getIconColor(fi.rawValue, fi.maxValue);
+        fi.iconParam = 0;
+        if (vo2maxHiit > 0 && vo2maxProfile > 0) {
+          if (vo2maxHiit < vo2maxProfile) {
+            fi.iconParam = -1;
+          } else if (vo2maxHiit > vo2maxProfile) {
+            fi.iconParam = 1;
+          }
+        }
+        fi.iconColor = getIconColorRedToGreen(fi.rawValue, fi.maxValue);
         return fi;
     }
 
@@ -1182,7 +1209,6 @@ class whatmetricsView extends WatchUi.DataField {
       return;
     }
     if (fi.type == FTHiit) {
-      // && fi.iconColor != -1
       drawHiitIcon(
         dc,
         x,
@@ -1190,7 +1216,8 @@ class whatmetricsView extends WatchUi.DataField {
         width,
         height,
         fi.iconColor,
-        fi.iconParam.toNumber()
+        fi.iconParam,
+        fi.iconParam2
       );
       return;
     }
@@ -1215,7 +1242,7 @@ class whatmetricsView extends WatchUi.DataField {
       return;
     }
     if (fi.type == FTVo2MaxHiit || fi.type == FTVo2MaxProfile) {
-      // drawVo2MaxIcon(dc, x, y, width, height, fi.iconColor);
+      drawVo2MaxIcon(dc, x, y, width, height, fi.iconColor, fi.iconParam);
       return;
     }
   }
@@ -1560,13 +1587,32 @@ class whatmetricsView extends WatchUi.DataField {
     mReverseColor = false;
     if ($.gShowColors and $.gCreateColors) {
       var perc = percentageOf(value, maxValue);
-      var darker = 0;
+      var shade = 0;
       if (getBackgroundColor() == Graphics.COLOR_BLACK) {
-        darker = 30;
+        shade = -30;
       } else {
         mReverseColor = perc >= 165;
       }
-      return percentageToColor(perc, 255, $.PERC_COLORS_SCHEME, darker);
+      return percentageToColor(perc, 255, $.PERC_COLORS_SCHEME, shade);
+    } else {
+      return mIconColor;
+    }
+  }
+
+  hidden function getIconColorRedToGreen(
+    value as Numeric,
+    maxValue as Numeric
+  ) as Graphics.ColorType {
+    mReverseColor = false;
+    if ($.gShowColors and $.gCreateColors) {
+      var perc = percentageOf(value, maxValue);
+      var shade = 10;
+      if (getBackgroundColor() == Graphics.COLOR_BLACK) {
+        shade = -30;
+      } else {
+        mReverseColor = perc >= 165;
+      }
+      return percentageToColor(perc, 255, $.PERC_COLORS_RED_GREEN, shade);
     } else {
       return mIconColor;
     }
@@ -1970,7 +2016,8 @@ class whatmetricsView extends WatchUi.DataField {
     width as Number,
     height as Number,
     color as ColorType,
-    showText as Number
+    showText as Numeric,
+    improving as Numeric
   ) as Void {
     var x1 = x + width / 2;
     var y1 = y + height / 2;
@@ -1978,14 +2025,46 @@ class whatmetricsView extends WatchUi.DataField {
     dc.setColor(color, Graphics.COLOR_TRANSPARENT);
     dc.fillRectangle(x, y, width, height);
 
+    var r = width / 3;
+    if (width > height) {
+      r = height / 3;
+    }
+
+    if (color == Graphics.COLOR_TRANSPARENT || color == mBackgroundColor) {
+      dc.setColor(Graphics.COLOR_LT_GRAY, Graphics.COLOR_TRANSPARENT);
+    } else {
+      dc.setColor(mBackgroundColor, Graphics.COLOR_TRANSPARENT);
+    }
+
+    if (improving == 0) {
+      dc.fillCircle(x1, y1, r);
+    } else if (improving > 0) {
+      var triangleUp =
+        [
+          [x1, y1 - r],
+          [x1 - r, y1 + r],
+          [x1 + r, y1 + r],
+        ] as Array<Graphics.Point2D>;
+      dc.fillPolygon(triangleUp);
+    } else {
+      var triangleDown =
+        [
+          [x1 - r, y1 - r],
+          [x1 + r, y1 - r],
+          [x1, y1 + r],
+        ] as Array<Graphics.Point2D>;
+      dc.fillPolygon(triangleDown);
+    }
+
     if (showText > 0) {
       // @@TODO draw very faint, hiit/vo2max text
-
+      // reversed..
       if (color == Graphics.COLOR_TRANSPARENT || color == mBackgroundColor) {
-        dc.setColor(Graphics.COLOR_LT_GRAY, Graphics.COLOR_TRANSPARENT);
-      } else {
         dc.setColor(mBackgroundColor, Graphics.COLOR_TRANSPARENT);
+      } else {
+        dc.setColor(Graphics.COLOR_LT_GRAY, Graphics.COLOR_TRANSPARENT);
       }
+
       var text = "HIIT";
       var font = getMatchingFont(dc, mFonts, width, height, text) as FontType;
       dc.drawText(
@@ -2026,10 +2105,37 @@ class whatmetricsView extends WatchUi.DataField {
     y as Number,
     width as Number,
     height as Number,
-    color as ColorType
+    color as ColorType,
+    improving as Numeric
   ) as Void {
-    // setColorFillStroke(dc, color);
-    // dc.fillRectangle(x, y, width, height);    
+    setColorFillStroke(dc, color);
+
+    var x1 = x + width / 2;
+    var y1 = y + height / 2;
+    var r = width / 3;
+    if (width > height) {
+      r = height / 3;
+    }
+
+    if (improving == 0) {
+      dc.fillCircle(x1, y1, r);
+    } else if (improving > 0) {
+      var triangleUp =
+        [
+          [x1, y1 - r],
+          [x1 - r, y1 + r],
+          [x1 + r, y1 + r],
+        ] as Array<Graphics.Point2D>;
+      dc.fillPolygon(triangleUp);
+    } else {
+      var triangleDown =
+        [
+          [x1 - r, y1 - r],
+          [x1 + r, y1 - r],
+          [x1, y1 + r],
+        ] as Array<Graphics.Point2D>;
+      dc.fillPolygon(triangleDown);
+    }
   }
 
   hidden function drawCadenceIcon(
