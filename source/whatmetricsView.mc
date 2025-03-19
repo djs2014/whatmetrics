@@ -765,7 +765,7 @@ class whatmetricsView extends WatchUi.DataField {
         fi.available =
           nrHiit > 0 ||
           (mMetrics.getPower() > 0 and
-            (mPowerFallbackCountdown > 0 or $.gPowerCountdownToFallBack == 0));
+            (mPowerFallbackCountdown > 0 or $.gPowerCountdownToFallBack == 0)) || mHiitt.isDemoActive();
         if (!fi.available) {
           return fi;
         }
@@ -844,7 +844,7 @@ class whatmetricsView extends WatchUi.DataField {
         fi.iconParam2 = 0;
         var vo2maxProfile = mHiitt.getProfileVo2Max();
         var vo2maxHiit = mHiitt.getVo2Max();
-        if (mPaused) {
+        if (mPaused && mHiitt.isActivityPaused()) { // when demo, hiitt is not paused
           fi.decimals = "";
           // Use all scores when pauzed
           vo2maxHiit = mHiitt.getAverageHiitScore();

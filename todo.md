@@ -1,10 +1,3 @@
-hiit demo based on hiit values
--> x sec power start
--> x sec power during
--> x sec cool down
--> x sec recovery
-
-
 vo2max rolling
 https://biketips.com/what-is-a-good-vo2-max-by-age/
 

@@ -158,6 +158,9 @@ class WhatHiitt {
     return [];
   }
 
+  function isDemoActive() as Boolean {
+    return isDemo;
+  }
   function isEnabled() as Boolean {
     if (isDemo || hiitMode == HiitAlwaysOn) {
       return true;
@@ -224,7 +227,8 @@ class WhatHiitt {
     if (isDemo) {
       var origPercOfTarget = percOfTarget;
       percOfTarget = getDemoPercOfTarget(percOfTarget);
-      System.println(["Demo", power, demoCounter, origPercOfTarget, "->", percOfTarget, "status", hiitStatus]);
+      power = (100 * (percOfTarget / 100.0)).toNumber();
+      // System.println(["Demo", power, demoCounter, origPercOfTarget, "->", percOfTarget, "status", hiitStatus]);
     }
     calcVo2Max = (hiitStatus as HiitStatus) == Active;
     updateMetrics(info);
