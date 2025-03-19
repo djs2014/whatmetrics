@@ -1,3 +1,5 @@
+readme update
+
 vo2max rolling
 https://biketips.com/what-is-a-good-vo2-max-by-age/
 
