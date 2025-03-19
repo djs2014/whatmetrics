@@ -72,9 +72,18 @@ class WhatHiitt {
   hidden var userVo2maxCycling as Number = 0;
   hidden var userGender as Number = 0;
   hidden var userAge as Number = 0;
+  hidden var userVo2MaxChartKey as String = "";
   hidden var vo2MaxChartKey as String = "";
   hidden var vo2MaxChart as Array<Number>  = [] as Array<Number>;
   
+  /* TODO
+  hiit demo
+  - hiitStartCountDownSeconds (power is hiitStartOnPerc + 10)
+  - minimalElapsedSeconds (power is hiitStopOnPerc + 10)
+  - hiitStopCountDownSeconds (power is hiitStopOnPerc - 10)
+  - minimalRecoverySeconds (power is hiitStopOnPerc - 10)
+  - stops when entering settings
+  */
   function initialize() {}
 
   function updateProfile() as Void {
@@ -98,9 +107,9 @@ class WhatHiitt {
       if (birthYear > 0) {
         var today = Gregorian.info(Time.now(), Time.FORMAT_MEDIUM);
         userAge = today.year - birthYear;
-      }
-      // System.println(["age",userAge,"birthyear",birthYear]);
+      }      
     }
+    userVo2MaxChartKey = Lang.format("$1$:$2$",[userAge,userGender]);
   }
 
   function setMode(hiitMode as HiitMode) as Void {
@@ -486,11 +495,8 @@ class WhatHiitt {
   function getVo2MaxPercentile(vo2max as Number) as Number {
     if (userAge == 0) { return 0; }
 
-// vo2MaxChartKey
-    var chartKey = Lang.format("$1$:$2$",[userAge,userGender]);
-
     // age and gender won't change during a ride, so cache result.
-    if (!chartKey.equals(vo2MaxChartKey)) {
+    if (!userVo2MaxChartKey.equals(vo2MaxChartKey)) {
       var chart;
       if (userGender == 0) {
         chart = getVo2MaxChart0();
@@ -508,10 +514,10 @@ class WhatHiitt {
         i--;
       }
 
-      vo2MaxChartKey = chartKey;
+      vo2MaxChartKey = userVo2MaxChartKey;
     }
     
-    // System.println(["vo2", chartKey, vo2MaxChart]);
+    // System.println(["vo2", userVo2MaxChartKey, vo2MaxChart]);
 
     
     // System.println([userAge, ageAndPerc]);
