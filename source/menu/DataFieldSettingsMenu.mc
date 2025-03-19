@@ -227,6 +227,9 @@ class DataFieldSettingsMenuDelegate extends WatchUi.Menu2InputDelegate {
       mi.setSubLabel($.getStorageNumberAsString(mi.getId() as String) + " sec");
       demMenu.addItem(mi);
 
+      boolean = Storage.getValue("demohiitt") ? true : false;
+      demMenu.addItem(new WatchUi.ToggleMenuItem("Demo Hiit", null, "demohiitt", boolean, null));
+
       WatchUi.pushView(demMenu, new $.GeneralMenuDelegate(self, demMenu), WatchUi.SLIDE_UP);
       return;
     }

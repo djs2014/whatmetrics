@@ -84,6 +84,9 @@ class WhatHiitt {
   - minimalRecoverySeconds (power is hiitStopOnPerc - 10)
   - stops when entering settings
   */
+  hidden var isDemo as Boolean = false;
+  hidden var demoCounter as Number = 0;
+
   function initialize() {}
 
   function updateProfile() as Void {
@@ -110,6 +113,11 @@ class WhatHiitt {
       }      
     }
     userVo2MaxChartKey = Lang.format("$1$:$2$",[userAge,userGender]);
+  }
+
+  function setDemo(demo as Boolean) as Void {
+    isDemo = demo;
+    demoCounter = 0;
   }
 
   function setMode(hiitMode as HiitMode) as Void {
@@ -151,7 +159,7 @@ class WhatHiitt {
   }
 
   function isEnabled() as Boolean {
-    if (hiitMode == HiitAlwaysOn) {
+    if (isDemo || hiitMode == HiitAlwaysOn) {
       return true;
     }
     if (hiitMode == HiitDisabled) {
@@ -213,7 +221,11 @@ class WhatHiitt {
     }
   }
   function compute(info as Activity.Info, percOfTarget as Numeric, power as Number) as Void {
-    
+    if (isDemo) {
+      var origPercOfTarget = percOfTarget;
+      percOfTarget = getDemoPercOfTarget(percOfTarget);
+      System.println(["Demo", power, demoCounter, origPercOfTarget, "->", percOfTarget, "status", hiitStatus]);
+    }
     calcVo2Max = (hiitStatus as HiitStatus) == Active;
     updateMetrics(info);
     updateRecoveryTime();
@@ -348,6 +360,15 @@ class WhatHiitt {
   }
 
   hidden function updateMetrics(info as Activity.Info) as Void {
+    if (isDemo) {
+      activityPaused = false;
+      userPaused = false;
+      if (demoCounter==0) {
+        reset();
+      }
+      return;
+    }
+
     var currentSpeed = getActivityValue(info, :currentSpeed, 0.0f) as Float;
     var currentCadence = getActivityValue(info, :currentCadence, 0.0f) as Float;
     userPaused = currentSpeed == 0.0f || (info has :currentCadence and currentCadence == 0);
@@ -360,6 +381,36 @@ class WhatHiitt {
     } else {
       activityPaused = false;
     }
+
+   
+  }
+
+  hidden function getDemoPercOfTarget(percOfTarget as Numeric) as Numeric {
+    // Based on seconds in demo give the perc of target
+    demoCounter = demoCounter + 1;
+    if (demoCounter <= hiitStartCountDownSeconds + 1) {
+      return hiitStartOnPerc + 10;
+    }
+    if (demoCounter <= (hiitStartCountDownSeconds + minimalElapsedSeconds + 10)) {
+      return hiitStartOnPerc + 10;
+    }
+    // minimalRecoverySeconds -> 
+    var recoverySeconds = minimalRecoverySeconds;
+    if (recoverySeconds > 30) {
+      recoverySeconds = 30;
+    }
+    if (demoCounter <= (hiitStartCountDownSeconds + minimalElapsedSeconds + 10 + hiitStopCountDownSeconds + recoverySeconds + 1)) {
+      var perc = hiitStopOnPerc - 10;
+      if (perc <= 0) {
+        perc = 1;
+      }
+      return perc;
+    }
+
+    // End of demo
+    isDemo = false;
+    demoCounter = 0;
+    return percOfTarget;
   }
 
   hidden function stopping() as Boolean {

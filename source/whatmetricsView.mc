@@ -753,7 +753,7 @@ class whatmetricsView extends WatchUi.DataField {
         return fi;
 
       case FTHiit:
-        // @@TODO compare score with profile vo2maxCycling -> color +
+        // @@TODO refactor
         fi.available = false;
         if (!mHiitt.isEnabled()) {
           return fi;
@@ -812,9 +812,9 @@ class whatmetricsView extends WatchUi.DataField {
           fi.decimals = vo2max.format("%0.0f");
         }
 
-        if (mPaused) {
-          fi.decimals = "";
-        }
+        // if (mPaused) {
+        //   fi.decimals = "";
+        // }
         fi.iconParam = showHiitIcon;
 
         if (nrHiit > 0) {
@@ -844,6 +844,14 @@ class whatmetricsView extends WatchUi.DataField {
         fi.iconParam2 = 0;
         var vo2maxProfile = mHiitt.getProfileVo2Max();
         var vo2maxHiit = mHiitt.getVo2Max();
+        if (mPaused) {
+          fi.decimals = "";
+          // Use all scores when pauzed
+          vo2maxHiit = mHiitt.getAverageHiitScore();
+          percentile = mHiitt.getVo2MaxPercentile(vo2maxHiit);
+          fi.iconColor = getIconColorRedToGreen(percentile, 100);
+
+        }
         //System.println(["hiit", vo2maxProfile, vo2maxHiit]);
         if (vo2maxProfile > 0 && vo2maxHiit > 0) {
           if (vo2maxHiit < vo2maxProfile) {

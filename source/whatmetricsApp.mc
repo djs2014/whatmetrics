@@ -28,7 +28,8 @@ class whatmetricsApp extends Application.AppBase {
   function onSettingsChanged() {
     var hiitt = getHiitt();
     hiitt.updateProfile();
-
+    hiitt.setDemo(false);
+    
     var version = getStorageValue("version", "") as String;
     if (!version.equals("1.0.4")) {
       Storage.clearValues();
@@ -120,6 +121,8 @@ class whatmetricsApp extends Application.AppBase {
       Storage.setValue("demofields", false);
       Storage.setValue("demofields_wait", 2);
       Storage.setValue("demofields_roundtrip", 1);
+      Storage.setValue("demohiitt", false);
+      
 
       Storage.setValue("show_icon", true);
     }
@@ -258,6 +261,12 @@ class whatmetricsApp extends Application.AppBase {
       $.gDemoFieldsRoundTrip = getStorageValue("demofields_roundtrip", 1) as Number;
     } else {
       $.gDemoFieldsRoundTrip = 0;
+    }
+
+    var demohiitt = getStorageValue("demohiitt", false) as Boolean;
+    if (demohiitt) {
+      Storage.setValue("demohiitt", false);
+      hiitt.setDemo(true);
     }
     $.gPause_x_offset = getStorageValue("pause_x_offset", 10) as Number;
   }
