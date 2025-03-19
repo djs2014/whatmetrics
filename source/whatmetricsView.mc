@@ -781,7 +781,7 @@ class whatmetricsView extends WatchUi.DataField {
           if (mHiitt.wasValidHiit()) {
             fi.iconColor = COLOR_LT_BLUE;
             percentile = mHiitt.getVo2MaxPercentile(vo2max);
-            fi.iconColor = getIconColorRedToGreen(percentile, 100);
+            fi.iconColor = getIconColorRedToGreen(percentile, 100, true);
           }
           if (mHiitt.isStartOfRecovery(10)) {
             fi.decimals = "";
@@ -803,7 +803,7 @@ class whatmetricsView extends WatchUi.DataField {
               if (mHiitt.wasValidHiit()) {
                 //fi.iconColor = Graphics.COLOR_GREEN;
                 percentile = mHiitt.getVo2MaxPercentile(vo2max);
-                fi.iconColor = getIconColorRedToGreen(percentile, 100);
+                fi.iconColor = getIconColorRedToGreen(percentile, 100, true);
               }
             }
           }
@@ -849,7 +849,7 @@ class whatmetricsView extends WatchUi.DataField {
           // Use all scores when pauzed
           vo2maxHiit = mHiitt.getAverageHiitScore();
           percentile = mHiitt.getVo2MaxPercentile(vo2maxHiit);
-          fi.iconColor = getIconColorRedToGreen(percentile, 100);
+          fi.iconColor = getIconColorRedToGreen(percentile, 100, true);
 
         }
         //System.println(["hiit", vo2maxProfile, vo2maxHiit]);
@@ -1113,7 +1113,7 @@ class whatmetricsView extends WatchUi.DataField {
             fi.iconParam = 1;
           }
         }
-        fi.iconColor = getIconColorRedToGreen(fi.rawValue, fi.maxValue);
+        fi.iconColor = getIconColorRedToGreen(fi.rawValue, fi.maxValue, false);
         return fi;
     }
 
@@ -1614,10 +1614,11 @@ class whatmetricsView extends WatchUi.DataField {
 
   hidden function getIconColorRedToGreen(
     value as Numeric,
-    maxValue as Numeric
+    maxValue as Numeric,
+    showColor as Boolean
   ) as Graphics.ColorType {
     mReverseColor = false;
-    if ($.gShowColors and $.gCreateColors) {
+    if ((showColor || $.gShowColors) and $.gCreateColors) {
       var perc = percentageOf(value, maxValue);
       var shade = 10;
       if (getBackgroundColor() == Graphics.COLOR_BLACK) {
@@ -2037,9 +2038,9 @@ class whatmetricsView extends WatchUi.DataField {
 
     // dc.fillRectangle(x, y, width, height);
 
-    var r = width / 3;
+    var r = width / 2.5;
     if (width > height) {
-      r = height / 3;
+      r = height / 2.5;
     }
 
     
@@ -2101,9 +2102,9 @@ class whatmetricsView extends WatchUi.DataField {
     height as Number,
     color as ColorType
   ) as Void {
-    var r = height / 3;
-    if (width < height) {
-      r = width / 3;
+    var r = width / 2.5;
+    if (width > height) {
+      r = height / 2.5;
     }
     var x1 = x + width / 2;
     var y1 = y + height / 2;
@@ -2128,9 +2129,9 @@ class whatmetricsView extends WatchUi.DataField {
 
     var x1 = x + width / 2;
     var y1 = y + height / 2;
-    var r = width / 3;
+    var r = width / 2.5;
     if (width > height) {
-      r = height / 3;
+      r = height / 2.5;
     }
 
     if (improving == 0) {
@@ -2166,9 +2167,9 @@ class whatmetricsView extends WatchUi.DataField {
       return;
     }
 
-    var r = height / 3;
-    if (width < height) {
-      r = width / 3;
+    var r = width / 2.5;
+    if (width > height) {
+      r = height / 2.5;
     }
     var x1 = x + width / 2;
     var y1 = y + height / 2;
@@ -2193,9 +2194,9 @@ class whatmetricsView extends WatchUi.DataField {
       return;
     }
 
-    var r = height / 3;
-    if (width < height) {
-      r = width / 3;
+    var r = width / 2.5;
+    if (width > height) {
+      r = height / 2.5;
     }
     var x1 = x + width / 2;
     var y1 = y + height / 2;
