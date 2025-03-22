@@ -286,6 +286,9 @@ class DataFieldSettingsMenuDelegate extends WatchUi.Menu2InputDelegate {
       mi.setSubLabel($.getStorageNumberAsString(mi.getId() as String));
       avMenu.addItem(mi);
 
+      var boolean = Storage.getValue("vo2maxbg") ? true : false;
+      avMenu.addItem(new WatchUi.ToggleMenuItem("Vo2Max background", null, "vo2maxbg", boolean, null));
+
       WatchUi.pushView(avMenu, new $.GeneralMenuDelegate(self, avMenu), WatchUi.SLIDE_UP);
       return;
     }

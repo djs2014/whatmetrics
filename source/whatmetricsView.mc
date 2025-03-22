@@ -58,6 +58,8 @@ class whatmetricsView extends WatchUi.DataField {
   ];
 
   hidden var mHiitt as WhatHiitt;
+  hidden var hiitBgColor as Graphics.ColorType = -1;
+  hidden var hiitBgImproving as Number = 0;
   hidden var mMetrics as WhatMetrics;
   hidden var mFields as Array<Number> = [] as Array<Number>;
   hidden var mFieldLayout as FieldLayout = FL8Fields;
@@ -297,6 +299,35 @@ class whatmetricsView extends WatchUi.DataField {
       // Reserve space for the graphic bar
       y = mGraphicFieldHeight;
     }
+    // @@ TEST, refactor
+    if ($.gVo2MaxBackGround) {      
+      var vo2maxProfile = mHiitt.getProfileVo2Max();
+      var vo2max = mHiitt.getVo2Max();
+      if (vo2max == 0) {
+        vo2max = mHiitt.getAverageHiitScore();
+      } 
+      if (vo2max > 7) {
+        var percentile = mHiitt.getVo2MaxPercentile(vo2max);   
+        var improving = 0;
+        if (vo2max < vo2maxProfile) {
+          improving = -1;
+        } else if (vo2max > 0 && vo2max > vo2maxProfile) {
+          improving = 1;
+        }     
+        drawHiitIcon(
+          dc,
+          0,
+          0,
+          dc.getWidth(),
+          dc.getHeight(),
+          getIconColorRedToGreen(percentile, 100, true),
+          0,
+          improving
+        );
+      }
+    }
+     
+
     // Note, index 0 is field layout
     var f = 1;
     var rowCount = mGrid.size();
@@ -849,7 +880,11 @@ class whatmetricsView extends WatchUi.DataField {
           // Use all scores when pauzed
           vo2maxHiit = mHiitt.getAverageHiitScore();
           percentile = mHiitt.getVo2MaxPercentile(vo2maxHiit);
-          fi.iconColor = getIconColorRedToGreen(percentile, 100, true);
+          if ($.gVo2MaxBackGround) {     
+            fi.iconColor = -1;
+          } else {
+            fi.iconColor = getIconColorRedToGreen(percentile, 100, true);
+          }
 
         }
         //System.println(["hiit", vo2maxProfile, vo2maxHiit]);
@@ -2043,27 +2078,28 @@ class whatmetricsView extends WatchUi.DataField {
       r = height / 2.5;
     }
 
-    
-    dc.setColor(color, Graphics.COLOR_TRANSPARENT);
+    if (color != Graphics.COLOR_TRANSPARENT) {
+      dc.setColor(color, Graphics.COLOR_TRANSPARENT);
 
-    if (improving == 0) {
-      dc.fillCircle(x1, y1, r);
-    } else if (improving > 0) {
-      var triangleUp =
-        [
-          [x1, y1 - r], 
-          [x1 - r, y1 + r],
-          [x1 + r, y1 + r],
-        ] as Array<Graphics.Point2D>;
-      dc.fillPolygon(triangleUp);
-    } else {
-      var triangleDown =
-        [
-          [x1 - r, y1 - r],
-          [x1 + r, y1 - r],
-          [x1, y1 + r],
-        ] as Array<Graphics.Point2D>;
-      dc.fillPolygon(triangleDown);
+      if (improving == 0) {
+        dc.fillCircle(x1, y1, r);
+      } else if (improving > 0) {
+        var triangleUp =
+          [
+            [x1, y1 - r], 
+            [x1 - r, y1 + r],
+            [x1 + r, y1 + r],
+          ] as Array<Graphics.Point2D>;
+        dc.fillPolygon(triangleUp);
+      } else {
+        var triangleDown =
+          [
+            [x1 - r, y1 - r],
+            [x1 + r, y1 - r],
+            [x1, y1 + r],
+          ] as Array<Graphics.Point2D>;
+        dc.fillPolygon(triangleDown);
+      }
     }
 
     if (showText > 0) {

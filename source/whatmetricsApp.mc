@@ -127,7 +127,7 @@ class whatmetricsApp extends Application.AppBase {
       Storage.setValue("show_icon", true);
     }
 
-    hiitt.setMode(getStorageValue("hiit_mode", WhatHiitt.HiitDisabled) as WhatHiitt.HiitMode);
+    hiitt.setMode(getStorageValue("hiit_mode", WhatHiitt.HiitDisabled) as WhatHiitt.HiitMode);      
     hiitt.setSound(getStorageValue("hiit_sound", WhatHiitt.StartOnlySound) as WhatHiitt.HiitSound);
     hiitt.setStartOnPerc(getStorageValue("hiit_startperc", 0) as Number);
     hiitt.setStopOnPerc(getStorageValue("hiit_stopperc", 0) as Number);
@@ -141,6 +141,8 @@ class whatmetricsApp extends Application.AppBase {
     hiitt.setMinimalElapsedSeconds(getStorageValue("hiit_valid_sec", 30) as Number);
     hiitt.setMinimalRecoverySeconds(getStorageValue("hiit_recovery_sec", 300) as Number);
 
+    $.gVo2MaxBackGround = getStorageValue("vo2maxbg", $.gVo2MaxBackGround) as Boolean;
+    
     var metrics = $.getWhatMetrics();
     metrics.setPowerPerSec(getStorageValue("metric_ppersec", 0) as Number);
     metrics.setGradeWindowSize(getStorageValue("metric_gradews", 0) as Number);
@@ -227,6 +229,7 @@ class whatmetricsApp extends Application.AppBase {
     $.gGraphic_fields_zones = getStorageValue("gf_zones", $.gGraphic_fields_zones) as Number;
 
     $.gDebug = getStorageValue("debug", $.gDebug) as Boolean;
+  
     $.gShowColors = getStorageValue("show_colors", $.gShowColors) as Boolean;
     $.gShowGrid = getStorageValue("show_grid", $.gShowGrid) as Boolean;
     $.gShowAverageWhenPaused = getStorageValue("show_average", $.gShowAverageWhenPaused) as Boolean;
@@ -358,3 +361,4 @@ var gDemoFieldsWait as Number = 2;
 var gDemoFieldsRoundTrip as Number = 0;
 
 var gPause_x_offset as Number = 10;
+var gVo2MaxBackGround as Boolean = false;
