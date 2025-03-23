@@ -801,6 +801,8 @@ class whatmetricsView extends WatchUi.DataField {
           return fi;
         }
 
+        var showHiittIcon = !$.gVo2MaxBackGround;
+
         fi.title = "hiit";
         var showHiitIcon = 1;
         var vo2max = mHiitt.getVo2Max();
@@ -809,8 +811,8 @@ class whatmetricsView extends WatchUi.DataField {
         if (recovery > 0) {
           showHiitIcon = 0;
           fi.text = secondsToCompactTimeString(recovery, "({m}:{s})");
-          if (mHiitt.wasValidHiit()) {
-            fi.iconColor = COLOR_LT_BLUE;
+          if (showHiittIcon && mHiitt.wasValidHiit()) {
+            // fi.iconColor = COLOR_LT_BLUE;
             percentile = mHiitt.getVo2MaxPercentile(vo2max);
             fi.iconColor = getIconColorRedToGreen(percentile, 100, true);
           }
@@ -831,7 +833,7 @@ class whatmetricsView extends WatchUi.DataField {
             if (hiitElapsed > 0) {
               showHiitIcon = 0;
               fi.text = secondsToCompactTimeString(hiitElapsed, "({m}:{s})");
-              if (mHiitt.wasValidHiit()) {
+              if (showHiittIcon && mHiitt.wasValidHiit()) {
                 //fi.iconColor = Graphics.COLOR_GREEN;
                 percentile = mHiitt.getVo2MaxPercentile(vo2max);
                 fi.iconColor = getIconColorRedToGreen(percentile, 100, true);
@@ -879,10 +881,8 @@ class whatmetricsView extends WatchUi.DataField {
           fi.decimals = "";
           // Use all scores when pauzed
           vo2maxHiit = mHiitt.getAverageHiitScore();
-          percentile = mHiitt.getVo2MaxPercentile(vo2maxHiit);
-          if ($.gVo2MaxBackGround) {     
-            fi.iconColor = -1;
-          } else {
+          if(showHiittIcon) {
+            percentile = mHiitt.getVo2MaxPercentile(vo2maxHiit);
             fi.iconColor = getIconColorRedToGreen(percentile, 100, true);
           }
 
