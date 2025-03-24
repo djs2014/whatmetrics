@@ -61,6 +61,11 @@ class DataFieldSettingsMenuDelegate extends WatchUi.Menu2InputDelegate {
       mi.setSubLabel($.getStorageNumberAsString(mi.getId() as String) + " sec");
       hiitMenu.addItem(mi);
 
+      mi = new WatchUi.MenuItem("Vo2Max icon", null, "hiit_vo2maxbg", null);
+      value = getStorageValue(mi.getId() as String, Vo2BgHiit) as Vo2MaxBackGround;
+      mi.setSubLabel($.getVo2MaxBackGroundAsString(value));
+      hiitMenu.addItem(mi);
+
       WatchUi.pushView(hiitMenu, new $.GeneralMenuDelegate(self, hiitMenu), WatchUi.SLIDE_UP);
       return;
     }
@@ -286,8 +291,8 @@ class DataFieldSettingsMenuDelegate extends WatchUi.Menu2InputDelegate {
       mi.setSubLabel($.getStorageNumberAsString(mi.getId() as String));
       avMenu.addItem(mi);
 
-      var boolean = Storage.getValue("vo2maxbg") ? true : false;
-      avMenu.addItem(new WatchUi.ToggleMenuItem("Vo2Max icon", null, "vo2maxbg", boolean, null));
+      // var boolean = Storage.getValue("vo2maxbg") ? true : false;
+      // avMenu.addItem(new WatchUi.ToggleMenuItem("Vo2Max icon", null, "vo2maxbg", boolean, null));
 
       WatchUi.pushView(avMenu, new $.GeneralMenuDelegate(self, avMenu), WatchUi.SLIDE_UP);
       return;
@@ -347,6 +352,16 @@ class GeneralMenuDelegate extends WatchUi.Menu2InputDelegate {
       // sp.add("Low", "low noise", WhatHiitt.LowNoise);
       // sp.add("Loud", "loud noise", WhatHiitt.LoudNoise);
 
+      sp.setOnSelected(self, :onSelectedSelection, item);
+      sp.show();
+      return;
+    }
+     if (id instanceof String && id.equals("hiit_vo2maxbg")) {
+      var sp = new selectionMenuPicker("Vo2Max icon", id as String);
+      for(var i = 0; i < 4; i++) {
+        sp.add($.getVo2MaxBackGroundAsString(i as Vo2MaxBackGround), null, i);
+      }
+   
       sp.setOnSelected(self, :onSelectedSelection, item);
       sp.show();
       return;
@@ -759,6 +774,22 @@ function getFieldTypeAsString(fieldType as FieldType) as String {
       return "unknown";
   }
 }
+
+function getVo2MaxBackGroundAsString(vo2Bg as Vo2MaxBackGround) as String {
+  switch (vo2Bg) {
+    case Vo2BgOff:
+      return "off";
+    case Vo2BgOn:
+      return "continuous";
+    case Vo2BgHiit:
+      return "when hiit";
+    case Vo2BgHiitOnly:
+      return "hiit only";  
+    default:
+      return "off";
+  }
+}
+
 
 function getStorageNumberAsString(key as String) as String {
   return (getStorageValue(key, 0) as Number).format("%0d");

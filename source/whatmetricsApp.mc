@@ -49,6 +49,8 @@ class whatmetricsApp extends Application.AppBase {
       Storage.setValue("hiit_inactivity", 10);
       Storage.setValue("hiit_valid_sec", 30);
       Storage.setValue("hiit_recovery_sec", 300);
+      Storage.setValue("hiit_vo2maxbg", Vo2BgHiit);
+
 
       Storage.setValue("metric_ppersec", 3);
       Storage.setValue("metric_gradews", 4);
@@ -141,7 +143,7 @@ class whatmetricsApp extends Application.AppBase {
     hiitt.setMinimalElapsedSeconds(getStorageValue("hiit_valid_sec", 30) as Number);
     hiitt.setMinimalRecoverySeconds(getStorageValue("hiit_recovery_sec", 300) as Number);
 
-    $.gVo2MaxBackGround = getStorageValue("vo2maxbg", $.gVo2MaxBackGround) as Boolean;
+    $.gVo2MaxBackGround = getStorageValue("hiit_vo2maxbg", Vo2BgHiit) as Vo2MaxBackGround;
     
     var metrics = $.getWhatMetrics();
     metrics.setPowerPerSec(getStorageValue("metric_ppersec", 0) as Number);
@@ -361,4 +363,4 @@ var gDemoFieldsWait as Number = 2;
 var gDemoFieldsRoundTrip as Number = 0;
 
 var gPause_x_offset as Number = 10;
-var gVo2MaxBackGround as Boolean = false;
+var gVo2MaxBackGround as Vo2MaxBackGround = Vo2BgHiit;

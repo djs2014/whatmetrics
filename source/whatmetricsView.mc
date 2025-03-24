@@ -58,8 +58,9 @@ class whatmetricsView extends WatchUi.DataField {
   ];
 
   hidden var mHiitt as WhatHiitt;
-  hidden var hiitBgColor as Graphics.ColorType = -1;
-  hidden var hiitBgImproving as Number = 0;
+  hidden var mDrawBackgroundHiittIcon as Boolean = false;
+  // hidden var hiitBgColor as Graphics.ColorType = -1;
+  // hidden var hiitBgImproving as Number = 0;
   hidden var mMetrics as WhatMetrics;
   hidden var mFields as Array<Number> = [] as Array<Number>;
   hidden var mFieldLayout as FieldLayout = FL8Fields;
@@ -300,32 +301,60 @@ class whatmetricsView extends WatchUi.DataField {
       y = mGraphicFieldHeight;
     }
     // @@ TEST, refactor
-    if ($.gVo2MaxBackGround) {      
-      var vo2maxProfile = mHiitt.getProfileVo2Max();
-      var vo2max = mHiitt.getVo2Max();
-      if (vo2max == 0) {
-        vo2max = mHiitt.getAverageHiitScore();
-      } 
-      if (vo2max > 7) {
-        var percentile = mHiitt.getVo2MaxPercentile(vo2max);   
-        var improving = 0;
-        if (vo2max < vo2maxProfile) {
-          improving = -1;
-        } else if (vo2max > 0 && vo2max > vo2maxProfile) {
-          improving = 1;
-        }     
-        drawHiitIcon(
-          dc,
-          0,
-          0,
-          dc.getWidth(),
-          dc.getHeight(),
-          getIconColorRedToGreen(percentile, 100, true),
-          0,
-          improving
-        );
-      }
+    mDrawBackgroundHiittIcon = false;
+    var vo2maxHiitt = 0;
+    switch($.gVo2MaxBackGround) {
+      case Vo2BgOff:
+        break;
+      case Vo2BgOn:
+        // show always, calculate always
+        vo2maxHiitt = mHiitt.getVo2Max();
+        if (vo2maxHiitt == 0) {
+          vo2maxHiitt = mHiitt.getAverageHiitScore();
+        } 
+        break;
+      case Vo2BgHiitOnly: 
+        // Show only hiitt scores, but actual score when hiitt active
+        if (mHiitt.isEnabled()) {
+          vo2maxHiitt = mHiitt.getVo2Max();
+        }
+        if (vo2maxHiitt == 0) {
+          vo2maxHiitt = mHiitt.getAverageHiitScore();
+        }
+        break;
+      case Vo2BgHiit: 
+        // show only during Hiitt
+        if (mHiitt.isEnabled()) {
+          vo2maxHiitt = mHiitt.getVo2Max();
+          if (vo2maxHiitt == 0) {
+            vo2maxHiitt = mHiitt.getAverageHiitScore();
+          } 
+        }
+        break;
     }
+
+    if (vo2maxHiitt > 7) {
+      var vo2maxProfile = mHiitt.getProfileVo2Max();     
+      mDrawBackgroundHiittIcon = true;
+      var percentile = mHiitt.getVo2MaxPercentile(vo2maxHiitt);   
+      var improving = 0;
+      if (vo2maxHiitt < vo2maxProfile) {
+        improving = -1;
+      } else if (vo2maxHiitt > 0 && vo2maxHiitt > vo2maxProfile) {
+        improving = 1;
+      }     
+      drawHiitIcon(
+        dc,
+        0,
+        0,
+        dc.getWidth(),
+        dc.getHeight(),
+        getIconColorRedToGreen(percentile, 100, true),
+        0,
+        improving
+      );
+    }
+    
      
 
     // Note, index 0 is field layout
@@ -801,17 +830,16 @@ class whatmetricsView extends WatchUi.DataField {
           return fi;
         }
 
-        var showHiittIcon = !$.gVo2MaxBackGround;
 
         fi.title = "hiit";
-        var showHiitIcon = 1;
+        var showHiittText = 1;
         var vo2max = mHiitt.getVo2Max();
         var recovery = mHiitt.getRecoveryElapsedSeconds();
         var percentile = 0;
         if (recovery > 0) {
-          showHiitIcon = 0;
+          showHiittText = 0;
           fi.text = secondsToCompactTimeString(recovery, "({m}:{s})");
-          if (showHiittIcon && mHiitt.wasValidHiit()) {
+          if (!mDrawBackgroundHiittIcon && mHiitt.wasValidHiit()) {
             // fi.iconColor = COLOR_LT_BLUE;
             percentile = mHiitt.getVo2MaxPercentile(vo2max);
             fi.iconColor = getIconColorRedToGreen(percentile, 100, true);
@@ -826,14 +854,14 @@ class whatmetricsView extends WatchUi.DataField {
         } else {
           var counter = mHiitt.getCounter();
           if (counter > 0) {
-            showHiitIcon = 0;
+            showHiittText = 0;
             fi.text = "(" + counter.format("%01d") + ")";
           } else {
             var hiitElapsed = mHiitt.getElapsedSeconds();
             if (hiitElapsed > 0) {
-              showHiitIcon = 0;
+              showHiittText = 0;
               fi.text = secondsToCompactTimeString(hiitElapsed, "({m}:{s})");
-              if (showHiittIcon && mHiitt.wasValidHiit()) {
+              if (!mDrawBackgroundHiittIcon && mHiitt.wasValidHiit()) {
                 //fi.iconColor = Graphics.COLOR_GREEN;
                 percentile = mHiitt.getVo2MaxPercentile(vo2max);
                 fi.iconColor = getIconColorRedToGreen(percentile, 100, true);
@@ -848,7 +876,7 @@ class whatmetricsView extends WatchUi.DataField {
         // if (mPaused) {
         //   fi.decimals = "";
         // }
-        fi.iconParam = showHiitIcon;
+        fi.iconParam = showHiittText;
 
         if (nrHiit > 0) {
           fi.text_botleft = "H " + nrHiit.format("%0.0d");
@@ -881,7 +909,7 @@ class whatmetricsView extends WatchUi.DataField {
           fi.decimals = "";
           // Use all scores when pauzed
           vo2maxHiit = mHiitt.getAverageHiitScore();
-          if(showHiittIcon) {
+          if(!mDrawBackgroundHiittIcon) {
             percentile = mHiitt.getVo2MaxPercentile(vo2maxHiit);
             fi.iconColor = getIconColorRedToGreen(percentile, 100, true);
           }

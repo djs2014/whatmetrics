@@ -98,3 +98,10 @@ enum BarPosition {
     BPTop = 1,
     BPBottom = 2
 }
+
+  enum Vo2MaxBackGround {
+      Vo2BgOff = 0,
+      Vo2BgOn = 1, // continuous
+      Vo2BgHiit = 2, // during Hiit 
+      Vo2BgHiitOnly = 3 // only Hiit scores
+  }
