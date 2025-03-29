@@ -2150,6 +2150,7 @@ class whatmetricsView extends WatchUi.DataField {
     dc.drawCircle(x1, y1, r);
     dc.drawCircle(x1, y1, r / 2);
     dc.drawCircle(x1, y1, r / 3);
+    dc.setPenWidth(1);
   }
 
   hidden function drawVo2MaxIcon(
