@@ -2263,6 +2263,7 @@ class whatmetricsView extends WatchUi.DataField {
     if (width > height) {
       r = height / 2.5;
     }
+    r = r.toNumber();
     var x1 = x + width / 2;
     var y1 = y + height / 2;
 
