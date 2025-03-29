@@ -369,11 +369,6 @@ class whatmetricsView extends WatchUi.DataField {
         // cell contains [w,h]
         var cell = row[c]; // as Array<Number>;
 
-        if (gShowGrid) {
-          dc.setColor(Graphics.COLOR_LT_GRAY, Graphics.COLOR_TRANSPARENT);
-          dc.drawRectangle(x, y, cell[0], cell[1]);
-        }
-
         var ft = FTUnknown;
         if (f < mFields.size()) {
           if (showDemoField) {
@@ -394,6 +389,25 @@ class whatmetricsView extends WatchUi.DataField {
             fbProcessed.add(fb);
             fi = getFieldInfo(fb, f);
           }
+        }
+
+        // Focus on field info, when they are close or above target.
+        var colorPerc = Graphics.COLOR_LT_GRAY;
+        var focusPerc = 0;          
+        if ($.gFocusField != FocusOff && fi.rawValue > 0 && fi.maxValue > 0) {          
+          focusPerc = percentageOf(fi.rawValue, fi.maxValue);  
+          //System.println(["focusfield ", focusPerc, fi.rawValue, fi.maxValue, fi.title]);
+          if (focusPerc > $.gFocusPerc) {
+            dc.setPenWidth(3);
+            if ($.gFocusField == FocusColor) {
+              colorPerc = getIconColorGreenToRed(fi.rawValue, fi.maxValue, true);
+            }
+          }
+        }        
+        if (gShowGrid || (focusPerc > 0 && focusPerc > $.gFocusPerc)) {
+          dc.setColor(colorPerc, Graphics.COLOR_TRANSPARENT);
+          dc.drawRectangle(x, y, cell[0], cell[1]);
+          dc.setPenWidth(1);
         }
 
         drawFieldBackground(dc, fi, x, y, cell[0], cell[1]);
@@ -628,6 +642,9 @@ class whatmetricsView extends WatchUi.DataField {
         if (grade < 0) {
           grade = grade * -1;
         }
+
+        fi.rawValue = grade;
+        fi.maxValue = $.gTargetGrade;
         fi.iconColor = getIconColor(grade, $.gTargetGrade);
         fi.iconParam = g;
         return fi;
@@ -700,6 +717,9 @@ class whatmetricsView extends WatchUi.DataField {
         fi.available =
           power > 0 and
           (mPowerFallbackCountdown > 0 or $.gPowerCountdownToFallBack == 0);
+
+        fi.rawValue = power;
+        fi.maxValue = $.gTargetFtp;  
         fi.iconColor = getIconColor(power, $.gTargetFtp);
         return fi;
 
@@ -759,6 +779,8 @@ class whatmetricsView extends WatchUi.DataField {
         if (altitude < 0) {
           altitude = altitude * -1;
         }
+        fi.rawValue = altitude;
+        fi.maxValue = $.gTargetAltitude;  
         fi.iconColor = getIconColor(altitude, $.gTargetAltitude);
 
         var totalAsc = mMetrics.getTotalAscent();
@@ -769,6 +791,7 @@ class whatmetricsView extends WatchUi.DataField {
         if (totalDesc > 0) {
           fi.text_botright = "D " + totalDesc.format("%0.0f");
         }
+
         return fi;
 
       case FTPressureAtSea:
@@ -980,6 +1003,8 @@ class whatmetricsView extends WatchUi.DataField {
         fi.available =
           powerpw > 0 and
           (mPowerFallbackCountdown > 0 or $.gPowerCountdownToFallBack == 0);
+        fi.rawValue = mMetrics.getPower();
+        fi.maxValue = $.gTargetFtp;    
         return fi;
 
       case FTPowerBalance:
@@ -1667,9 +1692,29 @@ class whatmetricsView extends WatchUi.DataField {
       if (getBackgroundColor() == Graphics.COLOR_BLACK) {
         shade = -30;
       } else {
-        mReverseColor = perc >= 165;
+        // mReverseColor = perc >= 165;
       }
       return percentageToColor(perc, 255, $.PERC_COLORS_SCHEME, shade);
+    } else {
+      return mIconColor;
+    }
+  }
+
+  hidden function getIconColorGreenToRed(
+    value as Numeric,
+    maxValue as Numeric,
+    showColor as Boolean
+  ) as Graphics.ColorType {
+    mReverseColor = false; // @@ TODO <-- refactor
+    if ((showColor || $.gShowColors) and $.gCreateColors) {
+      var perc = percentageOf(value, maxValue);
+      var shade = 10;
+      if (getBackgroundColor() == Graphics.COLOR_BLACK) {
+        shade = -30;
+      } else {
+        // mReverseColor = perc >= 165;
+      }
+      return percentageToColor(perc, 255, $.PERC_COLORS_GREEN_TO_RED, shade);
     } else {
       return mIconColor;
     }
@@ -1687,9 +1732,9 @@ class whatmetricsView extends WatchUi.DataField {
       if (getBackgroundColor() == Graphics.COLOR_BLACK) {
         shade = -30;
       } else {
-        mReverseColor = perc >= 165;
+        // mReverseColor = perc >= 165;
       }
-      return percentageToColor(perc, 255, $.PERC_COLORS_RED_GREEN, shade);
+      return percentageToColor(perc, 255, $.PERC_COLORS_RED_TO_GREEN, shade);
     } else {
       return mIconColor;
     }

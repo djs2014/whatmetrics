@@ -163,6 +163,8 @@ class whatmetricsApp extends Application.AppBase {
       Storage.setValue("target_tss", $.gTargetTSS);
       Storage.setValue("target_distance", $.gTargetDistance);
       Storage.setValue("target_distance_route", $.gTargetDistanceUseRoute);
+      Storage.setValue("focus_field", $.gFocusField);
+      Storage.setValue("focus_perc", $.gFocusPerc);
     }
     $.gTargetFtp = getStorageValue("target_ftp", $.gTargetFtp) as Number;
     $.gTargetSpeed = getStorageValue("target_speed", $.gTargetSpeed) as Number;
@@ -175,6 +177,9 @@ class whatmetricsApp extends Application.AppBase {
     $.gTargetDistance = getStorageValue("target_distance", $.gTargetDistance) as Number;
     $.gTargetDistanceUseRoute = getStorageValue("target_distance_route", $.gTargetDistanceUseRoute) as Boolean;
 
+    $.gFocusField = getStorageValue("focus_field", $.gFocusField) as FocusField;
+    $.gFocusPerc = getStorageValue("focus_perc", $.gFocusPerc) as Number;
+    
     var targetHrZone = getStorageValue("target_hrzone", 4) as Number;
     var heartRateZones = UserProfile.getHeartRateZones(UserProfile.HR_ZONE_SPORT_BIKING);
     if (heartRateZones.size() > 0) {
@@ -364,3 +369,6 @@ var gDemoFieldsRoundTrip as Number = 0;
 
 var gPause_x_offset as Number = 10;
 var gVo2MaxBackGround as Vo2MaxBackGround = Vo2BgHiit;
+
+var gFocusField as FocusField = FocusOff;
+var gFocusPerc as Number = 99;

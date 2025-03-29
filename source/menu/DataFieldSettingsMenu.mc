@@ -108,6 +108,14 @@ class DataFieldSettingsMenuDelegate extends WatchUi.Menu2InputDelegate {
       var boolean = Storage.getValue("target_distance_route") ? true : false;
       targetMenu.addItem(new WatchUi.ToggleMenuItem("Route as distance", null, "target_distance_route", boolean, null));
 
+      mi = new WatchUi.MenuItem("Focus on field", null, "focus_field", null);
+      var ff = $.getStorageValue("focus_field", $.gFocusField) as FocusField;
+      mi.setSubLabel($.getFocusFieldAsString(ff));
+      targetMenu.addItem(mi);
+      mi = new WatchUi.MenuItem("Focus perc of target|0-999", null, "focus_perc", null);
+      mi.setSubLabel($.getStorageNumberAsString(mi.getId() as String));
+      targetMenu.addItem(mi);
+
       WatchUi.pushView(targetMenu, new $.GeneralMenuDelegate(self, targetMenu), WatchUi.SLIDE_UP);
       return;
     }
@@ -374,6 +382,17 @@ class GeneralMenuDelegate extends WatchUi.Menu2InputDelegate {
       sp.add("Zone 4", null, 4);
       sp.add("Zone 5", null, 5);
 
+      sp.setOnSelected(self, :onSelectedSelection, item);
+      sp.show();
+      return;
+    }
+
+    if (id.equals("focus_field")) {
+      var sp = new selectionMenuPicker("Field focus", id as String);
+      for(var i = 0; i < 3; i++) {
+        sp.add($.getFocusFieldAsString(i as FocusField), null, i);
+      }
+      
       sp.setOnSelected(self, :onSelectedSelection, item);
       sp.show();
       return;
@@ -769,7 +788,7 @@ function getFieldTypeAsString(fieldType as FieldType) as String {
     case FTVo2MaxHiit:
       return "Vo2Max hiit";
     case FTVo2MaxProfile:
-      return "Vo2Max prof";
+      return "Vo2Max profile";
     default:
       return "unknown";
   }
@@ -789,6 +808,20 @@ function getVo2MaxBackGroundAsString(vo2Bg as Vo2MaxBackGround) as String {
       return "off";
   }
 }
+
+function getFocusFieldAsString(ff as FocusField) as String {
+  switch (ff) {
+    case FocusOff:
+      return "off";
+    case FocusOn:
+      return "on";
+    case FocusColor:
+      return "on using color";    
+    default:
+      return "off";
+  }
+}
+
 
 
 function getStorageNumberAsString(key as String) as String {

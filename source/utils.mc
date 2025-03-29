@@ -303,7 +303,6 @@ function setColorFillStroke(dc as Dc, color as Graphics.ColorType) as Void {
 //     [50, 155, 100, 100],
 //     [100, 255, 0, 0],
 //   ] as Array<Array<Number> >;
-
 const PERC_COLORS_GREEN_RED =
   [
     [0, 234, 250, 241],
@@ -316,8 +315,26 @@ const PERC_COLORS_GREEN_RED =
     [999, 0, 0, 0], 
   ] as Array<Array<Number> >;
 
-// https://rgbcolorcode.com/color/FFBB33
-const PERC_COLORS_RED_GREEN =
+const PERC_COLORS_GREEN_TO_RED =
+  [
+    [0, 51, 255, 85], // malachite
+    [10, 85, 255, 51], // neon green
+    [15, 119, 255, 51], // lawn green
+    [20, 153, 255, 51], // green yellow
+    [30, 221, 255, 51], // pear
+    [40, 255, 255, 51], // yellow
+    [50, 255, 221, 51], // Banana yellow
+    [60, 255, 187, 51], // Saffron
+    [70, 255, 153, 51], // Deep saffron
+    [80, 255, 119, 51], // Mango tango
+    [90, 255, 85, 51],  // portland orange
+    [100, 255, 51, 51],   // deep carmine pink
+    [200, 128, 0, 0],   // maroon
+    [999, 102, 0, 0],   // rosewood
+  ] as Array<Array<Number> >;
+
+// https://rgbcolorcode.com/color/FF3333
+const PERC_COLORS_RED_TO_GREEN =
   [
     [0, 255, 51, 51],   // deep carmine pink
     [10, 255, 85, 51],  // portland orange
@@ -331,6 +348,8 @@ const PERC_COLORS_RED_GREEN =
     [80, 119, 255, 51], // lawn green
     [90, 85, 255, 51], // neon green
     [100, 51, 255, 85], // malachite
+    [200, 51, 255, 255], // aqua
+    [999, 102, 25, 255], // han purple
      
   ] as Array<Array<Number> >;
 

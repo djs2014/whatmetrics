@@ -1,4 +1,7 @@
 readme update
+
+focus -> no / yes / color
+
 vo2max bg
  - OFF 
  - dURING Hiit - when active
