@@ -398,7 +398,7 @@ class whatmetricsView extends WatchUi.DataField {
           focusPerc = percentageOf(fi.rawValue, fi.maxValue);  
           //System.println(["focusfield ", focusPerc, fi.rawValue, fi.maxValue, fi.title]);
           if (focusPerc > $.gFocusPerc) {
-            dc.setPenWidth(3);
+            dc.setPenWidth($.gFocusBorder);
             if ($.gFocusField == FocusColor) {
               colorPerc = getIconColorGreenToRed(fi.rawValue, fi.maxValue, true);
             }
