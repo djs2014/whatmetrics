@@ -1,5 +1,10 @@
 readme update
 vo2max bg
+ - OFF 
+ - dURING Hiit - when active
+  - Hiit only - only show hiit scores
+ - Continuous - hiit scores / actual vo2max
+
 
 vo2max rolling
 https://biketips.com/what-is-a-good-vo2-max-by-age/
