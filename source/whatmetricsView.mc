@@ -11,6 +11,11 @@ class whatmetricsView extends WatchUi.DataField {
   const COLOR_LT_GRAY = 0xeeeeee;
   const COLOR_LT_BLUE = 0xade6e6;
 
+  hidden var mLargeField as Boolean = false;
+  hidden var mSmallField as Boolean = false;
+  hidden var mWideField as Boolean = false;
+  hidden var mOneField as Boolean = false;
+
   hidden var mFieldSize as String;
   hidden var mYoffsetFix as Number = 0;
 
@@ -66,7 +71,7 @@ class whatmetricsView extends WatchUi.DataField {
   hidden var mFieldLayout as FieldLayout = FL8Fields;
   hidden var mZenMode as ZenMode = ZMOff;
   hidden var mBarPosition as BarPosition = BPOff;
-  hidden var mDisplaySize as String = "s";
+  // hidden var mDisplaySize as String = "s";
 
   hidden var mDemoFields_FieldIndex as Number = $.FieldTypeCount;
   hidden var mDemoFt as FieldType = FTUnknown;
@@ -112,8 +117,15 @@ class whatmetricsView extends WatchUi.DataField {
     mFieldSize = Lang.format("$1$x$2$", [w, h]);
 
     mGraphicLineHeight = $.gGraphic_fields_line_width;
-    mDisplaySize = $.getDisplaySize(w, h);
-    if (mDisplaySize.equals("s")) {
+
+    var ef = $.getEdgeField(dc);
+    mLargeField = ef == EfLarge;
+    mSmallField = ef == EfSmall;
+    mWideField = ef == EfWide;
+    mOneField = ef == EfOne;
+
+    // mDisplaySize = $.getDisplaySize(w, h);
+    if (mSmallField) {
       mFields = $.gSmallField as Array<Number>;
       mZenMode = $.gSmallFieldZen;
       mBarPosition = $.gSmallFieldBp;
@@ -121,7 +133,7 @@ class whatmetricsView extends WatchUi.DataField {
       if (mGraphicLineHeight > 2) {
         mGraphicLineHeight = 2;
       }
-    } else if (mDisplaySize.equals("w")) {
+    } else if (mWideField) {
       mFields = $.gWideField as Array<Number>;
       mZenMode = $.gWideFieldZen;
       mBarPosition = $.gWideFieldBp;
@@ -162,7 +174,7 @@ class whatmetricsView extends WatchUi.DataField {
 
     mYoffsetFix = 0;
     var w_side = (w * 2) / 5;
-    if (mDisplaySize.equals("w")) {
+    if (mWideField) {
       w_side = w / 3;
       mYoffsetFix = 1;
     }
@@ -496,22 +508,22 @@ class whatmetricsView extends WatchUi.DataField {
       }
     }
 
-    if ($.gDebug) {
-      dc.setColor(Graphics.COLOR_RED, Graphics.COLOR_TRANSPARENT);
-      var font = Graphics.FONT_SYSTEM_SMALL;
-      var text = Lang.format("$1$x$2$ $3$", [
-        dc.getWidth(),
-        dc.getHeight(),
-        mDisplaySize,
-      ]);
-      dc.drawText(
-        dc.getWidth() / 2,
-        dc.getHeight() / 2,
-        font,
-        text,
-        Graphics.TEXT_JUSTIFY_CENTER | Graphics.TEXT_JUSTIFY_VCENTER
-      );
-    }
+    // if ($.gDebug) {
+    //   dc.setColor(Graphics.COLOR_RED, Graphics.COLOR_TRANSPARENT);
+    //   var font = Graphics.FONT_SYSTEM_SMALL;
+    //   var text = Lang.format("$1$x$2$ $3$", [
+    //     dc.getWidth(),
+    //     dc.getHeight(),
+    //     mDisplaySize,
+    //   ]);
+    //   dc.drawText(
+    //     dc.getWidth() / 2,
+    //     dc.getHeight() / 2,
+    //     font,
+    //     text,
+    //     Graphics.TEXT_JUSTIFY_CENTER | Graphics.TEXT_JUSTIFY_VCENTER
+    //   );
+    // }
   }
 
   hidden function getNextDemoFieldType(ftCurrent as FieldType) as FieldType {
@@ -562,7 +574,7 @@ class whatmetricsView extends WatchUi.DataField {
         fi.value = getDistanceInMeterOrKm(dist).format(
           getFormatForMeterAndKm(dist)
         );
-        if (mDisplaySize.equals("s")) {
+        if (mSmallField) {
           fi.text = fi.value;
           fi.units_side = getUnitsInMeterOrKm(dist);
         } else {
@@ -593,7 +605,7 @@ class whatmetricsView extends WatchUi.DataField {
         fi.value = getDistanceInMeterOrKm(distNext).format(
           getFormatForMeterAndKm(distNext)
         );
-        if (mDisplaySize.equals("s")) {
+        if (mSmallField) {
           fi.text = fi.value;
           fi.units_side = getUnitsInMeterOrKm(distNext);
         } else {
@@ -610,7 +622,7 @@ class whatmetricsView extends WatchUi.DataField {
         fi.value = getDistanceInMeterOrKm(distDest).format(
           getFormatForMeterAndKm(distDest)
         );
-        if (mDisplaySize.equals("s")) {
+        if (mSmallField) {
           fi.text = fi.value;
           fi.units_side = getUnitsInMeterOrKm(distDest);
         } else {
@@ -630,7 +642,7 @@ class whatmetricsView extends WatchUi.DataField {
         }
 
         fi.value = grade.format("%0.1f");
-        if (mDisplaySize.equals("s")) {
+        if (mSmallField) {
           fi.text = fi.value;
           fi.units_side = "%";
         } else {
@@ -768,7 +780,7 @@ class whatmetricsView extends WatchUi.DataField {
           fi.value = altitude.format("%0d");
         }
 
-        if (mDisplaySize.equals("w")) {
+        if (mWideField) {
           fi.number = fi.value;
           fi.units_side = "m";
         } else {
@@ -824,7 +836,7 @@ class whatmetricsView extends WatchUi.DataField {
           cadence = mMetrics.getCadence();
         }
         fi.number = cadence.format("%0d");
-        if (mDisplaySize.equals("w")) {
+        if (mWideField) {
           fi.units_side = "rpm";
         }
         fi.available =

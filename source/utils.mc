@@ -561,17 +561,17 @@ function convertToNumber(value as String, defaultValue as Number) as Number {
 }
 
 // o (one), l (large), w (wide), s (small)
-function getDisplaySize(width as Number, height as Number) as String {
-  var display = "s";
+// function getDisplaySize(width as Number, height as Number) as String {
+//   var display = "s";
 
-  if (width >= 246) {
-    display = "w";
-    if (height >= 322) {
-      display = "o";
-    } else if (height >= 100) {
-      display = "l";
-    }
-  }
+//   if (width >= 246) {
+//     display = "w";
+//     if (height >= 322) {
+//       display = "o";
+//     } else if (height >= 100) {
+//       display = "l";
+//     }
+//   }
 
-  return display;
-}
+//   return display;
+// }
