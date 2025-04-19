@@ -14,7 +14,7 @@ class whatmetricsView extends WatchUi.DataField {
   hidden var mLargeField as Boolean = false;
   hidden var mSmallField as Boolean = false;
   hidden var mWideField as Boolean = false;
-  hidden var mOneField as Boolean = false;
+  // hidden var mOneField as Boolean = false;
 
   hidden var mFieldSize as String;
   hidden var mYoffsetFix as Number = 0;
@@ -119,10 +119,10 @@ class whatmetricsView extends WatchUi.DataField {
     mGraphicLineHeight = $.gGraphic_fields_line_width;
 
     var ef = $.getEdgeField(dc);
-    mLargeField = ef == EfLarge;
+    mLargeField = ef == EfLarge || ef == EfOne;
     mSmallField = ef == EfSmall;
     mWideField = ef == EfWide;
-    mOneField = ef == EfOne;
+    // mOneField = ef == EfOne;
 
     // mDisplaySize = $.getDisplaySize(w, h);
     if (mSmallField) {
