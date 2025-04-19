@@ -433,8 +433,15 @@ class WhatHiitt {
     resetAveragePower();
   }
 
+
+  
+  // TODO No toneprofile on edge 1050
   hidden function hiitAttentionWarmingUp(playTone as Boolean) as Void {
     if (Attention has :playTone && soundEnabled && playTone) {
+      if ($.getEdgeVersion() >= 1050) {
+        Attention.playTone(Attention.TONE_LAP);
+        return;
+      }
       if (Attention has :ToneProfile) {
         var toneProfileBeeps = [new Attention.ToneProfile(1500, 50)] as Lang.Array<Attention.ToneProfile>;
         Attention.playTone({ :toneProfile => toneProfileBeeps });
@@ -446,6 +453,10 @@ class WhatHiitt {
 
   hidden function hiitAttentionCoolingdown(playTone as Boolean) as Void {
     if (Attention has :playTone && soundEnabled && playTone && hiitSound != StartOnlySound) {
+      if ($.getEdgeVersion() >= 1050) {
+        Attention.playTone(Attention.TONE_LAP);
+        return;
+      }
       if (Attention has :ToneProfile && hiitSound == LowNoise) {
         var toneProfileBeeps = [new Attention.ToneProfile(1000, 50)] as Lang.Array<Attention.ToneProfile>;
         Attention.playTone({ :toneProfile => toneProfileBeeps });
@@ -457,6 +468,10 @@ class WhatHiitt {
 
   hidden function hiitAttentionWarn() as Void {
     if (Attention has :playTone && soundEnabled) {
+      if ($.getEdgeVersion() >= 1050) {
+        Attention.playTone(Attention.TONE_RESET);
+        return;
+      }
       if (Attention has :ToneProfile) {
         var toneProfileBeeps =
           [new Attention.ToneProfile(1000, 40), new Attention.ToneProfile(1500, 100)] as
@@ -468,6 +483,10 @@ class WhatHiitt {
 
   hidden function hiitAttentionStart() as Void {
     if (Attention has :playTone && soundEnabled) {
+       if ($.getEdgeVersion() >= 1050) {
+        Attention.playTone(Attention.TONE_LAP);
+        return;
+      }
       if (Attention has :ToneProfile && hiitSound == LowNoise) {
         var toneProfileBeeps = [new Attention.ToneProfile(1100, 150)] as Lang.Array<Attention.ToneProfile>;
         Attention.playTone({ :toneProfile => toneProfileBeeps });
@@ -479,6 +498,10 @@ class WhatHiitt {
 
   hidden function hiitAttentionStop() as Void {
     if (Attention has :playTone && soundEnabled && hiitSound != StartOnlySound) {
+       if ($.getEdgeVersion() >= 1050) {
+        Attention.playTone(Attention.TONE_RESET);
+        return;
+      }
       if (Attention has :ToneProfile && hiitSound == LowNoise) {
         var toneProfileBeeps =
           [
