@@ -65,6 +65,7 @@ class whatmetricsApp extends Application.AppBase {
       Storage.setValue("np_skip_zero", false);
 
       // @@
+      Storage.setValue("show_shiftingbattery", $.gShowShiftingBattery);
       // Storage.setValue("show_powerbalance", $.gShowPowerBalance);
       Storage.setValue("show_powerbattery", $.gShowPowerBattery);
 
@@ -250,6 +251,7 @@ class whatmetricsApp extends Application.AppBase {
 
     $.gShowIcon = getStorageValue("show_icon", $.gShowIcon) as Boolean;
 
+    $.gShowShiftingBattery = getStorageValue("show_shiftingbattery", $.gShowShiftingBattery) as Boolean;
     $.gShowPowerBattery = getStorageValue("show_powerbattery", $.gShowPowerBattery) as Boolean;
     $.gShowNPasAverage = getStorageValue("show_np_as_avg", $.gShowNPasAverage) as Boolean;
     var NPSkipZero = getStorageValue("np_skip_zero", false) as Boolean;
@@ -336,6 +338,7 @@ var gShowNPasAverage as Boolean = false;
 
 // @@ refactor
 // var gShowPowerBalance as Boolean = true;
+var gShowShiftingBattery as Boolean = true;
 var gShowPowerBattery as Boolean = true;
 var gShowIcon as Boolean = true;
 
@@ -375,3 +378,4 @@ var gVo2MaxBackGround as Vo2MaxBackGround = Vo2BgHiit;
 var gFocusField as FocusField = FocusOff;
 var gFocusPerc as Number = 99;
 var gFocusBorder as Number = 5;
+

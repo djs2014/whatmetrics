@@ -1291,9 +1291,8 @@ class whatmetricsView extends WatchUi.DataField {
     ) {
       drawPowerIcon(dc, x, y, width, height, fi.iconColor);
 
-      if ($.gShowPowerBattery) {
-        var batteryLevel = mMetrics.getPowerBatteryLevel();
-        drawPowerBatteryLevel(dc, x, y, width, height, batteryLevel);
+      if ($.gShowPowerBattery) { 
+        drawPowerBatteryLevel(dc, x, y, width, height, mMetrics.getPowerBatteryLevel());
       }
       return;
     }
@@ -1336,6 +1335,10 @@ class whatmetricsView extends WatchUi.DataField {
     }
     if (fi.type == FTGearCombo) {
       // @@ drawGearComboIcon(dc, x, y, width, height, mIconColor);
+
+       if ($.gShowShiftingBattery) {         
+        drawPowerBatteryLevel(dc, x, y, width, height, mMetrics.getShiftingBatteryLevel());
+      }
       return;
     }
     if (fi.type == FTPowerPerWeight) {

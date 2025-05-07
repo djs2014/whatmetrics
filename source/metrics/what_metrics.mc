@@ -44,13 +44,20 @@ class WhatMetrics {
   hidden var mHasFailingDualpower as Boolean = false;
 
   // heartrate
-  hidden var mHrZones as Lang.Array<Lang.Number> = [] as Lang.Array<Lang.Number>;
+  hidden var mHrZones as Lang.Array<Lang.Number> =
+    [] as Lang.Array<Lang.Number>;
+
+  // shifting - battery status
+  hidden var mShifting as ShiftListener? = null;
   function initialize() {}
 
   // function reset() as Void {
   //   resetAverageNP();
   // }
-  function initPowerBalance(powerDualSecFallback as Number, powerTimesTwo as Boolean) as Void {
+  function initPowerBalance(
+    powerDualSecFallback as Number,
+    powerTimesTwo as Boolean
+  ) as Void {
     if (mPowerBalance == null) {
       mPowerBalance = new PowerBalance();
     }
@@ -58,7 +65,11 @@ class WhatMetrics {
     mHasFailingDualpower = false;
     mPowerTimesTwo = powerTimesTwo;
   }
-
+  function initShiftListener() {
+    if (mShifting == null) {
+      mShifting = new ShiftListener();
+    }
+  }
   function initWeight() as Void {
     var profile = UserProfile.getProfile();
     mUserWeightKg = 0.0f;
@@ -131,7 +142,9 @@ class WhatMetrics {
     return (getActivityValue(a_info, :ambientPressure, 0.0f) as Float) / 100.0;
   }
   function getMeanSeaLevelPressure() as Float {
-    return (getActivityValue(a_info, :meanSeaLevelPressure, 0.0f) as Float) / 100.0;
+    return (
+      (getActivityValue(a_info, :meanSeaLevelPressure, 0.0f) as Float) / 100.0
+    );
   }
 
   // heartrate, bpm
@@ -283,7 +296,10 @@ class WhatMetrics {
     if (fraction == 0) {
       return 0.0f;
     }
-    return ((seconds * getNormalizedPower() * getIntensityFactor()) / fraction) * 100.0f;
+    return (
+      ((seconds * getNormalizedPower() * getIntensityFactor()) / fraction) *
+      100.0f
+    );
   }
 
   // % power balance left
@@ -324,6 +340,15 @@ class WhatMetrics {
     return -1.0f;
   }
 
+  // shifting @@ TEST
+  function getShiftingBatteryLevel() as Number {
+    initShiftListener();
+    if (mShifting != null) {
+      return (mShifting as ShiftListener).getBatteryLevel();
+    }
+    return -1;
+  }
+
   // time of day, timer, elapsed time, date dd-month
   // elapsed time in millisec
   function getElapsedTime() as Number {
@@ -336,10 +361,13 @@ class WhatMetrics {
   // start time of activity
   function getStartTime() as Time.Moment {
     return $.getActivityValue(a_info, :startTime, 0) as Time.Moment;
-  }  
+  }
 
   // get estimated duration to destination in seconds (targetDistance in meters)
-  function getEstimatedDurationToDestination(targetDistance as Number, useRoute as Boolean) as Number {
+  function getEstimatedDurationToDestination(
+    targetDistance as Number,
+    useRoute as Boolean
+  ) as Number {
     var averageSpeed = getAverageSpeed();
     if (averageSpeed == 0) {
       return 0;
@@ -349,24 +377,37 @@ class WhatMetrics {
       return 0;
     }
 
-    var distanceRemaining = targetDistance - getElapsedDistance();    
+    var distanceRemaining = targetDistance - getElapsedDistance();
     var dd = getDistanceToDestination();
-    
+
     //System.println([distanceRemaining, dd, useRoute, averageSpeed]);
 
-    if (useRoute && dd > 0) {      
+    if (useRoute && dd > 0) {
       distanceRemaining = dd;
     }
-    
+
     return (distanceRemaining / averageSpeed).toNumber();
   }
 
   // called per second
   function compute(info as Activity.Info) as Void {
-    var previousState = $.getActivityValue(a_info, :timerState, Activity.TIMER_STATE_OFF);
-    var currentState = $.getActivityValue(info, :timerState, Activity.TIMER_STATE_OFF);
-    mPaused = currentState == Activity.TIMER_STATE_PAUSED or currentState == Activity.TIMER_STATE_OFF;
-    if (previousState == Activity.TIMER_STATE_OFF && currentState == Activity.TIMER_STATE_ON) {
+    var previousState = $.getActivityValue(
+      a_info,
+      :timerState,
+      Activity.TIMER_STATE_OFF
+    );
+    var currentState = $.getActivityValue(
+      info,
+      :timerState,
+      Activity.TIMER_STATE_OFF
+    );
+    mPaused =
+      currentState == Activity.TIMER_STATE_PAUSED or
+      currentState == Activity.TIMER_STATE_OFF;
+    if (
+      previousState == Activity.TIMER_STATE_OFF &&
+      currentState == Activity.TIMER_STATE_ON
+    ) {
       resetAverageNP();
     }
     // if (info has :timerState) {
@@ -391,7 +432,10 @@ class WhatMetrics {
     }
   }
 
-  hidden function calculateMetrics(intermediateAltitude as Float, intermediateDistance as Float) as Void {
+  hidden function calculateMetrics(
+    intermediateAltitude as Float,
+    intermediateDistance as Float
+  ) as Void {
     mCurrentGrade = calculateGrade(intermediateAltitude, intermediateDistance);
 
     var power = getActivityValue(a_info, :currentPower, 0) as Number;
@@ -468,7 +512,10 @@ class WhatMetrics {
     // );
   }
 
-  hidden function calculateGrade(intermediateAltitude as Float, intermediateDistance as Float) as Double {
+  hidden function calculateGrade(
+    intermediateAltitude as Float,
+    intermediateDistance as Float
+  ) as Double {
     var altitude = getAltitude();
     var distance = getElapsedDistance();
 
@@ -481,7 +528,10 @@ class WhatMetrics {
       previousRise = tmpRise;
       arrGrade = [] as Array<Float>;
       return 0.0d;
-    } else if (tmpRise < minimalRiseDown or (tmpRise > minimalRiseUp and tmpRun >= minimalRun)) {
+    } else if (
+      tmpRise < minimalRiseDown or
+      (tmpRise > minimalRiseUp and tmpRun >= minimalRun)
+    ) {
       // valid rise and valid run
       previousAltitude = intermediateAltitude;
       previousDistance = intermediateDistance;
@@ -490,7 +540,11 @@ class WhatMetrics {
     var rise = altitude - previousAltitude;
     var run = distance - previousDistance;
 
-    if (run != 0.0f and (rise < minimalRiseDown or rise > minimalRiseUp) and run >= minimalRun) {
+    if (
+      run != 0.0f and
+      (rise < minimalRiseDown or rise > minimalRiseUp) and
+      run >= minimalRun
+    ) {
       var grade = 0.0f; // %
       grade = (rise.toFloat() / run.toFloat()) * 100.0;
 
@@ -518,13 +572,77 @@ class WhatMetrics {
     mPowerTicks = 0;
     mCurrentNP = 0.0d;
   }
-  hidden function addAverageNP(averagePower as Double, power as Number) as Double {
+  hidden function addAverageNP(
+    averagePower as Double,
+    power as Number
+  ) as Double {
     // [ avg' * (n-1) + x ] / n
     mPowerTicks = mPowerTicks + 1;
-    averagePower = (averagePower * (mPowerTicks - 1) + power) / mPowerTicks.toDouble();
-    
+    averagePower =
+      (averagePower * (mPowerTicks - 1) + power) / mPowerTicks.toDouble();
+
     // System.println(Lang.format("p $1$ ticks $2$ avg $3$", [power, mPowerTicks, averagePower]));
     return averagePower;
+  }
+}
+
+class ShiftListener {
+  hidden var shifting as AntPlus.Shifting;
+  hidden var listener as AShiftingListener;
+  hidden var batteryLevel as Number = -1;
+
+  hidden var operatingTimeInSeconds as Number;
+  hidden var batteryVoltage as Float;
+
+  function initialize() {
+    listener = new AShiftingListener(self.weak(), :onBatteryStatusUpdate);
+    shifting = new AntPlus.Shifting(listener);
+    operatingTimeInSeconds = -1;
+    batteryVoltage = -1.0f;
+  }
+
+  function getBatteryLevel() as Number {
+    return batteryLevel;
+  }
+
+  function getOperatingTimeInSeconds() as Number {
+    return operatingTimeInSeconds as Number;
+  }
+  function getBatteryVoltage() as Float {
+    return batteryVoltage as Float;
+  }
+
+  function onBatteryStatusUpdate(
+    batteryStatus as AntPlus.BatteryStatusValue,
+    operatingTime as Number,
+    abatteryVoltage as Float
+  ) as Void {
+    batteryLevel = -1;
+    if (batteryStatus == AntPlus.BATT_STATUS_NEW) {
+      batteryLevel = 5;
+    } else if (batteryStatus == AntPlus.BATT_STATUS_GOOD) {
+      batteryLevel = 4;
+    } else if (batteryStatus == AntPlus.BATT_STATUS_OK) {
+      batteryLevel = 3;
+    } else if (batteryStatus == AntPlus.BATT_STATUS_LOW) {
+      batteryLevel = 2;
+    } else if (batteryStatus == AntPlus.BATT_STATUS_CRITICAL) {
+      batteryLevel = 1;
+    } else if (batteryStatus == AntPlus.BATT_STATUS_INVALID) {
+      batteryLevel = 0;
+    }
+
+    if (operatingTime == null) {
+      operatingTimeInSeconds = -1;
+    } else {
+      operatingTimeInSeconds = operatingTime;
+    }
+
+    if (abatteryVoltage == null) {
+      batteryVoltage = -1.0f;
+    } else {
+      batteryVoltage = abatteryVoltage;
+    }
   }
 }
 
@@ -540,7 +658,11 @@ class PowerBalance {
   hidden var batteryVoltage as Float;
 
   function initialize() {
-    listener = new ABikePowerListener(self.weak(), :onPedalPowerBalanceUpdate, :onBatteryStatusUpdate);
+    listener = new ABikePowerListener(
+      self.weak(),
+      :onPedalPowerBalanceUpdate,
+      :onBatteryStatusUpdate
+    );
     bikePower = new AntPlus.BikePower(listener);
     operatingTimeInSeconds = -1;
     batteryVoltage = -1.0f;
@@ -591,7 +713,10 @@ class PowerBalance {
       avgPowerBalanceLeft = a * mPowerBalanceLeft + b * avgPowerBalanceLeft;
     }
   }
-  function onPedalPowerBalanceUpdate(pedalPowerPercent as Lang.Number, rightPedalIndicator as Lang.Boolean) as Void {
+  function onPedalPowerBalanceUpdate(
+    pedalPowerPercent as Lang.Number,
+    rightPedalIndicator as Lang.Boolean
+  ) as Void {
     if (rightPedalIndicator) {
       mPowerBalanceLeft = 100 - pedalPowerPercent;
     } else {
