@@ -7,7 +7,7 @@ class AShiftingListener extends AntPlus.ShiftingListener {
   private var _onBatteryStatusUpdate as Lang.Method;
 
   function initialize(instance as Lang.WeakReference, cbOnBatteryStatusUpdate as Symbol) {
-    BikePowerListener.initialize();
+    ShiftingListener.initialize();
     _instance = instance;
     // _onShiftingUpdate = new Lang.Method(_instance.get(), cbOnShiftingUpdate) as Method;
     _onBatteryStatusUpdate = new Lang.Method(_instance.get(), cbOnBatteryStatusUpdate) as Method;

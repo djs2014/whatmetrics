@@ -65,7 +65,7 @@ class WhatMetrics {
     mHasFailingDualpower = false;
     mPowerTimesTwo = powerTimesTwo;
   }
-  function initShiftListener() {
+  function initShiftListener() as Void {
     if (mShifting == null) {
       mShifting = new ShiftListener();
     }

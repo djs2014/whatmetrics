@@ -1,3 +1,4 @@
++2 fields -> circles ex. rpm / slp
 readme update
 
 focus -> no / yes / color
