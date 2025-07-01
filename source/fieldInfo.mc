@@ -29,7 +29,7 @@ class FieldInfo {
 
     var rawValue as Numeric = 0;
     var maxValue as Numeric = 0;
-
+    
     function initialize(fieldType as FieldType, fieldIndex as Number) {
         type = fieldType;
         index = fieldIndex;
@@ -43,7 +43,7 @@ enum FieldLayout {
     FL4Fields = 2
 }
 
-const FieldTypeCount = 30; // incl the 0
+const FieldTypeCount = 34; // incl the 0
 enum FieldType {
     FTUnknown = 0,
     FTDistance = 1,
@@ -75,10 +75,11 @@ enum FieldType {
     FTIntensityFactor = 27,
     FTTrainingStressScore = 28,
     FTCalories = 29,
-
-
+    FTEta = 30, // Estimated Time of Arrival hh:mm
+    FTEtr = 31, // Estimated Time Remaining   x hour, x min
+    FTVo2MaxHiit = 32, // Hiit Vo2max default
+    FTVo2MaxProfile = 33, // Profile Vo2max default
     // @@ TODO
-    // FTVo2Max = 22,
     // FTEnergyExpenditure = 24,
     // FTTrainingEffect = 25,
     // FTTotalAscent = 26,
@@ -95,4 +96,18 @@ enum BarPosition {
     BPOff = 0,
     BPTop = 1,
     BPBottom = 2
+}
+
+enum Vo2MaxBackGround {
+    Vo2BgOff = 0,
+    Vo2BgOn = 1, // continuous
+    Vo2BgHiit = 2, // during Hiit 
+    Vo2BgHiitOnly = 3 // only Hiit scores
+}
+
+// field need targetvalue, % to target
+enum FocusField {
+    FocusOff = 0,
+    FocusOn = 1, 
+    FocusColor = 2
 }

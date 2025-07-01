@@ -5,7 +5,8 @@ import Toybox.Activity;
 import Toybox.System;
 import Toybox.Attention;
 import Toybox.Time;
-
+import Toybox.Math;
+import Toybox.Time.Gregorian;
 // Hiit
 // Start when enabled and x seconds power >= % of target -> show start counter / beep
 // Property Hiit started
@@ -59,15 +60,32 @@ class WhatHiitt {
   hidden var calcVo2Max as Boolean = false;
   hidden var playTone as Boolean = true;
 
-  hidden var hiitScores as Array<Float> = [] as Array<Float>; //[50.5,30.5,60.4,50.4,60.4]; // @@ TEST
+  hidden var hiitScores as Array<Number> = [] as Array<Number>; //[50,30,60,50,61]; // @@ TEST
   hidden var hiitDurations as Array<Number> = [] as Array<Number>; //[30,31,30,35,40]; // @@ TEST
   hidden var currentDuration as Number = 0;
-  hidden var currentScore as Float = 0.0f;
+  hidden var currentScore as Number = 0;
 
   hidden var currentTimerState as Number = Activity.TIMER_STATE_OFF;
   hidden var userWeightKg as Float = 0.0f;
   hidden var powerTicks as Number = 0;
   hidden var avgPowerPerSec as Double = 0.0d;
+  hidden var userVo2maxCycling as Number = 0;
+  hidden var userGender as Number = 0;
+  hidden var userAge as Number = 0;
+  hidden var userVo2MaxChartKey as String = "";
+  hidden var vo2MaxChartKey as String = "";
+  hidden var vo2MaxChart as Array<Number>  = [] as Array<Number>;
+  
+  /* TODO
+  hiit demo
+  - hiitStartCountDownSeconds (power is hiitStartOnPerc + 10)
+  - minimalElapsedSeconds (power is hiitStopOnPerc + 10)
+  - hiitStopCountDownSeconds (power is hiitStopOnPerc - 10)
+  - minimalRecoverySeconds (power is hiitStopOnPerc - 10)
+  - stops when entering settings
+  */
+  hidden var isDemo as Boolean = false;
+  hidden var demoCounter as Number = 0;
 
   function initialize() {}
 
@@ -77,7 +95,31 @@ class WhatHiitt {
       var weight = profile.weight as Number;
       userWeightKg = weight / 1000.0;
     }
+    if (profile.vo2maxCycling != null) {
+      userVo2maxCycling = profile.vo2maxCycling as Number;
+    }
+    // TODO get sex / age -> get vo2max percentile
+    userGender = 1; // 0 female, 1 male
+    if (profile.gender != null) {
+      userGender = profile.gender as Number;
+      if (userGender != 0) { userGender = 1; }
+    }
+    userAge = 0;
+    if (profile.birthYear != null) {
+      var birthYear = profile.birthYear as Number;
+      if (birthYear > 0) {
+        var today = Gregorian.info(Time.now(), Time.FORMAT_MEDIUM);
+        userAge = today.year - birthYear;
+      }      
+    }
+    userVo2MaxChartKey = Lang.format("$1$:$2$",[userAge,userGender]);
   }
+
+  function setDemo(demo as Boolean) as Void {
+    isDemo = demo;
+    demoCounter = 0;
+  }
+
   function setMode(hiitMode as HiitMode) as Void {
     self.hiitMode = hiitMode;
     soundEnabled = (self.hiitSound as HiitSound) != NoSound && hiitMode != HiitDisabled;    
@@ -116,8 +158,11 @@ class WhatHiitt {
     return [];
   }
 
+  function isDemoActive() as Boolean {
+    return isDemo;
+  }
   function isEnabled() as Boolean {
-    if (hiitMode == HiitAlwaysOn) {
+    if (isDemo || hiitMode == HiitAlwaysOn) {
       return true;
     }
     if (hiitMode == HiitDisabled) {
@@ -141,7 +186,14 @@ class WhatHiitt {
     return started;
   }
 
-  function getHitScores() as Array<Float> {
+  // Hiit vo2max
+  function getAverageHiitScore() as Number {
+    if (hiitScores.size()==0) {
+      return 0;
+    }
+    return Math.mean(hiitScores as Lang.Array<Lang.Numeric>).toNumber();
+  }
+  function getHitScores() as Array<Number> {
     return hiitScores;
   }
   function getHitDurations() as Array<Number> {
@@ -172,7 +224,12 @@ class WhatHiitt {
     }
   }
   function compute(info as Activity.Info, percOfTarget as Numeric, power as Number) as Void {
-    
+    if (isDemo) {
+      var origPercOfTarget = percOfTarget;
+      percOfTarget = getDemoPercOfTarget(percOfTarget);
+      power = (100 * (percOfTarget / 100.0)).toNumber();
+      // System.println(["Demo", power, demoCounter, origPercOfTarget, "->", percOfTarget, "status", hiitStatus]);
+    }
     calcVo2Max = (hiitStatus as HiitStatus) == Active;
     updateMetrics(info);
     updateRecoveryTime();
@@ -213,7 +270,7 @@ class WhatHiitt {
             hiitStatus = Active;
             hiitElapsedRecoveryTime = null;
             currentDuration = 0;
-            currentScore = 0.0f;
+            currentScore = 0;
             hiitElapsedTime = Time.now();
             hiitAttentionStart();
           }
@@ -245,7 +302,7 @@ class WhatHiitt {
               hiitStatus = InActive;
               hiitCounter = 0;
               hiitElapsedRecoveryTime = null;
-              currentScore = 0.0f;
+              currentScore = 0;
               currentDuration = 0;
             }
             hiitElapsedTime = null;
@@ -307,6 +364,15 @@ class WhatHiitt {
   }
 
   hidden function updateMetrics(info as Activity.Info) as Void {
+    if (isDemo) {
+      activityPaused = false;
+      userPaused = false;
+      if (demoCounter==0) {
+        reset();
+      }
+      return;
+    }
+
     var currentSpeed = getActivityValue(info, :currentSpeed, 0.0f) as Float;
     var currentCadence = getActivityValue(info, :currentCadence, 0.0f) as Float;
     userPaused = currentSpeed == 0.0f || (info has :currentCadence and currentCadence == 0);
@@ -319,6 +385,36 @@ class WhatHiitt {
     } else {
       activityPaused = false;
     }
+
+   
+  }
+
+  hidden function getDemoPercOfTarget(percOfTarget as Numeric) as Numeric {
+    // Based on seconds in demo give the perc of target
+    demoCounter = demoCounter + 1;
+    if (demoCounter <= hiitStartCountDownSeconds + 1) {
+      return hiitStartOnPerc + 10;
+    }
+    if (demoCounter <= (hiitStartCountDownSeconds + minimalElapsedSeconds + 10)) {
+      return hiitStartOnPerc + 10;
+    }
+    // minimalRecoverySeconds -> 
+    var recoverySeconds = minimalRecoverySeconds;
+    if (recoverySeconds > 30) {
+      recoverySeconds = 30;
+    }
+    if (demoCounter <= (hiitStartCountDownSeconds + minimalElapsedSeconds + 10 + hiitStopCountDownSeconds + recoverySeconds + 1)) {
+      var perc = hiitStopOnPerc - 10;
+      if (perc <= 0) {
+        perc = 1;
+      }
+      return perc;
+    }
+
+    // End of demo
+    isDemo = false;
+    demoCounter = 0;
+    return percOfTarget;
   }
 
   hidden function stopping() as Boolean {
@@ -326,19 +422,26 @@ class WhatHiitt {
   }
 
   hidden function reset() as Void {
-    hiitScores = [] as Array<Float>;
+    hiitScores = [] as Array<Number>;
     hiitDurations = [] as Array<Number>;
     hiitPerformed = 0;
     currentDuration = 0;
-    currentScore = 0.0f;
+    currentScore = 0;
     hiitCounter = 0;
     hiitElapsedRecoveryTime = null;
     hiitElapsedTime = null;
     resetAveragePower();
   }
 
+
+  
+  // TODO No toneprofile on edge 1050
   hidden function hiitAttentionWarmingUp(playTone as Boolean) as Void {
     if (Attention has :playTone && soundEnabled && playTone) {
+      if ($.getEdgeVersion() >= 1050) {
+        Attention.playTone(Attention.TONE_LAP);
+        return;
+      }
       if (Attention has :ToneProfile) {
         var toneProfileBeeps = [new Attention.ToneProfile(1500, 50)] as Lang.Array<Attention.ToneProfile>;
         Attention.playTone({ :toneProfile => toneProfileBeeps });
@@ -350,6 +453,10 @@ class WhatHiitt {
 
   hidden function hiitAttentionCoolingdown(playTone as Boolean) as Void {
     if (Attention has :playTone && soundEnabled && playTone && hiitSound != StartOnlySound) {
+      if ($.getEdgeVersion() >= 1050) {
+        Attention.playTone(Attention.TONE_LAP);
+        return;
+      }
       if (Attention has :ToneProfile && hiitSound == LowNoise) {
         var toneProfileBeeps = [new Attention.ToneProfile(1000, 50)] as Lang.Array<Attention.ToneProfile>;
         Attention.playTone({ :toneProfile => toneProfileBeeps });
@@ -361,6 +468,10 @@ class WhatHiitt {
 
   hidden function hiitAttentionWarn() as Void {
     if (Attention has :playTone && soundEnabled) {
+      if ($.getEdgeVersion() >= 1050) {
+        Attention.playTone(Attention.TONE_RESET);
+        return;
+      }
       if (Attention has :ToneProfile) {
         var toneProfileBeeps =
           [new Attention.ToneProfile(1000, 40), new Attention.ToneProfile(1500, 100)] as
@@ -372,6 +483,10 @@ class WhatHiitt {
 
   hidden function hiitAttentionStart() as Void {
     if (Attention has :playTone && soundEnabled) {
+       if ($.getEdgeVersion() >= 1050) {
+        Attention.playTone(Attention.TONE_LAP);
+        return;
+      }
       if (Attention has :ToneProfile && hiitSound == LowNoise) {
         var toneProfileBeeps = [new Attention.ToneProfile(1100, 150)] as Lang.Array<Attention.ToneProfile>;
         Attention.playTone({ :toneProfile => toneProfileBeeps });
@@ -383,6 +498,10 @@ class WhatHiitt {
 
   hidden function hiitAttentionStop() as Void {
     if (Attention has :playTone && soundEnabled && hiitSound != StartOnlySound) {
+       if ($.getEdgeVersion() >= 1050) {
+        Attention.playTone(Attention.TONE_RESET);
+        return;
+      }
       if (Attention has :ToneProfile && hiitSound == LowNoise) {
         var toneProfileBeeps =
           [
@@ -439,11 +558,102 @@ class WhatHiitt {
 
   // vo2max = ((6min pow er * 10.8) / weight) + 7
   // https://www.michael-konczer.com/en/training/calculators/calculate-vo2max
-  function getVo2Max() as Float {
+  function getVo2Max() as Number {
     if (userWeightKg == 0.0f) {
-      return 0.0f;
+      return 0;
     }
     var pp6min = avgPowerPerSec.toNumber();
-    return (pp6min * 10.8) / userWeightKg + 7;
+    return ((pp6min * 10.8) / userWeightKg + 7).toNumber();
+  }
+
+  function getProfileVo2Max() as Number {
+    return userVo2maxCycling;
+  }
+
+  function getVo2MaxPercentile(vo2max as Number) as Number {
+    if (userAge == 0) { return 0; }
+
+    // age and gender won't change during a ride, so cache result.
+    if (!userVo2MaxChartKey.equals(vo2MaxChartKey)) {
+      var chart;
+      if (userGender == 0) {
+        chart = getVo2MaxChart0();
+      } else {
+        chart = getVo2MaxChart1();
+      }
+      var i = chart.size() - 1;
+      while (i >= 0) {
+        vo2MaxChart = chart[i] as Array<Number>;
+        // System.println(["search", i, vo2MaxChart]);
+        if (userAge > vo2MaxChart[0]) {
+          // Found age row
+          break;
+        }
+        i--;
+      }
+
+      vo2MaxChartKey = userVo2MaxChartKey;
+    }
+    
+    // System.println(["vo2", userVo2MaxChartKey, vo2MaxChart]);
+
+    
+    // System.println([userAge, ageAndPerc]);
+
+    if (vo2MaxChart.size() < 5) {
+      return 0;
+    }
+
+    if (vo2max > vo2MaxChart[4] as Number) {
+      // superior
+      return 95;
+    }
+
+    if (vo2max > vo2MaxChart[3] as Number) {
+      // excellent  
+      return 80;
+    }
+
+    if (vo2max > vo2MaxChart[2] as Number) {
+      // Good
+      return 60;
+    }
+
+    if (vo2max > vo2MaxChart[1] as Number) {
+      // Fair
+      return 40;
+    }    
+    // Poor
+    return 20;
+  }
+
+  // https://www.cyclistshub.com/tools/vo2-max-calculator/
+  function getVo2MaxChart0() as Array<Array<Number>> {
+    // Female
+    return [
+        // xx, poor, fair, good, excellent, superior
+        // age, <40%, 40%, 60%, 80%, 95%
+        // 20-29, <=35, 36-39, 40-43, 44-49, 50+
+        [29, 35, 39, 43, 49], // 999],
+        [39, 33, 36, 40, 45],
+        [49, 31, 34, 38, 44],
+        [59, 24, 28, 30, 34],
+        [69, 25, 28, 31, 35],
+        [79, 23, 26, 29, 35]
+      ] as Array<Array<Number>>;       
+  }
+
+  function getVo2MaxChart1() as Array<Array<Number>> {
+    // male
+    return [
+        // age, <40%, 40%, 60%, 80%, 95%
+        [29, 41, 45, 50, 55], // 999],
+        [39, 40, 43, 47, 53],
+        [49, 37, 41, 45, 52],
+        [59, 34, 37, 42, 49],
+        [69, 30, 34, 38, 45],
+        [79, 27, 30, 35, 41]
+      ] as Array<Array<Number>>; 
   }
 }
+

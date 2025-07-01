@@ -9,7 +9,7 @@ class whatmetricsApp extends Application.AppBase {
   }
 
   // onStart() is called on application start up
-  function onStart(state as Dictionary?) as Void {}
+  function onStart(state as Dictionary?) as Void { }
 
   // onStop() is called when your application is exiting
   function onStop(state as Dictionary?) as Void {}
@@ -28,7 +28,8 @@ class whatmetricsApp extends Application.AppBase {
   function onSettingsChanged() {
     var hiitt = getHiitt();
     hiitt.updateProfile();
-
+    hiitt.setDemo(false);
+    
     var version = getStorageValue("version", "") as String;
     if (!version.equals("1.0.4")) {
       Storage.clearValues();
@@ -48,6 +49,8 @@ class whatmetricsApp extends Application.AppBase {
       Storage.setValue("hiit_inactivity", 10);
       Storage.setValue("hiit_valid_sec", 30);
       Storage.setValue("hiit_recovery_sec", 300);
+      Storage.setValue("hiit_vo2maxbg", Vo2BgHiit);
+
 
       Storage.setValue("metric_ppersec", 3);
       Storage.setValue("metric_gradews", 4);
@@ -62,6 +65,7 @@ class whatmetricsApp extends Application.AppBase {
       Storage.setValue("np_skip_zero", false);
 
       // @@
+      Storage.setValue("show_shiftingbattery", $.gShowShiftingBattery);
       // Storage.setValue("show_powerbalance", $.gShowPowerBalance);
       Storage.setValue("show_powerbattery", $.gShowPowerBattery);
 
@@ -98,10 +102,14 @@ class whatmetricsApp extends Application.AppBase {
       setFallbackField(FTDistanceDest, FTDistance);
       setFallbackField(FTPower, FTDistance);
       setFallbackField(FTPowerPerWeight, FTDistance);
-      setFallbackField(FTHeartRate, FTClock);
-      setFallbackField(FTHeartRateZone, FTClock);
-      setFallbackField(FTHiit, FTTimer);
+      setFallbackField(FTHeartRate, FTTimeElapsed);
+      setFallbackField(FTHeartRateZone, FTTimeElapsed);
+      setFallbackField(FTHiit, FTClock);
+      setFallbackField(FTVo2MaxHiit, FTHiit);
       setFallbackField(FTAltitude, FTPressureAtSea);
+      setFallbackField(FTEta, FTAltitude);
+      setFallbackField(FTVo2MaxProfile, FTEta);
+      setFallbackField(FTEtr, FTAltitude);
       setFallbackField(FTCadence, FTAverageSpeed);
       setFallbackField(FTNormalizedPower, FTTimeElapsed);
 
@@ -116,11 +124,13 @@ class whatmetricsApp extends Application.AppBase {
       Storage.setValue("demofields", false);
       Storage.setValue("demofields_wait", 2);
       Storage.setValue("demofields_roundtrip", 1);
+      Storage.setValue("demohiitt", false);
+      
 
       Storage.setValue("show_icon", true);
     }
 
-    hiitt.setMode(getStorageValue("hiit_mode", WhatHiitt.HiitDisabled) as WhatHiitt.HiitMode);
+    hiitt.setMode(getStorageValue("hiit_mode", WhatHiitt.HiitDisabled) as WhatHiitt.HiitMode);      
     hiitt.setSound(getStorageValue("hiit_sound", WhatHiitt.StartOnlySound) as WhatHiitt.HiitSound);
     hiitt.setStartOnPerc(getStorageValue("hiit_startperc", 0) as Number);
     hiitt.setStopOnPerc(getStorageValue("hiit_stopperc", 0) as Number);
@@ -134,6 +144,8 @@ class whatmetricsApp extends Application.AppBase {
     hiitt.setMinimalElapsedSeconds(getStorageValue("hiit_valid_sec", 30) as Number);
     hiitt.setMinimalRecoverySeconds(getStorageValue("hiit_recovery_sec", 300) as Number);
 
+    $.gVo2MaxBackGround = getStorageValue("hiit_vo2maxbg", Vo2BgHiit) as Vo2MaxBackGround;
+    
     var metrics = $.getWhatMetrics();
     metrics.setPowerPerSec(getStorageValue("metric_ppersec", 0) as Number);
     metrics.setGradeWindowSize(getStorageValue("metric_gradews", 0) as Number);
@@ -152,6 +164,9 @@ class whatmetricsApp extends Application.AppBase {
       Storage.setValue("target_tss", $.gTargetTSS);
       Storage.setValue("target_distance", $.gTargetDistance);
       Storage.setValue("target_distance_route", $.gTargetDistanceUseRoute);
+      Storage.setValue("focus_field", $.gFocusField);
+      Storage.setValue("focus_perc", $.gFocusPerc);
+      Storage.setValue("focus_border", $.gFocusBorder);
     }
     $.gTargetFtp = getStorageValue("target_ftp", $.gTargetFtp) as Number;
     $.gTargetSpeed = getStorageValue("target_speed", $.gTargetSpeed) as Number;
@@ -164,6 +179,10 @@ class whatmetricsApp extends Application.AppBase {
     $.gTargetDistance = getStorageValue("target_distance", $.gTargetDistance) as Number;
     $.gTargetDistanceUseRoute = getStorageValue("target_distance_route", $.gTargetDistanceUseRoute) as Boolean;
 
+    $.gFocusField = getStorageValue("focus_field", $.gFocusField) as FocusField;
+    $.gFocusPerc = getStorageValue("focus_perc", $.gFocusPerc) as Number;
+    $.gFocusBorder = getStorageValue("focus_border", $.gFocusBorder) as Number;
+    
     var targetHrZone = getStorageValue("target_hrzone", 4) as Number;
     var heartRateZones = UserProfile.getHeartRateZones(UserProfile.HR_ZONE_SPORT_BIKING);
     if (heartRateZones.size() > 0) {
@@ -220,6 +239,7 @@ class whatmetricsApp extends Application.AppBase {
     $.gGraphic_fields_zones = getStorageValue("gf_zones", $.gGraphic_fields_zones) as Number;
 
     $.gDebug = getStorageValue("debug", $.gDebug) as Boolean;
+  
     $.gShowColors = getStorageValue("show_colors", $.gShowColors) as Boolean;
     $.gShowGrid = getStorageValue("show_grid", $.gShowGrid) as Boolean;
     $.gShowAverageWhenPaused = getStorageValue("show_average", $.gShowAverageWhenPaused) as Boolean;
@@ -231,6 +251,7 @@ class whatmetricsApp extends Application.AppBase {
 
     $.gShowIcon = getStorageValue("show_icon", $.gShowIcon) as Boolean;
 
+    $.gShowShiftingBattery = getStorageValue("show_shiftingbattery", $.gShowShiftingBattery) as Boolean;
     $.gShowPowerBattery = getStorageValue("show_powerbattery", $.gShowPowerBattery) as Boolean;
     $.gShowNPasAverage = getStorageValue("show_np_as_avg", $.gShowNPasAverage) as Boolean;
     var NPSkipZero = getStorageValue("np_skip_zero", false) as Boolean;
@@ -254,6 +275,12 @@ class whatmetricsApp extends Application.AppBase {
       $.gDemoFieldsRoundTrip = getStorageValue("demofields_roundtrip", 1) as Number;
     } else {
       $.gDemoFieldsRoundTrip = 0;
+    }
+
+    var demohiitt = getStorageValue("demohiitt", false) as Boolean;
+    if (demohiitt) {
+      Storage.setValue("demohiitt", false);
+      hiitt.setDemo(true);
     }
     $.gPause_x_offset = getStorageValue("pause_x_offset", 10) as Number;
   }
@@ -311,6 +338,7 @@ var gShowNPasAverage as Boolean = false;
 
 // @@ refactor
 // var gShowPowerBalance as Boolean = true;
+var gShowShiftingBattery as Boolean = true;
 var gShowPowerBattery as Boolean = true;
 var gShowIcon as Boolean = true;
 
@@ -345,3 +373,9 @@ var gDemoFieldsWait as Number = 2;
 var gDemoFieldsRoundTrip as Number = 0;
 
 var gPause_x_offset as Number = 10;
+var gVo2MaxBackGround as Vo2MaxBackGround = Vo2BgHiit;
+
+var gFocusField as FocusField = FocusOff;
+var gFocusPerc as Number = 99;
+var gFocusBorder as Number = 5;
+

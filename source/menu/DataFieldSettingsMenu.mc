@@ -28,40 +28,84 @@ class DataFieldSettingsMenuDelegate extends WatchUi.Menu2InputDelegate {
       var hiitMenu = new WatchUi.Menu2({ :title => "High-intensity interval" });
 
       var mi = new WatchUi.MenuItem("Mode", null, "hiit_mode", null);
-      var value = getStorageValue(mi.getId() as String, WhatHiitt.HiitDisabled) as WhatHiitt.HiitMode;
+      var value =
+        getStorageValue(mi.getId() as String, WhatHiitt.HiitDisabled) as
+        WhatHiitt.HiitMode;
       mi.setSubLabel($.getHiittModeText(value));
       hiitMenu.addItem(mi);
 
       mi = new WatchUi.MenuItem("Sound", null, "hiit_sound", null);
-      value = getStorageValue(mi.getId() as String, WhatHiitt.NoSound) as WhatHiitt.HiitSound;
+      value =
+        getStorageValue(mi.getId() as String, WhatHiitt.NoSound) as
+        WhatHiitt.HiitSound;
       mi.setSubLabel($.getHiittSoundText(value));
       hiitMenu.addItem(mi);
 
-      mi = new WatchUi.MenuItem("Start when % of target|0~500 (%)", null, "hiit_startperc", null);
+      mi = new WatchUi.MenuItem(
+        "Start when % of target|0~500 (%)",
+        null,
+        "hiit_startperc",
+        null
+      );
       mi.setSubLabel($.getStorageNumberAsString(mi.getId() as String) + " %");
       hiitMenu.addItem(mi);
 
-      mi = new WatchUi.MenuItem("Stop when % of target|0~500 (%)", null, "hiit_stopperc", null);
+      mi = new WatchUi.MenuItem(
+        "Stop when % of target|0~500 (%)",
+        null,
+        "hiit_stopperc",
+        null
+      );
       mi.setSubLabel($.getStorageNumberAsString(mi.getId() as String) + " %");
       hiitMenu.addItem(mi);
 
-      mi = new WatchUi.MenuItem("Sec countdown to start|0~30 (sec)", null, "hiit_countdown", null);
+      mi = new WatchUi.MenuItem(
+        "Sec countdown to start|0~30 (sec)",
+        null,
+        "hiit_countdown",
+        null
+      );
       mi.setSubLabel($.getStorageNumberAsString(mi.getId() as String) + " sec");
       hiitMenu.addItem(mi);
 
-      mi = new WatchUi.MenuItem("Sec inactivity until stop|0~60 (sec)", null, "hiit_inactivity", null);
+      mi = new WatchUi.MenuItem(
+        "Sec inactivity until stop|0~60 (sec)",
+        null,
+        "hiit_inactivity",
+        null
+      );
       mi.setSubLabel($.getStorageNumberAsString(mi.getId() as String) + " sec");
       hiitMenu.addItem(mi);
 
-      mi = new WatchUi.MenuItem("Sec valid hiit| (sec)", null, "hiit_valid_sec", null);
+      mi = new WatchUi.MenuItem(
+        "Sec valid hiit| (sec)",
+        null,
+        "hiit_valid_sec",
+        null
+      );
       mi.setSubLabel($.getStorageNumberAsString(mi.getId() as String) + " sec");
       hiitMenu.addItem(mi);
 
-      mi = new WatchUi.MenuItem("Sec recovery| (sec)", null, "hiit_recovery_sec", null);
+      mi = new WatchUi.MenuItem(
+        "Sec recovery| (sec)",
+        null,
+        "hiit_recovery_sec",
+        null
+      );
       mi.setSubLabel($.getStorageNumberAsString(mi.getId() as String) + " sec");
       hiitMenu.addItem(mi);
 
-      WatchUi.pushView(hiitMenu, new $.GeneralMenuDelegate(self, hiitMenu), WatchUi.SLIDE_UP);
+      mi = new WatchUi.MenuItem("Vo2Max icon", null, "hiit_vo2maxbg", null);
+      value =
+        getStorageValue(mi.getId() as String, Vo2BgHiit) as Vo2MaxBackGround;
+      mi.setSubLabel($.getVo2MaxBackGroundAsString(value));
+      hiitMenu.addItem(mi);
+
+      WatchUi.pushView(
+        hiitMenu,
+        new $.GeneralMenuDelegate(self, hiitMenu),
+        WatchUi.SLIDE_UP
+      );
       return;
     }
     if (id instanceof String && id.equals("targets")) {
@@ -71,19 +115,39 @@ class DataFieldSettingsMenuDelegate extends WatchUi.Menu2InputDelegate {
       mi.setSubLabel($.getStorageNumberAsString(mi.getId() as String));
       targetMenu.addItem(mi);
 
-      mi = new WatchUi.MenuItem("Target speed km/h", null, "target_speed", null);
+      mi = new WatchUi.MenuItem(
+        "Target speed km/h",
+        null,
+        "target_speed",
+        null
+      );
       mi.setSubLabel($.getStorageNumberAsString(mi.getId() as String));
       targetMenu.addItem(mi);
-      mi = new WatchUi.MenuItem("Target cadence rpm", null, "target_cadence", null);
+      mi = new WatchUi.MenuItem(
+        "Target cadence rpm",
+        null,
+        "target_cadence",
+        null
+      );
       mi.setSubLabel($.getStorageNumberAsString(mi.getId() as String));
       targetMenu.addItem(mi);
-      mi = new WatchUi.MenuItem("Target calories kcal", null, "target_calories", null);
+      mi = new WatchUi.MenuItem(
+        "Target calories kcal",
+        null,
+        "target_calories",
+        null
+      );
       mi.setSubLabel($.getStorageNumberAsString(mi.getId() as String));
       targetMenu.addItem(mi);
       mi = new WatchUi.MenuItem("Target grade %", null, "target_grade", null);
       mi.setSubLabel($.getStorageNumberAsString(mi.getId() as String));
       targetMenu.addItem(mi);
-      mi = new WatchUi.MenuItem("Target altitude meters", null, "target_altitude", null);
+      mi = new WatchUi.MenuItem(
+        "Target altitude meters",
+        null,
+        "target_altitude",
+        null
+      );
       mi.setSubLabel($.getStorageNumberAsString(mi.getId() as String));
       targetMenu.addItem(mi);
       mi = new WatchUi.MenuItem("Target IF|0.0~1.2", null, "target_if", null);
@@ -92,40 +156,109 @@ class DataFieldSettingsMenuDelegate extends WatchUi.Menu2InputDelegate {
       mi = new WatchUi.MenuItem("Target TSS|0~600", null, "target_tss", null);
       mi.setSubLabel($.getStorageNumberAsString(mi.getId() as String));
       targetMenu.addItem(mi);
-      mi = new WatchUi.MenuItem("Target heartrate zone", null, "target_hrzone", null);
-      mi.setSubLabel("zone " + $.getStorageNumberAsString(mi.getId() as String));
+      mi = new WatchUi.MenuItem(
+        "Target heartrate zone",
+        null,
+        "target_hrzone",
+        null
+      );
+      mi.setSubLabel(
+        "zone " + $.getStorageNumberAsString(mi.getId() as String)
+      );
       targetMenu.addItem(mi);
 
-      mi = new WatchUi.MenuItem("Target distance km", null, "target_distance", null);
+      mi = new WatchUi.MenuItem(
+        "Target distance km",
+        null,
+        "target_distance",
+        null
+      );
       mi.setSubLabel($.getStorageNumberAsString(mi.getId() as String));
       targetMenu.addItem(mi);
 
       var boolean = Storage.getValue("target_distance_route") ? true : false;
-      targetMenu.addItem(new WatchUi.ToggleMenuItem("Route as distance", null, "target_distance_route", boolean, null));
+      targetMenu.addItem(
+        new WatchUi.ToggleMenuItem(
+          "Route as distance",
+          null,
+          "target_distance_route",
+          boolean,
+          null
+        )
+      );
 
-      WatchUi.pushView(targetMenu, new $.GeneralMenuDelegate(self, targetMenu), WatchUi.SLIDE_UP);
+      mi = new WatchUi.MenuItem("Focus on field", null, "focus_field", null);
+      var ff = $.getStorageValue("focus_field", $.gFocusField) as FocusField;
+      mi.setSubLabel($.getFocusFieldAsString(ff));
+      targetMenu.addItem(mi);
+      mi = new WatchUi.MenuItem(
+        "Focus perc of target|0-999",
+        null,
+        "focus_perc",
+        null
+      );
+      mi.setSubLabel($.getStorageNumberAsString(mi.getId() as String));
+      targetMenu.addItem(mi);
+      mi = new WatchUi.MenuItem(
+        "Focus border|1-10",
+        null,
+        "focus_border",
+        null
+      );
+      mi.setSubLabel($.getStorageNumberAsString(mi.getId() as String));
+      targetMenu.addItem(mi);
+
+      WatchUi.pushView(
+        targetMenu,
+        new $.GeneralMenuDelegate(self, targetMenu),
+        WatchUi.SLIDE_UP
+      );
       return;
     }
     if (id instanceof String && id.equals("gradient")) {
       var gradientMenu = new WatchUi.Menu2({ :title => "Gradient" });
 
-      var mi = new WatchUi.MenuItem("Window size", null, "metric_gradews", null);
+      var mi = new WatchUi.MenuItem(
+        "Window size",
+        null,
+        "metric_gradews",
+        null
+      );
       mi.setSubLabel($.getStorageNumberAsString(mi.getId() as String));
       gradientMenu.addItem(mi);
-      mi = new WatchUi.MenuItem("Minimal rise in cm", null, "metric_grademinrise", null);
+      mi = new WatchUi.MenuItem(
+        "Minimal rise in cm",
+        null,
+        "metric_grademinrise",
+        null
+      );
       mi.setSubLabel($.getStorageNumberAsString(mi.getId() as String));
       gradientMenu.addItem(mi);
-      mi = new WatchUi.MenuItem("Minimal run in cm", null, "metric_grademinrun", null);
+      mi = new WatchUi.MenuItem(
+        "Minimal run in cm",
+        null,
+        "metric_grademinrun",
+        null
+      );
       mi.setSubLabel($.getStorageNumberAsString(mi.getId() as String));
       gradientMenu.addItem(mi);
 
-      WatchUi.pushView(gradientMenu, new $.GeneralMenuDelegate(self, gradientMenu), WatchUi.SLIDE_LEFT);
+      WatchUi.pushView(
+        gradientMenu,
+        new $.GeneralMenuDelegate(self, gradientMenu),
+        WatchUi.SLIDE_LEFT
+      );
       return;
     }
     if (id instanceof String && id.equals("power")) {
       var powerMenu = new WatchUi.Menu2({ :title => "Power metrics" });
 
-      var mi = new WatchUi.MenuItem("Power per sec", null, "metric_ppersec", null);
+      var mi = new WatchUi.MenuItem(
+        "Power per sec",
+        null,
+        "metric_ppersec",
+        null
+      );
       mi.setSubLabel($.getStorageNumberAsString(mi.getId() as String));
       powerMenu.addItem(mi);
 
@@ -134,26 +267,72 @@ class DataFieldSettingsMenuDelegate extends WatchUi.Menu2InputDelegate {
       // powerMenu.addItem(new WatchUi.ToggleMenuItem("Balance", null, "show_powerbalance", boolean, null));
 
       boolean = Storage.getValue("show_powerbattery") ? true : false;
-      powerMenu.addItem(new WatchUi.ToggleMenuItem("Batt. level", null, "show_powerbattery", boolean, null));
+      powerMenu.addItem(
+        new WatchUi.ToggleMenuItem(
+          "Batt. level",
+          null,
+          "show_powerbattery",
+          boolean,
+          null
+        )
+      );
 
       boolean = Storage.getValue("show_np_as_avg") ? true : false;
-      powerMenu.addItem(new WatchUi.ToggleMenuItem("NP for avg", null, "show_np_as_avg", boolean, null));
+      powerMenu.addItem(
+        new WatchUi.ToggleMenuItem(
+          "NP for avg",
+          null,
+          "show_np_as_avg",
+          boolean,
+          null
+        )
+      );
 
       boolean = Storage.getValue("np_skip_zero") ? true : false;
-      powerMenu.addItem(new WatchUi.ToggleMenuItem("NP skip zeros", null, "np_skip_zero", boolean, null));
+      powerMenu.addItem(
+        new WatchUi.ToggleMenuItem(
+          "NP skip zeros",
+          null,
+          "np_skip_zero",
+          boolean,
+          null
+        )
+      );
 
-      mi = new WatchUi.MenuItem("Dualpwr sec fallback", null, "power_dual_sec_fallback", null);
+      mi = new WatchUi.MenuItem(
+        "Dualpwr sec fallback",
+        null,
+        "power_dual_sec_fallback",
+        null
+      );
       mi.setSubLabel($.getStorageNumberAsString(mi.getId() as String));
       powerMenu.addItem(mi);
 
       boolean = Storage.getValue("power_times_two") ? true : false;
-      powerMenu.addItem(new WatchUi.ToggleMenuItem("Power*2 (pedal fail)", null, "power_times_two", boolean, null));
+      powerMenu.addItem(
+        new WatchUi.ToggleMenuItem(
+          "Power*2 (pedal fail)",
+          null,
+          "power_times_two",
+          boolean,
+          null
+        )
+      );
 
-      WatchUi.pushView(powerMenu, new $.GeneralMenuDelegate(self, powerMenu), WatchUi.SLIDE_LEFT);
+      WatchUi.pushView(
+        powerMenu,
+        new $.GeneralMenuDelegate(self, powerMenu),
+        WatchUi.SLIDE_LEFT
+      );
       return;
     }
 
-    if (id instanceof String && (id.equals("large_field") || id.equals("wide_field") || id.equals("small_field"))) {
+    if (
+      id instanceof String &&
+      (id.equals("large_field") ||
+        id.equals("wide_field") ||
+        id.equals("small_field"))
+    ) {
       var label = item.getLabel();
       var prefix = id.toString();
       var fieldMenu = new WatchUi.Menu2({ :title => label + " items" });
@@ -164,7 +343,12 @@ class DataFieldSettingsMenuDelegate extends WatchUi.Menu2InputDelegate {
       fieldMenu.addItem(mi);
       // Fields
       for (var i = 1; i < 9; i++) {
-        mi = new WatchUi.MenuItem("Field " + i, null, prefix + "|" + i.format("%d"), null);
+        mi = new WatchUi.MenuItem(
+          "Field " + i,
+          null,
+          prefix + "|" + i.format("%d"),
+          null
+        );
         mi.setSubLabel($.getFieldByIndex(prefix, i));
         fieldMenu.addItem(mi);
       }
@@ -182,7 +366,11 @@ class DataFieldSettingsMenuDelegate extends WatchUi.Menu2InputDelegate {
       mi.setSubLabel($.getBarPositionAsString(bp));
       fieldMenu.addItem(mi);
 
-      WatchUi.pushView(fieldMenu, new $.GeneralMenuDelegate(self, fieldMenu), WatchUi.SLIDE_UP);
+      WatchUi.pushView(
+        fieldMenu,
+        new $.GeneralMenuDelegate(self, fieldMenu),
+        WatchUi.SLIDE_UP
+      );
       return;
     }
 
@@ -193,9 +381,22 @@ class DataFieldSettingsMenuDelegate extends WatchUi.Menu2InputDelegate {
       var gfieldMenu = new WatchUi.Menu2({ :title => label + " items" });
 
       var boolean = Storage.getValue("show_graphic_fields") ? true : false;
-      gfieldMenu.addItem(new WatchUi.ToggleMenuItem("Visible", null, "show_graphic_fields", boolean, null));
+      gfieldMenu.addItem(
+        new WatchUi.ToggleMenuItem(
+          "Visible",
+          null,
+          "show_graphic_fields",
+          boolean,
+          null
+        )
+      );
 
-      var mi = new WatchUi.MenuItem("Line width|1~10", null, "gf_line_width", null);
+      var mi = new WatchUi.MenuItem(
+        "Line width|1~10",
+        null,
+        "gf_line_width",
+        null
+      );
       mi.setSubLabel($.getStorageNumberAsString(mi.getId() as String));
       gfieldMenu.addItem(mi);
 
@@ -204,12 +405,21 @@ class DataFieldSettingsMenuDelegate extends WatchUi.Menu2InputDelegate {
       gfieldMenu.addItem(mi);
       // Fields
       for (var i = 0; i < 5; i++) {
-        mi = new WatchUi.MenuItem("Field " + i, null, prefix + "|" + i.format("%d"), null);
+        mi = new WatchUi.MenuItem(
+          "Field " + i,
+          null,
+          prefix + "|" + i.format("%d"),
+          null
+        );
         mi.setSubLabel($.getFieldByIndex(prefix, i));
         gfieldMenu.addItem(mi);
       }
 
-      WatchUi.pushView(gfieldMenu, new $.GeneralMenuDelegate(self, gfieldMenu), WatchUi.SLIDE_UP);
+      WatchUi.pushView(
+        gfieldMenu,
+        new $.GeneralMenuDelegate(self, gfieldMenu),
+        WatchUi.SLIDE_UP
+      );
       return;
     }
 
@@ -217,17 +427,50 @@ class DataFieldSettingsMenuDelegate extends WatchUi.Menu2InputDelegate {
       var demMenu = new WatchUi.Menu2({ :title => "Cycle through fields" });
 
       var boolean = Storage.getValue("demofields") ? true : false;
-      demMenu.addItem(new WatchUi.ToggleMenuItem("Show demo", null, "demofields", boolean, null));
+      demMenu.addItem(
+        new WatchUi.ToggleMenuItem(
+          "Show demo",
+          null,
+          "demofields",
+          boolean,
+          null
+        )
+      );
 
-      var mi = new WatchUi.MenuItem("Wait seconds|0~60 (sec)", null, "demofields_wait", null);
+      var mi = new WatchUi.MenuItem(
+        "Wait seconds|0~60 (sec)",
+        null,
+        "demofields_wait",
+        null
+      );
       mi.setSubLabel($.getStorageNumberAsString(mi.getId() as String) + " sec");
       demMenu.addItem(mi);
 
-      mi = new WatchUi.MenuItem("Roundtrips|0~60 (sec)", null, "demofields_roundtrip", null);
+      mi = new WatchUi.MenuItem(
+        "Roundtrips|0~60 (sec)",
+        null,
+        "demofields_roundtrip",
+        null
+      );
       mi.setSubLabel($.getStorageNumberAsString(mi.getId() as String) + " sec");
       demMenu.addItem(mi);
 
-      WatchUi.pushView(demMenu, new $.GeneralMenuDelegate(self, demMenu), WatchUi.SLIDE_UP);
+      boolean = Storage.getValue("demohiitt") ? true : false;
+      demMenu.addItem(
+        new WatchUi.ToggleMenuItem(
+          "Demo Hiit",
+          null,
+          "demohiitt",
+          boolean,
+          null
+        )
+      );
+
+      WatchUi.pushView(
+        demMenu,
+        new $.GeneralMenuDelegate(self, demMenu),
+        WatchUi.SLIDE_UP
+      );
       return;
     }
     if (id instanceof String && id.equals("fallbacks")) {
@@ -237,28 +480,52 @@ class DataFieldSettingsMenuDelegate extends WatchUi.Menu2InputDelegate {
       for (var i = 1; i < $.FieldTypeCount; i++) {
         if ($.fieldHasFallback(i)) {
           var field = i as FieldType;
-          var mi = new WatchUi.MenuItem($.getFieldTypeAsString(field), null, "fields_fallback|" + i.format("%d"), null);
+          var mi = new WatchUi.MenuItem(
+            $.getFieldTypeAsString(field),
+            null,
+            "fields_fallback|" + i.format("%d"),
+            null
+          );
           mi.setSubLabel($.getFieldByIndex("fields_fallback", i));
           fbMenu.addItem(mi);
         }
-      }      
+      }
 
-      WatchUi.pushView(fbMenu, new $.GeneralMenuDelegate(self, fbMenu), WatchUi.SLIDE_UP);
+      WatchUi.pushView(
+        fbMenu,
+        new $.GeneralMenuDelegate(self, fbMenu),
+        WatchUi.SLIDE_UP
+      );
       return;
     }
 
     if (id instanceof String && id.equals("fallbackstriggers")) {
       var fbtMenu = new WatchUi.Menu2({ :title => "Fallback triggers" });
 
-      var mi = new WatchUi.MenuItem("Sec. 0 power", null, "power_countdowntofb", null);
+      var mi = new WatchUi.MenuItem(
+        "Sec. 0 power",
+        null,
+        "power_countdowntofb",
+        null
+      );
       mi.setSubLabel($.getStorageNumberAsString(mi.getId() as String));
       fbtMenu.addItem(mi);
-      mi = new WatchUi.MenuItem("Sec. 0 cadence", null, "cadence_countdowntofb", null);
+      mi = new WatchUi.MenuItem(
+        "Sec. 0 cadence",
+        null,
+        "cadence_countdowntofb",
+        null
+      );
       mi.setSubLabel($.getStorageNumberAsString(mi.getId() as String));
       fbtMenu.addItem(mi);
 
       // !! fb_ in key already used
-      mi = new WatchUi.MenuItem("Altitude start", null, "altitude_start_fb", null);
+      mi = new WatchUi.MenuItem(
+        "Altitude start",
+        null,
+        "altitude_start_fb",
+        null
+      );
       mi.setSubLabel($.getStorageNumberAsString(mi.getId() as String));
       fbtMenu.addItem(mi);
       mi = new WatchUi.MenuItem("Altitude end", null, "altitude_end_fb", null);
@@ -272,18 +539,45 @@ class DataFieldSettingsMenuDelegate extends WatchUi.Menu2InputDelegate {
       mi.setSubLabel($.getStorageNumberAsString(mi.getId() as String));
       fbtMenu.addItem(mi);
 
-      WatchUi.pushView(fbtMenu, new $.GeneralMenuDelegate(self, fbtMenu), WatchUi.SLIDE_UP);
+      WatchUi.pushView(
+        fbtMenu,
+        new $.GeneralMenuDelegate(self, fbtMenu),
+        WatchUi.SLIDE_UP
+      );
       return;
     }
 
     if (id instanceof String && id.equals("advancedmenu")) {
       var avMenu = new WatchUi.Menu2({ :title => "Advanced items" });
 
-      var mi = new WatchUi.MenuItem("Pause x offset|0~30", null, "pause_x_offset", null);
+      var mi = new WatchUi.MenuItem(
+        "Pause x offset|0~30",
+        null,
+        "pause_x_offset",
+        null
+      );
       mi.setSubLabel($.getStorageNumberAsString(mi.getId() as String));
       avMenu.addItem(mi);
 
-      WatchUi.pushView(avMenu, new $.GeneralMenuDelegate(self, avMenu), WatchUi.SLIDE_UP);
+      var boolean = Storage.getValue("show_shiftingbattery") ? true : false;
+      avMenu.addItem(
+        new WatchUi.ToggleMenuItem(
+          "Batt. shifting",
+          null,
+          "show_shiftingbattery",
+          boolean,
+          null
+        )
+      );
+
+      // var boolean = Storage.getValue("vo2maxbg") ? true : false;
+      // avMenu.addItem(new WatchUi.ToggleMenuItem("Vo2Max icon", null, "vo2maxbg", boolean, null));
+
+      WatchUi.pushView(
+        avMenu,
+        new $.GeneralMenuDelegate(self, avMenu),
+        WatchUi.SLIDE_UP
+      );
       return;
     }
 
@@ -294,7 +588,10 @@ class DataFieldSettingsMenuDelegate extends WatchUi.Menu2InputDelegate {
     }
   }
 
-  function onSelectedSelection(storageKey as String, value as Application.PropertyValueType) as Void {
+  function onSelectedSelection(
+    storageKey as String,
+    value as Application.PropertyValueType
+  ) as Void {
     Storage.setValue(storageKey, value);
   }
 }
@@ -304,7 +601,10 @@ class GeneralMenuDelegate extends WatchUi.Menu2InputDelegate {
   hidden var _item as MenuItem?;
   hidden var _debug as Boolean = false;
 
-  function initialize(delegate as DataFieldSettingsMenuDelegate, menu as WatchUi.Menu2) {
+  function initialize(
+    delegate as DataFieldSettingsMenuDelegate,
+    menu as WatchUi.Menu2
+  ) {
     Menu2InputDelegate.initialize();
     _delegate = delegate;
   }
@@ -320,7 +620,7 @@ class GeneralMenuDelegate extends WatchUi.Menu2InputDelegate {
     }
     if (id instanceof String && id.equals("hiit_mode")) {
       var sp = new selectionMenuPicker("Hiit mode, visible", id as String);
-      for(var i = 0; i < 3; i++) {
+      for (var i = 0; i < 3; i++) {
         sp.add($.getHiittModeText(i as WhatHiitt.HiitMode), null, i);
       }
       // sp.add("Disabled", "hiit is not active", WhatHiitt.HiitDisabled);
@@ -333,13 +633,23 @@ class GeneralMenuDelegate extends WatchUi.Menu2InputDelegate {
     }
     if (id instanceof String && id.equals("hiit_sound")) {
       var sp = new selectionMenuPicker("Hiit sound", id as String);
-      for(var i = 0; i < 4; i++) {
+      for (var i = 0; i < 4; i++) {
         sp.add($.getHiittSoundText(i as WhatHiitt.HiitSound), null, i);
       }
       // sp.add("No sound", null, WhatHiitt.NoSound);
       // sp.add("Start only", null, WhatHiitt.StartOnlySound);
       // sp.add("Low", "low noise", WhatHiitt.LowNoise);
       // sp.add("Loud", "loud noise", WhatHiitt.LoudNoise);
+
+      sp.setOnSelected(self, :onSelectedSelection, item);
+      sp.show();
+      return;
+    }
+    if (id instanceof String && id.equals("hiit_vo2maxbg")) {
+      var sp = new selectionMenuPicker("Vo2Max icon", id as String);
+      for (var i = 0; i < 4; i++) {
+        sp.add($.getVo2MaxBackGroundAsString(i as Vo2MaxBackGround), null, i);
+      }
 
       sp.setOnSelected(self, :onSelectedSelection, item);
       sp.show();
@@ -358,23 +668,42 @@ class GeneralMenuDelegate extends WatchUi.Menu2InputDelegate {
       return;
     }
 
-    if (id.equals("large_field_zen") || id.equals("wide_field_zen") || id.equals("small_field_zen")) {
-      var sp = new selectionMenuPicker("Zen mode", id as String);
-      for(var i = 0; i < 3; i++) {
-        sp.add($.getZenModeAsString(i as ZenMode), null, i);
+    if (id.equals("focus_field")) {
+      var sp = new selectionMenuPicker("Field focus", id as String);
+      for (var i = 0; i < 3; i++) {
+        sp.add($.getFocusFieldAsString(i as FocusField), null, i);
       }
-      
+
       sp.setOnSelected(self, :onSelectedSelection, item);
       sp.show();
       return;
     }
 
-    if (id.equals("large_field_bp") || id.equals("wide_field_bp") || id.equals("small_field_bp")) {
+    if (
+      id.equals("large_field_zen") ||
+      id.equals("wide_field_zen") ||
+      id.equals("small_field_zen")
+    ) {
+      var sp = new selectionMenuPicker("Zen mode", id as String);
+      for (var i = 0; i < 3; i++) {
+        sp.add($.getZenModeAsString(i as ZenMode), null, i);
+      }
+
+      sp.setOnSelected(self, :onSelectedSelection, item);
+      sp.show();
+      return;
+    }
+
+    if (
+      id.equals("large_field_bp") ||
+      id.equals("wide_field_bp") ||
+      id.equals("small_field_bp")
+    ) {
       var sp = new selectionMenuPicker("Bar position", id as String);
-      for(var i = 0; i < 3; i++) {
+      for (var i = 0; i < 3; i++) {
         sp.add($.getBarPositionAsString(i as BarPosition), null, i);
       }
-      
+
       sp.setOnSelected(self, :onSelectedSelection, item);
       sp.show();
       return;
@@ -393,7 +722,7 @@ class GeneralMenuDelegate extends WatchUi.Menu2InputDelegate {
       for (var i = 0; i < $.FieldTypeCount; i++) {
         sp.add($.getFieldTypeAsString(i as FieldType), null, i);
       }
-      sp.setOnSelected(self, :onSelectedField, item);
+      sp.setOnSelected(self, :onSelectedFieldFallback, item);
       sp.show();
       return;
     }
@@ -446,7 +775,10 @@ class GeneralMenuDelegate extends WatchUi.Menu2InputDelegate {
 
     // Fallback fields
     if (id.find("fb_") != null) {
-      var sp = new selectionMenuPicker("Fallback for " + item.getLabel(), id as String);
+      var sp = new selectionMenuPicker(
+        "Fallback for " + item.getLabel(),
+        id as String
+      );
       for (var i = 0; i < $.FieldTypeCount; i++) {
         sp.add($.getFieldTypeAsString(i as FieldType), null, i);
       }
@@ -462,7 +794,11 @@ class GeneralMenuDelegate extends WatchUi.Menu2InputDelegate {
     view.setOnAccept(self, :onAcceptNumericinput);
     view.setOnKeypressed(self, :onNumericinput);
 
-    Toybox.WatchUi.pushView(view, new $.NumericInputDelegate(_debug, view), WatchUi.SLIDE_RIGHT);
+    Toybox.WatchUi.pushView(
+      view,
+      new $.NumericInputDelegate(_debug, view),
+      WatchUi.SLIDE_RIGHT
+    );
   }
 
   function onAcceptNumericinput(value as Numeric, subLabel as String) as Void {
@@ -493,7 +829,11 @@ class GeneralMenuDelegate extends WatchUi.Menu2InputDelegate {
     view.setOnAccept(self, :onAcceptNumericinput);
     view.setOnKeypressed(self, :onNumericinput);
 
-    Toybox.WatchUi.pushView(view, new $.NumericInputDelegate(_debug, view), WatchUi.SLIDE_IMMEDIATE);
+    Toybox.WatchUi.pushView(
+      view,
+      new $.NumericInputDelegate(_debug, view),
+      WatchUi.SLIDE_IMMEDIATE
+    );
   }
 
   //! Handle the back key being pressed
@@ -510,11 +850,17 @@ class GeneralMenuDelegate extends WatchUi.Menu2InputDelegate {
 
   // --
 
-  function onSelectedSelection(storageKey as String, value as Application.PropertyValueType) as Void {
+  function onSelectedSelection(
+    storageKey as String,
+    value as Application.PropertyValueType
+  ) as Void {
     Storage.setValue(storageKey, value);
   }
 
-  function onSelectedFieldLayout(storageKey as String, value as Application.PropertyValueType) as Void {
+  function onSelectedFieldLayout(
+    storageKey as String,
+    value as Application.PropertyValueType
+  ) as Void {
     // storageKey large_field|0  (key and field index) value = 1 (field type)
     var key = stringLeft(storageKey, "|", "");
     var index = 0;
@@ -522,14 +868,21 @@ class GeneralMenuDelegate extends WatchUi.Menu2InputDelegate {
       return;
     }
     var idx = index as Number;
-    var fields = getStorageValue(key, [0, 0, 0, 0, 0, 0, 0, 0, 0]) as Array<Number>;
+    var fields =
+      getStorageValue(key, [0, 0, 0, 0, 0, 0, 0, 0, 0]) as Array<Number>;
     if (idx < fields.size()) {
       fields[idx] = value as Number;
-      Storage.setValue(key, fields as Lang.Array<Application.PropertyValueType>);
+      Storage.setValue(
+        key,
+        fields as Lang.Array<Application.PropertyValueType>
+      );
     }
   }
 
-  function onSelectedField(storageKey as String, value as Application.PropertyValueType) as Void {
+  function onSelectedField(
+    storageKey as String,
+    value as Application.PropertyValueType
+  ) as Void {
     // storageKey large_field|0  (key and field index) value = 1 (field type)
     var key = stringLeft(storageKey, "|", "");
     var index = stringRight(storageKey, "|", "").toNumber();
@@ -537,10 +890,41 @@ class GeneralMenuDelegate extends WatchUi.Menu2InputDelegate {
       return;
     }
     var idx = index as Number;
-    var fields = getStorageValue(key, [0, 0, 0, 0, 0, 0, 0, 0, 0]) as Array<Number>;
+    var fields =
+      getStorageValue(key, [0, 0, 0, 0, 0, 0, 0, 0, 0]) as Array<Number>;
     if (idx < fields.size()) {
       fields[idx] = value as Number;
-      Storage.setValue(key, fields as Lang.Array<Application.PropertyValueType>);
+      Storage.setValue(
+        key,
+        fields as Lang.Array<Application.PropertyValueType>
+      );
+    }
+  }
+
+  function onSelectedFieldFallback(
+    storageKey as String,
+    value as Application.PropertyValueType
+  ) as Void {
+    // storageKey large_field|0  (key and field index) value = 1 (field type)
+    var key = stringLeft(storageKey, "|", "");
+    var index = stringRight(storageKey, "|", "").toNumber();
+    if (key == "" || index == null) {
+      return;
+    }
+    var idx = index as Number;
+
+    var fields =
+      getStorageValue(key, [0, 0, 0, 0, 0, 0, 0, 0, 0]) as Array<Number>;
+    // Array can get bigger
+    while (fields.size() < $.FieldTypeCount) {
+      fields.add(FTUnknown);
+    }
+    if (idx < fields.size()) {
+      fields[idx] = value as Number;
+      Storage.setValue(
+        key,
+        fields as Lang.Array<Application.PropertyValueType>
+      );
     }
   }
 }
@@ -604,7 +988,10 @@ function getFieldByIndex(key as String, index as Number) as String {
   return $.getFieldTypeAsString(field);
 }
 
-function getGraphicInfoByIndex(key as String, index as Number) as String or Boolean {
+function getGraphicInfoByIndex(
+  key as String,
+  index as Number
+) as String or Boolean {
   var fields = getStorageValue(key, []) as Array<Number>;
   if (index < 0 || index >= fields.size()) {
     return "--";
@@ -721,8 +1108,44 @@ function getFieldTypeAsString(fieldType as FieldType) as String {
       return "training stress score";
     case FTCalories:
       return "calories";
+    case FTEta:
+      return "ET Arrival";
+    case FTEtr:
+      return "ET Remaining";
+    case FTVo2MaxHiit:
+      return "Vo2Max hiit";
+    case FTVo2MaxProfile:
+      return "Vo2Max profile";
     default:
       return "unknown";
+  }
+}
+
+function getVo2MaxBackGroundAsString(vo2Bg as Vo2MaxBackGround) as String {
+  switch (vo2Bg) {
+    case Vo2BgOff:
+      return "off";
+    case Vo2BgOn:
+      return "continuous";
+    case Vo2BgHiit:
+      return "when hiit";
+    case Vo2BgHiitOnly:
+      return "hiit only";
+    default:
+      return "off";
+  }
+}
+
+function getFocusFieldAsString(ff as FocusField) as String {
+  switch (ff) {
+    case FocusOff:
+      return "off";
+    case FocusOn:
+      return "on";
+    case FocusColor:
+      return "on using color";
+    default:
+      return "off";
   }
 }
 
@@ -756,6 +1179,10 @@ function fieldHasFallback(fieldId as Number) as Boolean {
       FTIntensityFactor,
       FTTrainingStressScore,
       FTHiit,
+      FTEta,
+      FTEtr,
+      FTVo2MaxHiit,
+      FTVo2MaxProfile,
     ].indexOf(fieldId) > -1
   );
 }
@@ -772,7 +1199,7 @@ function fieldHasGraphic(fieldId as Number) as Boolean {
       FTCadence,
       FTHeartRate,
       FTCalories,
-      FTDistance
+      FTDistance,
     ].indexOf(fieldId) > -1
   );
 }

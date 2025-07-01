@@ -1,3 +1,42 @@
++2 fields -> circles ex. rpm / slp
+readme update
+
+focus -> no / yes / color
+
+vo2max bg
+ - OFF 
+ - dURING Hiit - when active
+  - Hiit only - only show hiit scores
+ - Continuous - hiit scores / actual vo2max
+
+
+vo2max rolling
+https://biketips.com/what-is-a-good-vo2-max-by-age/
+
+# fields
+
+https://www.cyclingweekly.com/fitness/what-is-vam-and-can-i-use-it-to-improve-my-climbing
+VAM = (vertical metres climbed X 60) / time 
+
+TrainingPeaks VAM
+VAM = (metres ascended/hour)/(Gradient Factor x 100)
+Gradient factor = 2 + (% grade/10)
+
+
+VAM avg x seconds
+https://pedallers.com/what-is-vam-in-cycling/
+Relative power output (watts/kg) = VAM (metres/hour) / (200 + 10 × % gradient)
+
+x - ETA / ETR, time / duration -> use current average speed
+x ETR 0:3 --> 0:03 leading zeros
+- ETA, optimistic -> use average speed of last x minutes. (speed 0 -> normal avg)
+    - rolling average x minutes - default 10 minutes..
+  - icons for ETA/ETR
+avg: 20 m/s
+remaining distance : 2000 m
+duration: 2000 / 20 = 100 sec
+-> only when target distance > 0
+
 https://stackoverflow.com/questions/48692741/how-can-i-make-all-line-endings-eols-in-all-files-in-visual-studio-code-unix
 
 dark mode, graphics bar white when no color

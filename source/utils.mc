@@ -297,13 +297,12 @@ function setColorFillStroke(dc as Dc, color as Graphics.ColorType) as Void {
 }
 
 // [perc, R, G, B]
-const PERC_COLORS_RED =
-  [
-    [0, 255, 255, 255],
-    [50, 155, 100, 100],
-    [100, 255, 0, 0],
-  ] as Array<Array<Number> >;
-
+// const PERC_COLORS_RED =
+//   [
+//     [0, 255, 255, 255],
+//     [50, 155, 100, 100],
+//     [100, 255, 0, 0],
+//   ] as Array<Array<Number> >;
 const PERC_COLORS_GREEN_RED =
   [
     [0, 234, 250, 241],
@@ -314,6 +313,44 @@ const PERC_COLORS_GREEN_RED =
     [90, 211, 84, 0],
     [100, 255, 0, 0],
     [999, 0, 0, 0], 
+  ] as Array<Array<Number> >;
+
+const PERC_COLORS_GREEN_TO_RED =
+  [
+    [0, 51, 255, 85], // malachite
+    [10, 85, 255, 51], // neon green
+    [15, 119, 255, 51], // lawn green
+    [20, 153, 255, 51], // green yellow
+    [30, 221, 255, 51], // pear
+    [40, 255, 255, 51], // yellow
+    [50, 255, 221, 51], // Banana yellow
+    [60, 255, 187, 51], // Saffron
+    [70, 255, 153, 51], // Deep saffron
+    [80, 255, 119, 51], // Mango tango
+    [90, 255, 85, 51],  // portland orange
+    [100, 255, 51, 51],   // deep carmine pink
+    [200, 128, 0, 0],   // maroon
+    [999, 102, 0, 0],   // rosewood
+  ] as Array<Array<Number> >;
+
+// https://rgbcolorcode.com/color/FF3333
+const PERC_COLORS_RED_TO_GREEN =
+  [
+    [0, 255, 51, 51],   // deep carmine pink
+    [10, 255, 85, 51],  // portland orange
+    [15, 255, 119, 51], // Mango tango
+    [20, 255, 153, 51], // Deep saffron
+    [30, 255, 187, 51], // Saffron
+    [40, 255, 221, 51], // Banana yellow
+    [50, 255, 255, 51], // yellow
+    [60, 221, 255, 51], // pear
+    [70, 153, 255, 51], // green yellow
+    [80, 119, 255, 51], // lawn green
+    [90, 85, 255, 51], // neon green
+    [100, 51, 255, 85], // malachite
+    [200, 51, 255, 255], // aqua
+    [999, 102, 25, 255], // han purple
+     
   ] as Array<Array<Number> >;
 
 const PERC_COLORS_SCHEME =
@@ -342,7 +379,7 @@ function percentageToColor(
   percentage as Numeric?,
   alpha as Number,
   colorScheme as Array<Array<Number> >,
-  darker as Number
+  shadePercentage as Number  
 ) as ColorType {
   var pcolor = 0;
   var pColors = colorScheme;
@@ -376,10 +413,39 @@ function percentageToColor(
   var green = Math.floor(lower[2] * pctLower + upper[2] * pctUpper);
   var blue = Math.floor(lower[3] * pctLower + upper[3] * pctUpper);
 
-  if (darker > 0 && darker < 100) {
-    red = red - (red / 100) * darker;
-    green = green - (green / 100) * darker;
-    blue = blue - (blue / 100) * darker;
+  // if (shadePercentage == 0) {
+  //   return Graphics.createColor(alpha, red.toNumber(), green.toNumber(), blue.toNumber());
+  // }
+  return shadeColor(alpha, red, green, blue, shadePercentage);
+}
+
+function min(valueA as Numeric, valueB as Numeric ) as Numeric {
+  if (valueA > valueB) {
+    return valueB;
+  }
+  return valueA;
+}
+
+function max(valueA as Numeric, valueB as Numeric ) as Numeric {
+  if (valueA > valueB) {
+    return valueA;
+  }
+  return valueB;
+}
+
+// percent > 0 lighten  color, percent < 0 darken
+function shadeColor(alpha as Number, red as Numeric, green as Numeric, blue as Numeric, percent as Number) as ColorType 
+{
+  if (percent != 0) {
+    // System.println(["shadeColor - 1", alpha, red, green, blue, percent]);
+    red = (red * (100 + percent) / 100.0);
+    green = (green * (100 + percent) / 100.0);
+    blue = (blue * (100 + percent) / 100.0);
+
+    red = min(red, 255);
+    green = min(green, 255);
+    blue = min(blue, 255);
+    // System.println(["shadeColor - 2", alpha, red, green, blue, percent]);
   }
   return Graphics.createColor(alpha, red.toNumber(), green.toNumber(), blue.toNumber());
 }
@@ -426,7 +492,7 @@ function secondsToHourMinutes(totalSeconds as Number) as String {
     var hours = (totalSeconds / (60 * 60)).toNumber(); // % 24;
     timeString = $.stringReplace(timeString, "{h}", hours.format("%01d"));
     var minutes = (totalSeconds / 60.0).toNumber() % 60;
-    timeString = $.stringReplace(timeString, "{m}", minutes.format("%01d"));
+    timeString = $.stringReplace(timeString, "{m}", minutes.format("%02d"));
 
     return timeString;
   }
@@ -495,17 +561,17 @@ function convertToNumber(value as String, defaultValue as Number) as Number {
 }
 
 // o (one), l (large), w (wide), s (small)
-function getDisplaySize(width as Number, height as Number) as String {
-  var display = "s";
+// function getDisplaySize(width as Number, height as Number) as String {
+//   var display = "s";
 
-  if (width >= 246) {
-    display = "w";
-    if (height >= 322) {
-      display = "o";
-    } else if (height >= 100) {
-      display = "l";
-    }
-  }
+//   if (width >= 246) {
+//     display = "w";
+//     if (height >= 322) {
+//       display = "o";
+//     } else if (height >= 100) {
+//       display = "l";
+//     }
+//   }
 
-  return display;
-}
+//   return display;
+// }
