@@ -1042,6 +1042,10 @@ function getFieldLayoutAsString(fieldLayout as FieldLayout) as String {
       return "6 fields";
     case FL4Fields:
       return "4 fields";
+    case FL6SSFields:
+      return "6 fields same size";
+    case FL8SSFields:
+      return "8 fields same size";  
     default:
       return "unknown";
   }

@@ -36,11 +36,13 @@ class FieldInfo {
     }
 }
 
-const FieldLayoutCount = 3;
+const FieldLayoutCount = 5;
 enum FieldLayout {
     FL8Fields = 0,
     FL6Fields = 1,
-    FL4Fields = 2
+    FL4Fields = 2,
+    FL6SSFields = 3,
+    FL8SSFields = 4
 }
 
 const FieldTypeCount = 34; // incl the 0

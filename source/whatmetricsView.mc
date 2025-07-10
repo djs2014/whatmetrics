@@ -200,6 +200,30 @@ class whatmetricsView extends WatchUi.DataField {
       mGrid.add(row as Array<Array<Number> >);
       mGrid.add(centerRow as Array<Array<Number> >);
       mGrid.add(row as Array<Array<Number> >);
+     } else if (mFieldLayout == FL6SSFields) {
+      var w_1third = w / 3;
+      var w_1thirdMiddle = w - (2 * w_1third);
+      // top left, middle,  right
+      // bottom left, middle, right
+       row = [
+        [w_1third, h_halve],
+        [w_1thirdMiddle, h_halve],
+        [w_1third, h_halve],
+      ];  
+      mGrid.add(row as Array<Array<Number> >);
+      mGrid.add(row as Array<Array<Number> >);  
+    } else if (mFieldLayout == FL8SSFields) {
+      var w_1fourth = w / 4;
+      // top left, middle, middle, right
+      // bottom left, middle, middle, right
+       row = [
+        [w_1fourth, h_halve],
+        [w_1fourth, h_halve],
+        [w_1fourth, h_halve],
+        [w_1fourth, h_halve],
+      ];  
+      mGrid.add(row as Array<Array<Number> >);
+      mGrid.add(row as Array<Array<Number> >);
     } else if (mFieldLayout == FL6Fields) {
       // top left, middle, right
       // bottom left, middle, right
@@ -1407,6 +1431,7 @@ class whatmetricsView extends WatchUi.DataField {
           }
           break;
         case FL6Fields:
+        case FL6SSFields:
           if (fieldInfo.index == 3 || fieldInfo.index == 6) {
             x_offset_right = $.gPause_x_offset;
           } else if (fieldInfo.index == 1 || fieldInfo.index == 4) {
@@ -1417,6 +1442,13 @@ class whatmetricsView extends WatchUi.DataField {
           if (fieldInfo.index == 2 || fieldInfo.index == 4) {
             x_offset_right = $.gPause_x_offset;
           } else if (fieldInfo.index == 1 || fieldInfo.index == 3) {
+            x_offset_left = $.gPause_x_offset;
+          }
+          break;
+        case FL8SSFields:
+          if (fieldInfo.index == 4 || fieldInfo.index == 8) {
+            x_offset_right = $.gPause_x_offset;
+          } else if (fieldInfo.index == 1 || fieldInfo.index == 5) {
             x_offset_left = $.gPause_x_offset;
           }
           break;
