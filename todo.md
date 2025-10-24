@@ -1,3 +1,7 @@
+lower bound rpm
+
+time to night / morning -> 1hour before is off (config) -> show diff field
+layout mondriaan ..
 +2 fields -> circles ex. rpm / slp
 readme update
 

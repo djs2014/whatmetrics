@@ -29,6 +29,7 @@ class FieldInfo {
 
     var rawValue as Numeric = 0;
     var maxValue as Numeric = 0;
+    var minValue as Numeric = 0;
     
     function initialize(fieldType as FieldType, fieldIndex as Number) {
         type = fieldType;

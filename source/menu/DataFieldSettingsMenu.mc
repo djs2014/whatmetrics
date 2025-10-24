@@ -123,14 +123,24 @@ class DataFieldSettingsMenuDelegate extends WatchUi.Menu2InputDelegate {
       );
       mi.setSubLabel($.getStorageNumberAsString(mi.getId() as String));
       targetMenu.addItem(mi);
+
       mi = new WatchUi.MenuItem(
-        "Target cadence rpm",
+        "Target cadence rpm low",
+        null,
+        "target_cadence_low",
+        null
+      );
+      mi.setSubLabel($.getStorageNumberAsString(mi.getId() as String));
+      targetMenu.addItem(mi);
+      mi = new WatchUi.MenuItem(
+        "Target cadence rpm high",
         null,
         "target_cadence",
         null
       );
       mi.setSubLabel($.getStorageNumberAsString(mi.getId() as String));
       targetMenu.addItem(mi);
+
       mi = new WatchUi.MenuItem(
         "Target calories kcal",
         null,
@@ -1045,7 +1055,7 @@ function getFieldLayoutAsString(fieldLayout as FieldLayout) as String {
     case FL6SSFields:
       return "6 fields same size";
     case FL8SSFields:
-      return "8 fields same size";  
+      return "8 fields same size";
     default:
       return "unknown";
   }

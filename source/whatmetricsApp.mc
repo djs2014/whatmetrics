@@ -156,6 +156,7 @@ class whatmetricsApp extends Application.AppBase {
       Storage.setValue("target_ftp", $.gTargetFtp);
       Storage.setValue("target_speed", $.gTargetSpeed);
       Storage.setValue("target_cadence", $.gTargetCadence);
+      Storage.setValue("target_cadence", $.gTargetCadenceLow);
       Storage.setValue("target_calories", $.gTargetCalories);
       Storage.setValue("target_grade", $.gTargetGrade);
       Storage.setValue("target_altitude", $.gTargetAltitude);
@@ -171,6 +172,7 @@ class whatmetricsApp extends Application.AppBase {
     $.gTargetFtp = getStorageValue("target_ftp", $.gTargetFtp) as Number;
     $.gTargetSpeed = getStorageValue("target_speed", $.gTargetSpeed) as Number;
     $.gTargetCadence = getStorageValue("target_cadence", $.gTargetCadence) as Number;
+    $.gTargetCadenceLow = getStorageValue("target_cadence_low", $.gTargetCadenceLow) as Number;
     $.gTargetCalories = getStorageValue("target_calories", $.gTargetCalories) as Number;
     $.gTargetGrade = getStorageValue("target_grade", $.gTargetGrade) as Number;
     $.gTargetAltitude = getStorageValue("target_altitude", $.gTargetAltitude) as Number;
@@ -315,6 +317,7 @@ var gMetrics as WhatMetrics?;
 var gTargetFtp as Number = 250;
 var gTargetSpeed as Number = 30;
 var gTargetCadence as Number = 90;
+var gTargetCadenceLow as Number = 75;
 var gTargetCalories as Number = 4000;
 var gTargetGrade as Number = 8;
 var gTargetAltitude as Number = 1000;

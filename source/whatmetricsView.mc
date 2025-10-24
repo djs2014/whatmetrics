@@ -427,16 +427,41 @@ class whatmetricsView extends WatchUi.DataField {
           }
         }
 
-        // Focus on field info, when they are close or above target.
+        // Focus on field info, when they are close or above target (or close or under target low).
+        // https://www.perplexity.ai: How to calculate how close in percentage a value is to a lower bound?
         var colorPerc = Graphics.COLOR_LT_GRAY;
         var focusPerc = 0;          
-        if ($.gFocusField != FocusOff && fi.rawValue > 0 && fi.maxValue > 0) {          
-          focusPerc = percentageOf(fi.rawValue, fi.maxValue);  
-          //System.println(["focusfield ", focusPerc, fi.rawValue, fi.maxValue, fi.title]);
-          if (focusPerc > $.gFocusPerc) {
+        var hasUpper = false;
+        var hasLower = false;
+        if ($.gFocusField != FocusOff && fi.rawValue > 0 && (fi.maxValue > 0 || fi.minValue > 0)) {          
+
+          if (fi.maxValue > 0 && fi.minValue <= 0) {
+            // 100% if close to upperbound (ignore lowerbound)
+            focusPerc = percentageOf(fi.rawValue, fi.maxValue); 
+            hasUpper = true; 
+          } else if (fi.maxValue > 0 && fi.minValue > 0 && fi.maxValue > fi.minValue) {
+            // 0% if close to lowerbound and 100% if close to upperbound
+            focusPerc = percentageOf(fi.rawValue - fi.minValue, fi.maxValue - fi.minValue);  
+            hasUpper = true; 
+            hasLower = true;
+          } else if (fi.maxValue <= 0 && fi.minValue > 0) {
+            focusPerc = percentageOf(fi.rawValue - fi.minValue, fi.minValue);  
+            hasLower = true;
+          }
+         
+          System.println(["focusfield ", focusPerc, fi.rawValue, fi.minValue, fi.maxValue, fi.title]);
+
+          if (hasUpper && focusPerc > $.gFocusPerc) {
             dc.setPenWidth($.gFocusBorder);
             if ($.gFocusField == FocusColor) {
-              colorPerc = getIconColorGreenToRed(fi.rawValue, fi.maxValue, true);
+              System.println(["focusfield high", focusPerc, fi.rawValue, fi.minValue, fi.maxValue, fi.title]);
+              colorPerc = getIconColorGreenToRed2(focusPerc, true);
+            }
+          } else if (hasLower && focusPerc < 100 - $.gFocusPerc) {
+            dc.setPenWidth($.gFocusBorder);
+            if ($.gFocusField == FocusColor) {
+              System.println(["focusfield low", 100 - focusPerc, fi.rawValue, fi.minValue, fi.maxValue, fi.title]);
+              colorPerc = getIconColorGreenToRed2(100 - focusPerc, true);
             }
           }
         }        
@@ -869,6 +894,7 @@ class whatmetricsView extends WatchUi.DataField {
         fi.iconColor = getIconColor(cadence, $.gTargetCadence);
         fi.rawValue = cadence;
         fi.maxValue = $.gTargetCadence;
+        fi.minValue = $.gTargetCadenceLow;
         return fi;
 
       case FTHiit:
@@ -1767,14 +1793,33 @@ class whatmetricsView extends WatchUi.DataField {
     }
   }
 
+  hidden function getIconColorGreenToRed2(
+    perc as Numeric,
+    showColor as Boolean
+  ) as Graphics.ColorType {
+    mReverseColor = false; // @@ TODO <-- refactor
+    if ((showColor || $.gShowColors) and $.gCreateColors) {
+      // var perc = percentageOf(value, maxValue);
+      var shade = 10;
+      if (getBackgroundColor() == Graphics.COLOR_BLACK) {
+        shade = -30;
+      } else {
+        // mReverseColor = perc >= 165;
+      }
+      return percentageToColor(perc, 255, $.PERC_COLORS_GREEN_TO_RED, shade);
+    } else {
+      return mIconColor;
+    }
+  }
+
   hidden function getIconColorRedToGreen(
-    value as Numeric,
-    maxValue as Numeric,
+    perc as Numeric,
+    //maxValue as Numeric,
     showColor as Boolean
   ) as Graphics.ColorType {
     mReverseColor = false;
     if ((showColor || $.gShowColors) and $.gCreateColors) {
-      var perc = percentageOf(value, maxValue);
+      // var perc = percentageOf(value, maxValue);
       var shade = 10;
       if (getBackgroundColor() == Graphics.COLOR_BLACK) {
         shade = -30;
