@@ -82,6 +82,8 @@ class whatmetricsView extends WatchUi.DataField {
   hidden var mCurrentLocation as CurrentLocation;
   hidden var mSunrise as Moment?;
   hidden var mSunset as Moment?;
+  hidden var mSunriseTomorrow as Moment?;
+  // hidden var mSunsetTomorrow as Moment?;
 
   // hidden var mGrade as Double = 0.0d;
   function initialize() {
@@ -117,6 +119,8 @@ class whatmetricsView extends WatchUi.DataField {
   function onLocationChanged(degrees as Array<Double>) as Void {
     mSunrise = mCurrentLocation.getSunrise();
     mSunset = mCurrentLocation.getSunset();
+    mSunriseTomorrow = mCurrentLocation.getSunriseTomorrow();
+    // mSunsetTomorrow = mCurrentLocation.getSunsetTomorrow();
   }
 
   function onLayout(dc as Dc) as Void {
@@ -1197,32 +1201,48 @@ class whatmetricsView extends WatchUi.DataField {
           fi.title = "Sunrise in";
           fi.iconParam2 = 1;
           t2next = $.getSecondsToNext(Time.now(), mSunrise);
+          // if (t2next < 0) {
+          //   t2next = $.getSecondsToNext(Time.now(), mSunriseTomorrow);
+          // }
           // System.println(["FTTime2SunUp", t2next ]);
         } else if (fieldType == FTTime2SunDown) {
           fi.title = "Sunset in";
           fi.iconParam2 = -1;
           t2next = $.getSecondsToNext(Time.now(), mSunset);
+          // if (t2next < 0) {
+          //   t2next = $.getSecondsToNext(Time.now(), mSunsetTomorrow);
+          // }
           // System.println(["FTTime2SunDown", t2next ]);
         } else {
           var t2sunrise = $.getSecondsToNext(Time.now(), mSunrise);
-          var t2sunset = $.getSecondsToNext(Time.now(), mSunset);
 
-          if (t2sunrise < 0) {
-            // Sun is already rised. Sunset will be next.
-            fi.title = "Sunset in";
-            fi.iconParam2 = -1;
-            t2next = t2sunset;
-          } else {
+          if (t2sunrise > 0) {
             // Sun is not rised yet.
             fi.title = "Sunrise in";
             fi.iconParam2 = 1;
             t2next = t2sunrise;
-          }
+          } else if (t2sunrise <= 0) {
+            // Sun is already rised. Sunset will be next. 
+            var t2sunset = $.getSecondsToNext(Time.now(), mSunset);
+            if (t2sunset > 0) {
+              fi.title = "Sunset in";
+              fi.iconParam2 = -1;
+              t2next = t2sunset;
+            } else {
+              // Sun already set, get sunset for tomorrow
+              t2sunrise = $.getSecondsToNext(Time.now(), mSunriseTomorrow);
+              fi.title = "Sunrise in";
+              fi.iconParam2 = 1;
+              t2next = t2sunrise;
+            }
+          } 
           // System.println(["FTTime2Sun next", t2next ]);
         }
 
         // When target specified, then field availble when in range.
         fi.available = t2next > 0 && ($.gTargetSunEventSec == 0 || (t2next < $.gTargetSunEventSec && $.gTargetSunEventSec > 0));
+
+        //System.println(["FTTime2Sun i.available", fi.available, t2next, $.gTargetSunEventSec ]);
 
         if (fi.available) {
           fi.text = $.secondsToHourMinutes(t2next);

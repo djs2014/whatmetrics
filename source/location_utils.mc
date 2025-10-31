@@ -6,6 +6,7 @@ import Toybox.System;
 import Toybox.Position;
 import Toybox.Weather;
 import Toybox.Time;
+import Toybox.Time.Gregorian;
 import Toybox.Application.Storage;
 
 class CurrentLocation {
@@ -37,6 +38,8 @@ class CurrentLocation {
   hidden var mAccuracy as Quality? = Position.QUALITY_NOT_AVAILABLE;
   hidden var mSunrise as Moment?;
   hidden var mSunset as Moment?;
+  hidden var mSunriseTomorrow as Moment?;
+  hidden var mSunsetTomorrow as Moment?;
 
   var methodLocationChanged as Method?;
   function setOnLocationChanged(objInstance as Object?, callback as Symbol) as Void {
@@ -192,6 +195,7 @@ class CurrentLocation {
     return true;
   }
 
+  // Gives sunrise and sunset for current day.
   hidden function setSunRiseAndSunSet(location as Location?) as Void {
     if (location == null) {
       return;
@@ -199,7 +203,13 @@ class CurrentLocation {
     // Note: is sunrise of current day. So will return date before now() if the sun has rised already. Same for sunset.
     mSunrise = Weather.getSunrise(location as Location, Time.now()); // ex: 13-6-2022 05:20:43
     mSunset = Weather.getSunset(location as Location, Time.now()); // ex: 13-6-2022 22:02:25
-    System.println("Sunrise:" + $.getLongTimeString(mSunrise) + " sunset: " + $.getLongTimeString(mSunset));
+    // Sunrise tomorrow
+    var today = new Time.Moment(Time.today().value());
+    var oneDay = new Time.Duration(Gregorian.SECONDS_PER_DAY);
+    var tomorrow = today.add(oneDay);
+    mSunriseTomorrow = Weather.getSunrise(location as Location, tomorrow); // ex: 14-6-2022 05:20:43
+    mSunsetTomorrow = Weather.getSunset(location as Location, tomorrow); // ex: 14-6-2022 05:20:43
+    System.println("Sunrise:" + $.getLongTimeString(mSunrise) + " Sunset: " + $.getLongTimeString(mSunset) + "Sunrise Tomorrow" + $.getLongTimeString(mSunriseTomorrow));
   }
 
   function isAtDaylightTime(time as Moment?, defValue as Boolean) as Boolean {
@@ -223,6 +233,9 @@ class CurrentLocation {
   function getSunrise() as Moment? { return mSunrise; }
   // Note: is sunrise of current day. So will return date before now() if the sun has rised already.
   function getSunset() as Moment? { return mSunset; }
+
+  function getSunriseTomorrow() as Moment? { return mSunriseTomorrow; }
+  function getSunsetTomorrow() as Moment? { return mSunsetTomorrow; }
 
   function getRelativeToObservation(latObservation as Double, lonObservation as Double) as String {
     if (!hasLocation() || latObservation == 0.0 || lonObservation == 0.0) {
