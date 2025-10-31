@@ -1,3 +1,17 @@
+ Time to Sun up
+Time to Sun down
+Time to Sun up/down
+
+    Active x minutes before
+    Is off after event and before x event
+
+Pressure
+
+    Track x seconds
+    If avg < current -> - down indicator
+    If > -> + up indicator
+
+
 lower bound rpm
 
 time to night / morning -> 1hour before is off (config) -> show diff field

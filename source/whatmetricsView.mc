@@ -200,28 +200,28 @@ class whatmetricsView extends WatchUi.DataField {
       mGrid.add(row as Array<Array<Number> >);
       mGrid.add(centerRow as Array<Array<Number> >);
       mGrid.add(row as Array<Array<Number> >);
-     } else if (mFieldLayout == FL6SSFields) {
+    } else if (mFieldLayout == FL6SSFields) {
       var w_1third = w / 3;
-      var w_1thirdMiddle = w - (2 * w_1third);
+      var w_1thirdMiddle = w - 2 * w_1third;
       // top left, middle,  right
       // bottom left, middle, right
-       row = [
+      row = [
         [w_1third, h_halve],
         [w_1thirdMiddle, h_halve],
         [w_1third, h_halve],
-      ];  
+      ];
       mGrid.add(row as Array<Array<Number> >);
-      mGrid.add(row as Array<Array<Number> >);  
+      mGrid.add(row as Array<Array<Number> >);
     } else if (mFieldLayout == FL8SSFields) {
       var w_1fourth = w / 4;
       // top left, middle, middle, right
       // bottom left, middle, middle, right
-       row = [
+      row = [
         [w_1fourth, h_halve],
         [w_1fourth, h_halve],
         [w_1fourth, h_halve],
         [w_1fourth, h_halve],
-      ];  
+      ];
       mGrid.add(row as Array<Array<Number> >);
       mGrid.add(row as Array<Array<Number> >);
     } else if (mFieldLayout == FL6Fields) {
@@ -339,7 +339,7 @@ class whatmetricsView extends WatchUi.DataField {
     // @@ TEST, refactor
     mDrawBackgroundHiittIcon = false;
     var vo2maxHiitt = 0;
-    switch($.gVo2MaxBackGround) {
+    switch ($.gVo2MaxBackGround) {
       case Vo2BgOff:
         break;
       case Vo2BgOn:
@@ -347,9 +347,9 @@ class whatmetricsView extends WatchUi.DataField {
         vo2maxHiitt = mHiitt.getVo2Max();
         if (vo2maxHiitt == 0) {
           vo2maxHiitt = mHiitt.getAverageHiitScore();
-        } 
+        }
         break;
-      case Vo2BgHiitOnly: 
+      case Vo2BgHiitOnly:
         // Show only hiitt scores, but actual score when hiitt active
         if (mHiitt.isEnabled()) {
           vo2maxHiitt = mHiitt.getVo2Max();
@@ -358,40 +358,38 @@ class whatmetricsView extends WatchUi.DataField {
           vo2maxHiitt = mHiitt.getAverageHiitScore();
         }
         break;
-      case Vo2BgHiit: 
+      case Vo2BgHiit:
         // show only during Hiitt
         if (mHiitt.isEnabled()) {
           vo2maxHiitt = mHiitt.getVo2Max();
           if (vo2maxHiitt == 0) {
             vo2maxHiitt = mHiitt.getAverageHiitScore();
-          } 
+          }
         }
         break;
     }
 
     if (vo2maxHiitt > 7) {
-      var vo2maxProfile = mHiitt.getProfileVo2Max();     
+      var vo2maxProfile = mHiitt.getProfileVo2Max();
       mDrawBackgroundHiittIcon = true;
-      var percentile = mHiitt.getVo2MaxPercentile(vo2maxHiitt);   
+      var percentile = mHiitt.getVo2MaxPercentile(vo2maxHiitt);
       var improving = 0;
       if (vo2maxHiitt < vo2maxProfile) {
         improving = -1;
       } else if (vo2maxHiitt > 0 && vo2maxHiitt > vo2maxProfile) {
         improving = 1;
-      }     
+      }
       drawHiitIcon(
         dc,
         0,
         0,
         dc.getWidth(),
         dc.getHeight(),
-        getIconColorRedToGreen(percentile, 100, true),
+        getIconColorRedToGreen(percentageOf(percentile, 100), true),
         0,
         improving
       );
     }
-    
-     
 
     // Note, index 0 is field layout
     var f = 1;
@@ -430,41 +428,72 @@ class whatmetricsView extends WatchUi.DataField {
         // Focus on field info, when they are close or above target (or close or under target low).
         // https://www.perplexity.ai: How to calculate how close in percentage a value is to a lower bound?
         var colorPerc = Graphics.COLOR_LT_GRAY;
-        var focusPerc = 0;          
+        var focusPerc = 0;
         var hasUpper = false;
         var hasLower = false;
-        if ($.gFocusField != FocusOff && fi.rawValue > 0 && (fi.maxValue > 0 || fi.minValue > 0)) {          
-
+        if (
+          $.gFocusField != FocusOff &&
+          fi.rawValue > 0 &&
+          (fi.maxValue > 0 || fi.minValue > 0)
+        ) {
           if (fi.maxValue > 0 && fi.minValue <= 0) {
             // 100% if close to upperbound (ignore lowerbound)
-            focusPerc = percentageOf(fi.rawValue, fi.maxValue); 
-            hasUpper = true; 
-          } else if (fi.maxValue > 0 && fi.minValue > 0 && fi.maxValue > fi.minValue) {
+            focusPerc = percentageOf(fi.rawValue, fi.maxValue);
+            hasUpper = true;
+          } else if (
+            fi.maxValue > 0 &&
+            fi.minValue > 0 &&
+            fi.maxValue > fi.minValue
+          ) {
             // 0% if close to lowerbound and 100% if close to upperbound
-            focusPerc = percentageOf(fi.rawValue - fi.minValue, fi.maxValue - fi.minValue);  
-            hasUpper = true; 
+            focusPerc = percentageOf(
+              fi.rawValue - fi.minValue,
+              fi.maxValue - fi.minValue
+            );
+            hasUpper = true;
             hasLower = true;
           } else if (fi.maxValue <= 0 && fi.minValue > 0) {
-            focusPerc = percentageOf(fi.rawValue - fi.minValue, fi.minValue);  
+            focusPerc = percentageOf(fi.rawValue - fi.minValue, fi.minValue);
             hasLower = true;
           }
-         
-          System.println(["focusfield ", focusPerc, fi.rawValue, fi.minValue, fi.maxValue, fi.title]);
+
+          System.println([
+            "focusfield ",
+            focusPerc,
+            fi.rawValue,
+            fi.minValue,
+            fi.maxValue,
+            fi.title,
+          ]);
 
           if (hasUpper && focusPerc > $.gFocusPerc) {
             dc.setPenWidth($.gFocusBorder);
             if ($.gFocusField == FocusColor) {
-              System.println(["focusfield high", focusPerc, fi.rawValue, fi.minValue, fi.maxValue, fi.title]);
+              System.println([
+                "focusfield high",
+                focusPerc,
+                fi.rawValue,
+                fi.minValue,
+                fi.maxValue,
+                fi.title,
+              ]);
               colorPerc = getIconColorGreenToRed2(focusPerc, true);
             }
           } else if (hasLower && focusPerc < 100 - $.gFocusPerc) {
             dc.setPenWidth($.gFocusBorder);
             if ($.gFocusField == FocusColor) {
-              System.println(["focusfield low", 100 - focusPerc, fi.rawValue, fi.minValue, fi.maxValue, fi.title]);
+              System.println([
+                "focusfield low",
+                100 - focusPerc,
+                fi.rawValue,
+                fi.minValue,
+                fi.maxValue,
+                fi.title,
+              ]);
               colorPerc = getIconColorGreenToRed2(100 - focusPerc, true);
             }
           }
-        }        
+        }
         if (gShowGrid || (focusPerc > 0 && focusPerc > $.gFocusPerc)) {
           dc.setColor(colorPerc, Graphics.COLOR_TRANSPARENT);
           dc.drawRectangle(x, y, cell[0], cell[1]);
@@ -780,7 +809,7 @@ class whatmetricsView extends WatchUi.DataField {
           (mPowerFallbackCountdown > 0 or $.gPowerCountdownToFallBack == 0);
 
         fi.rawValue = power;
-        fi.maxValue = $.gTargetFtp;  
+        fi.maxValue = $.gTargetFtp;
         fi.iconColor = getIconColor(power, $.gTargetFtp);
         return fi;
 
@@ -841,7 +870,7 @@ class whatmetricsView extends WatchUi.DataField {
           altitude = altitude * -1;
         }
         fi.rawValue = altitude;
-        fi.maxValue = $.gTargetAltitude;  
+        fi.maxValue = $.gTargetAltitude;
         fi.iconColor = getIconColor(altitude, $.gTargetAltitude);
 
         var totalAsc = mMetrics.getTotalAscent();
@@ -866,6 +895,8 @@ class whatmetricsView extends WatchUi.DataField {
         }
         fi.number = stringLeft(fi.value, ".", fi.value);
         fi.decimals = stringRight(fi.value, ".", "");
+        // TODO optional? --> use icon value
+        fi.iconParam = mMetrics.getPressureTrend();
         return fi;
 
       case FTAverageCadence:
@@ -910,11 +941,12 @@ class whatmetricsView extends WatchUi.DataField {
         fi.available =
           nrHiit > 0 ||
           (mMetrics.getPower() > 0 and
-            (mPowerFallbackCountdown > 0 or $.gPowerCountdownToFallBack == 0)) || mHiitt.isDemoActive();
+            (mPowerFallbackCountdown > 0 or
+              $.gPowerCountdownToFallBack == 0)) ||
+          mHiitt.isDemoActive();
         if (!fi.available) {
           return fi;
         }
-
 
         fi.title = "hiit";
         var showHiittText = 1;
@@ -927,7 +959,10 @@ class whatmetricsView extends WatchUi.DataField {
           if (!mDrawBackgroundHiittIcon && mHiitt.wasValidHiit()) {
             // fi.iconColor = COLOR_LT_BLUE;
             percentile = mHiitt.getVo2MaxPercentile(vo2max);
-            fi.iconColor = getIconColorRedToGreen(percentile, 100, true);
+            fi.iconColor = getIconColorRedToGreen(
+              percentageOf(percentile, 100),
+              true
+            );
           }
           if (mHiitt.isStartOfRecovery(10)) {
             fi.decimals = "";
@@ -949,7 +984,10 @@ class whatmetricsView extends WatchUi.DataField {
               if (!mDrawBackgroundHiittIcon && mHiitt.wasValidHiit()) {
                 //fi.iconColor = Graphics.COLOR_GREEN;
                 percentile = mHiitt.getVo2MaxPercentile(vo2max);
-                fi.iconColor = getIconColorRedToGreen(percentile, 100, true);
+                fi.iconColor = getIconColorRedToGreen(
+                  percentageOf(percentile, 100),
+                  true
+                );
               }
             }
           }
@@ -990,15 +1028,16 @@ class whatmetricsView extends WatchUi.DataField {
         fi.iconParam2 = 0;
         var vo2maxProfile = mHiitt.getProfileVo2Max();
         var vo2maxHiit = mHiitt.getVo2Max();
-        if (mPaused && mHiitt.isActivityPaused()) { // when demo, hiitt is not paused
+        if (mPaused && mHiitt.isActivityPaused()) {
+          // when demo, hiitt is not paused
           fi.decimals = "";
           // Use all scores when pauzed
           vo2maxHiit = mHiitt.getAverageHiitScore();
-          if(!mDrawBackgroundHiittIcon) {
+          if (!mDrawBackgroundHiittIcon) {
             percentile = mHiitt.getVo2MaxPercentile(vo2maxHiit);
-            fi.iconColor = getIconColorRedToGreen(percentile, 100, true);
+            var perc0 = percentageOf(percentile, 100);
+            fi.iconColor = getIconColorRedToGreen(perc0, true);
           }
-
         }
         //System.println(["hiit", vo2maxProfile, vo2maxHiit]);
         if (vo2maxProfile > 0 && vo2maxHiit > 0) {
@@ -1066,7 +1105,7 @@ class whatmetricsView extends WatchUi.DataField {
           powerpw > 0 and
           (mPowerFallbackCountdown > 0 or $.gPowerCountdownToFallBack == 0);
         fi.rawValue = mMetrics.getPower();
-        fi.maxValue = $.gTargetFtp;    
+        fi.maxValue = $.gTargetFtp;
         return fi;
 
       case FTPowerBalance:
@@ -1220,50 +1259,53 @@ class whatmetricsView extends WatchUi.DataField {
         fi.title = "vo2max";
         fi.units = "vo2";
 
-        var vo2maxProfile = mHiitt.getProfileVo2Max();
-        var vo2maxHiit = mHiitt.getAverageHiitScore();
-        var percentile = 0;
+        var vo2maxProfile0 = mHiitt.getProfileVo2Max();
+        var vo2maxHiit0 = mHiitt.getAverageHiitScore();
+        var percentile0 = 0;
         // TODO rolling vo2max
         // TODO percentile info etc.
         if (fieldType == FTVo2MaxHiit) {
-          fi.available = vo2maxHiit > 7;
+          fi.available = vo2maxHiit0 > 7;
           if (!fi.available) {
             return fi;
           }
-          fi.number = vo2maxHiit.format("%0d");
-          percentile = mHiitt.getVo2MaxPercentile(vo2maxHiit);
-          if (percentile > 0) {
-            fi.text_botleft = percentile.format("%0d") + "%";
+          fi.number = vo2maxHiit0.format("%0d");
+          percentile0 = mHiitt.getVo2MaxPercentile(vo2maxHiit0);
+          if (percentile0 > 0) {
+            fi.text_botleft = percentile0.format("%0d") + "%";
           }
-          if (vo2maxProfile > 0) {
-            fi.text_botright = "prof: " + vo2maxProfile.format("%0d");
+          if (vo2maxProfile0 > 0) {
+            fi.text_botright = "prof: " + vo2maxProfile0.format("%0d");
           }
         } else {
           // FTVo2MaxProfile
-          fi.available = vo2maxProfile > 0;
+          fi.available = vo2maxProfile0 > 0;
           if (!fi.available) {
             return fi;
           }
-          fi.number = vo2maxProfile.format("%0d");
-          percentile = mHiitt.getVo2MaxPercentile(vo2maxProfile);
-          if (percentile > 0) {
-            fi.text_botleft = percentile.format("%0d") + "%";
+          fi.number = vo2maxProfile0.format("%0d");
+          percentile0 = mHiitt.getVo2MaxPercentile(vo2maxProfile0);
+          if (percentile0 > 0) {
+            fi.text_botleft = percentile0.format("%0d") + "%";
           }
-          if (vo2maxHiit > 7) {
-            fi.text_botright = "hiit: " + vo2maxHiit.format("%0d");
+          if (vo2maxHiit0 > 7) {
+            fi.text_botright = "hiit: " + vo2maxHiit0.format("%0d");
           }
         }
         fi.maxValue = 100;
-        fi.rawValue = percentile;
+        fi.rawValue = percentile0;
         fi.iconParam = 0;
-        if (vo2maxHiit > 0 && vo2maxProfile > 0) {
-          if (vo2maxHiit < vo2maxProfile) {
+        if (vo2maxHiit0 > 0 && vo2maxProfile0 > 0) {
+          if (vo2maxHiit0 < vo2maxProfile0) {
             fi.iconParam = -1;
-          } else if (vo2maxHiit > vo2maxProfile) {
+          } else if (vo2maxHiit0 > vo2maxProfile0) {
             fi.iconParam = 1;
           }
         }
-        fi.iconColor = getIconColorRedToGreen(fi.rawValue, fi.maxValue, false);
+        fi.iconColor = getIconColorRedToGreen(
+          percentageOf(fi.rawValue, fi.maxValue),
+          false
+        );
         return fi;
     }
 
@@ -1341,8 +1383,15 @@ class whatmetricsView extends WatchUi.DataField {
     ) {
       drawPowerIcon(dc, x, y, width, height, fi.iconColor);
 
-      if ($.gShowPowerBattery) { 
-        drawPowerBatteryLevel(dc, x, y, width, height, mMetrics.getPowerBatteryLevel());
+      if ($.gShowPowerBattery) {
+        drawPowerBatteryLevel(
+          dc,
+          x,
+          y,
+          width,
+          height,
+          mMetrics.getPowerBatteryLevel()
+        );
       }
       return;
     }
@@ -1359,11 +1408,27 @@ class whatmetricsView extends WatchUi.DataField {
       return;
     }
     if (fi.type == FTPressureAtSea) {
-      drawPressureAtSeaIcon(dc, x, y, width, height, mIconColor);
+      drawPressureAtSeaIcon(
+        dc,
+        x,
+        y,
+        width,
+        height,
+        mIconColor,
+        fi.iconParam.toNumber()
+      );
       return;
     }
     if (fi.type == FTPressure) {
-      drawPressureIcon(dc, x, y, width, height, mIconColor);
+      drawPressureIcon(
+        dc,
+        x,
+        y,
+        width,
+        height,
+        mIconColor,
+        fi.iconParam.toNumber()
+      );
       return;
     }
     if (fi.type == FTCadence || fi.type == FTAverageCadence) {
@@ -1386,8 +1451,15 @@ class whatmetricsView extends WatchUi.DataField {
     if (fi.type == FTGearCombo) {
       // @@ drawGearComboIcon(dc, x, y, width, height, mIconColor);
 
-       if ($.gShowShiftingBattery) {         
-        drawPowerBatteryLevel(dc, x, y, width, height, mMetrics.getShiftingBatteryLevel());
+      if ($.gShowShiftingBattery) {
+        drawPowerBatteryLevel(
+          dc,
+          x,
+          y,
+          width,
+          height,
+          mMetrics.getShiftingBatteryLevel()
+        );
       }
       return;
     }
@@ -2251,7 +2323,7 @@ class whatmetricsView extends WatchUi.DataField {
       } else if (improving > 0) {
         var triangleUp =
           [
-            [x1, y1 - r], 
+            [x1, y1 - r],
             [x1 - r, y1 + r],
             [x1 + r, y1 + r],
           ] as Array<Graphics.Point2D>;
@@ -2484,7 +2556,8 @@ class whatmetricsView extends WatchUi.DataField {
     y as Number,
     width as Number,
     height as Number,
-    color as ColorType
+    color as ColorType,
+    trend as Number
   ) as Void {
     if (!gShowIcon) {
       return;
@@ -2519,6 +2592,29 @@ class whatmetricsView extends WatchUi.DataField {
     );
 
     dc.drawLine(x1 - m0, y3, x5 + m0, y3);
+
+    if (trend != 0) {
+      var font;
+      var trendIndicator;
+
+      dc.setColor(Graphics.COLOR_LT_GRAY, Graphics.COLOR_TRANSPARENT);
+      if (trend < 0) {
+        trendIndicator = "-";
+      } else {
+        trendIndicator = "+";
+      }
+      font =
+        $.getMatchingFont(dc, mFontsNumbers, width, height, trendIndicator) as
+        FontType;
+
+      dc.drawText(
+        x + 1,
+        y + height - dc.getFontHeight(font),
+        font,
+        trendIndicator,
+        Graphics.TEXT_JUSTIFY_LEFT // | Graphics.TEXT_JUSTIFY_VCENTER
+      );
+    }
   }
 
   hidden function drawPressureIcon(
@@ -2527,7 +2623,8 @@ class whatmetricsView extends WatchUi.DataField {
     y as Number,
     width as Number,
     height as Number,
-    color as ColorType
+    color as ColorType,
+    trend as Number
   ) as Void {
     if (!gShowIcon) {
       return;
@@ -2559,6 +2656,29 @@ class whatmetricsView extends WatchUi.DataField {
         [x5, y1],
       ] as Array<Point2D>
     );
+
+    if (trend != 0) {
+      var font;
+      var trendIndicator;
+
+      dc.setColor(Graphics.COLOR_LT_GRAY, Graphics.COLOR_TRANSPARENT);
+      if (trend < 0) {
+        trendIndicator = "-";
+      } else {
+        trendIndicator = "+";
+      }
+      font =
+        $.getMatchingFont(dc, mFontsNumbers, width, height, trendIndicator) as
+        FontType;
+
+      dc.drawText(
+        x + 1,
+        y + height - dc.getFontHeight(font),
+        font,
+        trendIndicator,
+        Graphics.TEXT_JUSTIFY_LEFT // | Graphics.TEXT_JUSTIFY_VCENTER
+      );
+    }
   }
 
   hidden function showDebugValues(dc as Dc) as Void {
