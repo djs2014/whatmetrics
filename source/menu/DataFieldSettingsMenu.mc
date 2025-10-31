@@ -186,6 +186,16 @@ class DataFieldSettingsMenuDelegate extends WatchUi.Menu2InputDelegate {
       mi.setSubLabel($.getStorageNumberAsString(mi.getId() as String));
       targetMenu.addItem(mi);
 
+      mi = new WatchUi.MenuItem(
+        "Target sunrise/set min|0~",
+        null,
+        "target_sunevent",
+        null
+      );
+      mi.setSubLabel($.getStorageNumberAsString(mi.getId() as String));
+      targetMenu.addItem(mi);
+
+
       var boolean = Storage.getValue("target_distance_route") ? true : false;
       targetMenu.addItem(
         new WatchUi.ToggleMenuItem(
@@ -1130,6 +1140,12 @@ function getFieldTypeAsString(fieldType as FieldType) as String {
       return "Vo2Max hiit";
     case FTVo2MaxProfile:
       return "Vo2Max profile";
+    case FTTime2SunUp:
+      return "Time to sun rise";
+    case FTTime2SunDown:
+      return "Time to sun set";
+    case FTTime2SunUpDown:
+      return "Time to sun rise/set";
     default:
       return "unknown";
   }
@@ -1197,6 +1213,9 @@ function fieldHasFallback(fieldId as Number) as Boolean {
       FTEtr,
       FTVo2MaxHiit,
       FTVo2MaxProfile,
+      FTTime2SunUp,
+      FTTime2SunDown,
+      FTTime2SunUpDown,
     ].indexOf(fieldId) > -1
   );
 }

@@ -13,7 +13,11 @@ const FEET = 3.281;
 var gCreateColors as Boolean = false;
 var gUseSetFillStroke as Boolean = false;
 
-function getActivityValue(info as Activity.Info?, symbol as Symbol, dflt as Lang.Object) as Lang.Object {
+function getActivityValue(
+  info as Activity.Info?,
+  symbol as Symbol,
+  dflt as Lang.Object
+) as Lang.Object {
   if (info == null) {
     return dflt;
   }
@@ -312,7 +316,7 @@ const PERC_COLORS_GREEN_RED =
     [80, 230, 116, 341],
     [90, 211, 84, 0],
     [100, 255, 0, 0],
-    [999, 0, 0, 0], 
+    [999, 0, 0, 0],
   ] as Array<Array<Number> >;
 
 const PERC_COLORS_GREEN_TO_RED =
@@ -327,17 +331,17 @@ const PERC_COLORS_GREEN_TO_RED =
     [60, 255, 187, 51], // Saffron
     [70, 255, 153, 51], // Deep saffron
     [80, 255, 119, 51], // Mango tango
-    [90, 255, 85, 51],  // portland orange
-    [100, 255, 51, 51],   // deep carmine pink
-    [200, 128, 0, 0],   // maroon
-    [999, 102, 0, 0],   // rosewood
+    [90, 255, 85, 51], // portland orange
+    [100, 255, 51, 51], // deep carmine pink
+    [200, 128, 0, 0], // maroon
+    [999, 102, 0, 0], // rosewood
   ] as Array<Array<Number> >;
 
 // https://rgbcolorcode.com/color/FF3333
 const PERC_COLORS_RED_TO_GREEN =
   [
-    [0, 255, 51, 51],   // deep carmine pink
-    [10, 255, 85, 51],  // portland orange
+    [0, 255, 51, 51], // deep carmine pink
+    [10, 255, 85, 51], // portland orange
     [15, 255, 119, 51], // Mango tango
     [20, 255, 153, 51], // Deep saffron
     [30, 255, 187, 51], // Saffron
@@ -350,7 +354,6 @@ const PERC_COLORS_RED_TO_GREEN =
     [100, 51, 255, 85], // malachite
     [200, 51, 255, 255], // aqua
     [999, 102, 25, 255], // han purple
-     
   ] as Array<Array<Number> >;
 
 const PERC_COLORS_SCHEME =
@@ -371,7 +374,7 @@ const PERC_COLORS_SCHEME =
     [145, 215, 189, 226], // COLOR_WHITE_PURPLE_3
     [155, 210, 180, 222], // COLOR_WHITE_DK_PURPLE_3
     [165, 187, 143, 206], // COLOR_WHITE_DK_PURPLE_4
-    [999, 0, 0, 0], 
+    [999, 0, 0, 0],
   ] as Array<Array<Number> >;
 
 // alpha, 255 is solid, 0 is transparent
@@ -379,7 +382,7 @@ function percentageToColor(
   percentage as Numeric?,
   alpha as Number,
   colorScheme as Array<Array<Number> >,
-  shadePercentage as Number  
+  shadePercentage as Number
 ) as ColorType {
   var pcolor = 0;
   var pColors = colorScheme;
@@ -419,14 +422,14 @@ function percentageToColor(
   return shadeColor(alpha, red, green, blue, shadePercentage);
 }
 
-function min(valueA as Numeric, valueB as Numeric ) as Numeric {
+function min(valueA as Numeric, valueB as Numeric) as Numeric {
   if (valueA > valueB) {
     return valueB;
   }
   return valueA;
 }
 
-function max(valueA as Numeric, valueB as Numeric ) as Numeric {
+function max(valueA as Numeric, valueB as Numeric) as Numeric {
   if (valueA > valueB) {
     return valueA;
   }
@@ -434,24 +437,48 @@ function max(valueA as Numeric, valueB as Numeric ) as Numeric {
 }
 
 // percent > 0 lighten  color, percent < 0 darken
-function shadeColor(alpha as Number, red as Numeric, green as Numeric, blue as Numeric, percent as Number) as ColorType 
-{
+function shadeColor(
+  alpha as Number,
+  red as Numeric,
+  green as Numeric,
+  blue as Numeric,
+  percent as Number
+) as ColorType {
   if (percent != 0) {
     // System.println(["shadeColor - 1", alpha, red, green, blue, percent]);
-    red = (red * (100 + percent) / 100.0);
-    green = (green * (100 + percent) / 100.0);
-    blue = (blue * (100 + percent) / 100.0);
+    red = (red * (100 + percent)) / 100.0;
+    green = (green * (100 + percent)) / 100.0;
+    blue = (blue * (100 + percent)) / 100.0;
 
     red = min(red, 255);
     green = min(green, 255);
     blue = min(blue, 255);
     // System.println(["shadeColor - 2", alpha, red, green, blue, percent]);
   }
-  return Graphics.createColor(alpha, red.toNumber(), green.toNumber(), blue.toNumber());
+  return Graphics.createColor(
+    alpha,
+    red.toNumber(),
+    green.toNumber(),
+    blue.toNumber()
+  );
+}
+
+function getSecondsToNext(
+  momentStart as Moment?,
+  momentNext as Moment?
+) as Number {
+  if (momentStart == null || momentNext == null) {
+    return 0;
+  }
+  // remainingSeconds
+  return momentNext.value() - momentStart.value();
 }
 
 // template: "{h}:{m}:{s}:{ms}"
-function millisecondsToShortTimeString(totalMilliSeconds as Number, template as String) as String {
+function millisecondsToShortTimeString(
+  totalMilliSeconds as Number,
+  template as String
+) as String {
   if (totalMilliSeconds != null && totalMilliSeconds instanceof Lang.Number) {
     var hours = (totalMilliSeconds / (1000.0 * 60 * 60)).toNumber() % 24;
     var minutes = (totalMilliSeconds / (1000.0 * 60.0)).toNumber() % 60;
@@ -472,7 +499,10 @@ function millisecondsToShortTimeString(totalMilliSeconds as Number, template as 
 }
 
 // 1:40 or 150:40
-function secondsToCompactTimeString(totalSeconds as Number, template as String) as String {
+function secondsToCompactTimeString(
+  totalSeconds as Number,
+  template as String
+) as String {
   if (totalSeconds != null && totalSeconds instanceof Lang.Number) {
     var minutes = (totalSeconds / 60.0).toNumber();
     var seconds = totalSeconds.toNumber() % 60;
@@ -499,7 +529,27 @@ function secondsToHourMinutes(totalSeconds as Number) as String {
   return "";
 }
 
-function stringReplace(str as String, oldString as String, newString as String) as String {
+function getShortTimeString(moment as Time.Moment?) as String {
+  if (moment != null && moment instanceof Time.Moment) {
+    var date = Gregorian.info(moment, Time.FORMAT_SHORT);
+    return date.hour.format("%02d") + ":" + date.min.format("%02d");
+  }
+  return "";
+}
+
+function getLongTimeString(moment as Time.Moment?) as String {
+  if (moment != null && moment instanceof Time.Moment) {
+    var date = Gregorian.info(moment, Time.FORMAT_SHORT);
+    return date.day.format("%02d") + "-" + date.month.format("%02d") + "-" + date.year.format("%02d") + " " + date.hour.format("%02d") + ":" + date.min.format("%02d");
+  }
+  return "";
+}
+
+function stringReplace(
+  str as String,
+  oldString as String,
+  newString as String
+) as String {
   //str = str.toString(); // @@ TODO why crash here? -> because of too many nested function calls?
   if (str.length() == 0 || oldString.length() == 0) {
     return str;
@@ -510,7 +560,10 @@ function stringReplace(str as String, oldString as String, newString as String) 
   var count = 0;
   while (index != null && count < 30) {
     var indexEnd = index + oldString.length();
-    var res = result.substring(0, index) + newString + result.substring(indexEnd, result.length());
+    var res =
+      result.substring(0, index) +
+      newString +
+      result.substring(indexEnd, result.length());
     result = res;
     index = result.find(oldString);
     count = count + 1;
@@ -531,7 +584,11 @@ function stringLeft(str as String, marker as String, dflt as String) as String {
   return str.substring(0, index) as String;
 }
 
-function stringRight(str as String, marker as String, dflt as String) as String {
+function stringRight(
+  str as String,
+  marker as String,
+  dflt as String
+) as String {
   if (str.length() == 0 || marker.length() == 0) {
     return dflt;
   }
@@ -543,11 +600,21 @@ function stringRight(str as String, marker as String, dflt as String) as String 
   return str.substring(index + 1, str.length()) as String;
 }
 
-function pointOnCircle_x(x as Number, y as Number, radius as Number, angleInDegrees as Number) as Number {
+function pointOnCircle_x(
+  x as Number,
+  y as Number,
+  radius as Number,
+  angleInDegrees as Number
+) as Number {
   // Convert from degrees to radians
   return (radius * Math.cos(deg2rad(angleInDegrees)) + x).toNumber();
 }
-function pointOnCircle_y(x as Number, y as Number, radius as Number, angleInDegrees as Number) as Number {
+function pointOnCircle_y(
+  x as Number,
+  y as Number,
+  radius as Number,
+  angleInDegrees as Number
+) as Number {
   // Convert from degrees to radians
   return (radius * Math.sin(deg2rad(angleInDegrees)) + y).toNumber();
 }

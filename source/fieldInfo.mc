@@ -46,7 +46,7 @@ enum FieldLayout {
     FL8SSFields = 4
 }
 
-const FieldTypeCount = 34; // incl the 0
+const FieldTypeCount = 37; // incl the 0
 enum FieldType {
     FTUnknown = 0,
     FTDistance = 1,
@@ -82,6 +82,9 @@ enum FieldType {
     FTEtr = 31, // Estimated Time Remaining   x hour, x min
     FTVo2MaxHiit = 32, // Hiit Vo2max default
     FTVo2MaxProfile = 33, // Profile Vo2max default
+    FTTime2SunUp = 34,
+    FTTime2SunDown = 35,
+    FTTime2SunUpDown = 36,
     // @@ TODO
     // FTEnergyExpenditure = 24,
     // FTTrainingEffect = 25,

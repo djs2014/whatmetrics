@@ -4,11 +4,10 @@ Time to Sun up/down
 
     Active x minutes before
     Is off after event and before x event
+HasGraphic
+  -> target is towards 0 (from x before event)
 
-Pressure
-
-    Track x seconds - TODO configuration x seconds 0 - XX (calc rolling average)
-    
+x Pressure  
     If avg < current -> - down indicator
     If > -> + up indicator
 
