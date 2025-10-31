@@ -1073,65 +1073,65 @@ function getFieldLayoutAsString(fieldLayout as FieldLayout) as String {
 function getFieldTypeAsString(fieldType as FieldType) as String {
   switch (fieldType) {
     case FTUnknown:
-      return "unknown";
+      return "Unknown";
     case FTDistance:
-      return "distance";
+      return "Distance";
     case FTDistanceNext:
-      return "distance next";
+      return "Distance next";
     case FTDistanceDest:
-      return "distance dest";
+      return "Distance dest";
     case FTGrade:
-      return "grade";
+      return "Grade";
     case FTClock:
-      return "clock";
+      return "Clock";
     case FTHeartRate:
-      return "heartrate";
+      return "Heartrate";
     case FTPower:
-      return "power";
+      return "Power";
     case FTBearing:
-      return "bearing";
+      return "Bearing";
     case FTSpeed:
-      return "speed";
+      return "Speed";
     case FTAltitude:
-      return "altitude";
+      return "Altitude";
     case FTPressureAtSea:
-      return "pressure at sea";
+      return "Pressure at sea";
     case FTPressure:
-      return "pressure";
+      return "Pressure";
     case FTCadence:
-      return "cadence";
+      return "Cadence";
     case FTHiit:
-      return "hiit";
+      return "Hiit";
     case FTTimer:
-      return "timer";
+      return "Timer";
     case FTTimeElapsed:
-      return "time elapsed";
+      return "Time elapsed";
     case FTGearCombo:
-      return "gear combo";
+      return "Gear combo";
     case FTPowerPerWeight:
-      return "power per weight";
+      return "Power per weight";
     case FTPowerBalance:
-      return "power balance";
+      return "Power balance";
     case FTHeartRateZone:
-      return "heartrate zone";
+      return "Heartrate zone";
     case FTGearIndex:
-      return "gear index";
+      return "Gear index";
     case FTAverageSpeed:
-      return "avg speed";
+      return "Avg speed";
     case FTAverageHeartRate:
-      return "avg heartrate";
+      return "Avg heartrate";
     case FTAveragePower:
-      return "avg power";
+      return "Avg power";
     case FTAverageCadence:
-      return "avg cadence";
+      return "Avg cadence";
     case FTNormalizedPower:
-      return "normalized power";
+      return "Normalized power";
     case FTIntensityFactor:
-      return "intensity factor";
+      return "Intensity factor";
     case FTTrainingStressScore:
-      return "training stress score";
+      return "Training stress score";
     case FTCalories:
-      return "calories";
+      return "Calories";
     case FTEta:
       return "ET Arrival";
     case FTEtr:
@@ -1146,8 +1146,10 @@ function getFieldTypeAsString(fieldType as FieldType) as String {
       return "Time to sun set";
     case FTTime2SunUpDown:
       return "Time to sun rise/set";
+    case FTTime2SunUpDownLoop:
+      return "Time to sun r/s continous";
     default:
-      return "unknown";
+      return "Unknown";
   }
 }
 

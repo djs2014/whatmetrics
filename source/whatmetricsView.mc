@@ -1190,6 +1190,7 @@ class whatmetricsView extends WatchUi.DataField {
       case FTTime2SunUp:
       case FTTime2SunDown:
       case FTTime2SunUpDown:
+      case FTTime2SunUpDownLoop:
         if (mSunrise == null || mSunset == null) {
           fi.available = false;
           return fi;
@@ -1228,7 +1229,7 @@ class whatmetricsView extends WatchUi.DataField {
               fi.title = "Sunset in";
               fi.iconParam2 = -1;
               t2next = t2sunset;
-            } else {
+            } else if (fieldType == FTTime2SunUpDownLoop) {
               // Sun already set, get sunset for tomorrow
               t2sunrise = $.getSecondsToNext(Time.now(), mSunriseTomorrow);
               fi.title = "Sunrise in";
@@ -1363,18 +1364,10 @@ class whatmetricsView extends WatchUi.DataField {
       drawVo2MaxIcon(dc, x, y, width, height, fi.iconColor, fi.iconParam);
       return;
     }
-    if (fi.type == FTTime2SunUp || fi.type == FTTime2SunDown || fi.type == FTTime2SunUpDown) {
+    if (fi.type == FTTime2SunUp || fi.type == FTTime2SunDown || fi.type == FTTime2SunUpDown || fi.type == FTTime2SunUpDownLoop) {
       drawTime2SunIcon(dc, x, y, width, height, fi.iconColor, fi.iconParam.toNumber(), fi.iconParam2.toNumber());
       return;
     }
-    // if (fi.type == FTTime2SunDown) {
-    //   drawTime2SunIcon(dc, x, y, width, height, fi.iconColor, fi.iconParam, fi.iconParam2);
-    //   return;
-    // }
-    // if (fi.type == FTTime2SunUpDown) {
-    //   drawTime2SunIcon(dc, x, y, width, height, fi.iconColor, fi.iconParam, fi.iconParam2);
-    //   return;
-    // }
   }
 
   function drawFieldInfo(
