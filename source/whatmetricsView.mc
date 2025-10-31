@@ -1222,7 +1222,7 @@ class whatmetricsView extends WatchUi.DataField {
         }
 
         // When target specified, then field availble when in range.
-        fi.available = t2next > 0 && ($.gTargetSunEventSec == 0 || t2next < $.gTargetSunEventSec);
+        fi.available = t2next > 0 && ($.gTargetSunEventSec == 0 || (t2next < $.gTargetSunEventSec && $.gTargetSunEventSec > 0));
 
         if (fi.available) {
           fi.text = $.secondsToHourMinutes(t2next);

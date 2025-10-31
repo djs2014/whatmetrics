@@ -104,7 +104,8 @@ class whatmetricsApp extends Application.AppBase {
       setFallbackField(FTPowerPerWeight, FTDistance);
       setFallbackField(FTHeartRate, FTTimeElapsed);
       setFallbackField(FTHeartRateZone, FTTimeElapsed);
-      setFallbackField(FTHiit, FTClock);
+      setFallbackField(FTHiit, FTTime2SunUpDown);
+      setFallbackField(FTTime2SunUpDown, FTClock);
       setFallbackField(FTVo2MaxHiit, FTHiit);
       setFallbackField(FTAltitude, FTPressureAtSea);
       setFallbackField(FTEta, FTAltitude);
