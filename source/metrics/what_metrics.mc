@@ -51,7 +51,8 @@ class WhatMetrics {
   hidden var mShifting as ShiftListener? = null;
 
   // pressure - history
-  hidden var mPressurePerSec as Array<Float> = [] as Array<Float>;
+  hidden var mPressureTicks as Number = 0;
+  hidden var mAveragePressure as Double = 0d;
 
   function initialize() {}
 
@@ -153,21 +154,28 @@ class WhatMetrics {
 
   // -1 down, 0 stable, 1 up
   function getPressureTrend() as Number {
-    var pressure = (getActivityValue(a_info, :ambientPressure, 0.0f) as Float);
-    if (pressure == null) { return 0; }
-
-    var trend = 0;
-    if (mPressurePerSec.size() >= 10) {
-      var avg = Math.mean(mPressurePerSec as Array<Float>);
-      if (pressure < avg) {
-        trend = -1;
-      } else if (pressure > avg) {
-        trend = 1;
-      } 
-
-      mPressurePerSec = mPressurePerSec.slice(1, null);
+    var pressure = getActivityValue(a_info, :ambientPressure, 0.0f) as Float;
+    if (pressure == 0.0f) {
+      return 0;
     }
-    mPressurePerSec.add(pressure);
+
+    // Calc trend
+    var trend = 0;
+    if (pressure < mAveragePressure) {
+      trend = -1;
+    } else if (pressure > mAveragePressure) {
+      trend = 1;
+    }
+
+    // Add current to average
+    //Rolling average ( avg' * (n-1) + x ) / n
+    mPressureTicks = mPressureTicks + 1;
+    mAveragePressure =
+      (mAveragePressure * (mPressureTicks - 1) + pressure) /
+      mPressureTicks.toDouble();
+    // System.println(Lang.format("p $1$ ticks $2$ avg $3$", [pressure, mPressureTicks, mAveragePressure]));
+
+
     return trend;
   }
 

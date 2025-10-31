@@ -7,7 +7,8 @@ Time to Sun up/down
 
 Pressure
 
-    Track x seconds
+    Track x seconds - TODO configuration x seconds 0 - XX (calc rolling average)
+    
     If avg < current -> - down indicator
     If > -> + up indicator
 
