@@ -671,6 +671,9 @@ class whatmetricsView extends WatchUi.DataField {
     fieldIdx as Number
   ) as FieldInfo {
     var fi = new FieldInfo(fieldType, fieldIdx);
+    var useColor = $.gShowColors || $.gUseColorFields.indexOf(fi.type as Number) > -1;
+    // System.println($.gUseColorFields);
+    // System.println([fi.type, useColor]);
 
     switch (fieldType) {
       case FTDistance:
@@ -699,7 +702,7 @@ class whatmetricsView extends WatchUi.DataField {
         // @@TEST
         // System.println([fi.maxValue, fi.rawValue]);
         if (fi.maxValue > 0) {
-          fi.iconColor = getIconColor(fi.rawValue, fi.maxValue);
+          fi.iconColor = getIconColor(useColor, fi.rawValue, fi.maxValue);
         }
         return fi;
 
@@ -762,7 +765,7 @@ class whatmetricsView extends WatchUi.DataField {
 
         fi.rawValue = grade;
         fi.maxValue = $.gTargetGrade;
-        fi.iconColor = getIconColor(grade, $.gTargetGrade);
+        fi.iconColor = getIconColor(useColor, grade, $.gTargetGrade);
         fi.iconParam = g;
         return fi;
 
@@ -804,7 +807,7 @@ class whatmetricsView extends WatchUi.DataField {
 
         fi.rawValue = heartRate;
         fi.maxValue = $.gTargetHeartRate;
-        fi.iconColor = getIconColor(heartRate, $.gTargetHeartRate);
+        fi.iconColor = getIconColor(useColor, heartRate, $.gTargetHeartRate);
         return fi;
 
       case FTAveragePower:
@@ -837,7 +840,7 @@ class whatmetricsView extends WatchUi.DataField {
 
         fi.rawValue = power;
         fi.maxValue = $.gTargetFtp;
-        fi.iconColor = getIconColor(power, $.gTargetFtp);
+        fi.iconColor = getIconColor(useColor, power, $.gTargetFtp);
         return fi;
 
       case FTBearing:
@@ -863,7 +866,7 @@ class whatmetricsView extends WatchUi.DataField {
         fi.value = speed.format("%0.1f");
         fi.number = stringLeft(fi.value, ".", fi.value);
         fi.decimals = stringRight(fi.value, ".", "");
-        fi.iconColor = getIconColor(speed, $.gTargetSpeed);
+        fi.iconColor = getIconColor(useColor, speed, $.gTargetSpeed);
         fi.rawValue = speed;
         fi.maxValue = $.gTargetSpeed;
         return fi;
@@ -898,7 +901,7 @@ class whatmetricsView extends WatchUi.DataField {
         }
         fi.rawValue = altitude;
         fi.maxValue = $.gTargetAltitude;
-        fi.iconColor = getIconColor(altitude, $.gTargetAltitude);
+        fi.iconColor = getIconColor(useColor, altitude, $.gTargetAltitude);
 
         var totalAsc = mMetrics.getTotalAscent();
         if (totalAsc > 0) {
@@ -949,7 +952,7 @@ class whatmetricsView extends WatchUi.DataField {
         fi.available =
           mMetrics.getCadence() > 0 and
           (mCadenceFallbackCountdown > 0 or $.gCadenceCountdownToFallBack == 0);
-        fi.iconColor = getIconColor(cadence, $.gTargetCadence);
+        fi.iconColor = getIconColor(useColor, cadence, $.gTargetCadence);
         fi.rawValue = cadence;
         fi.maxValue = $.gTargetCadence;
         fi.minValue = $.gTargetCadenceLow;
@@ -988,7 +991,7 @@ class whatmetricsView extends WatchUi.DataField {
             percentile = mHiitt.getVo2MaxPercentile(vo2max);
             fi.iconColor = getIconColorRedToGreen(
               percentageOf(percentile, 100),
-              true
+              useColor
             );
           }
           if (mHiitt.isStartOfRecovery(10)) {
@@ -1013,7 +1016,7 @@ class whatmetricsView extends WatchUi.DataField {
                 percentile = mHiitt.getVo2MaxPercentile(vo2max);
                 fi.iconColor = getIconColorRedToGreen(
                   percentageOf(percentile, 100),
-                  true
+                  useColor
                 );
               }
             }
@@ -1063,7 +1066,7 @@ class whatmetricsView extends WatchUi.DataField {
           if (!mDrawBackgroundHiittIcon) {
             percentile = mHiitt.getVo2MaxPercentile(vo2maxHiit);
             var perc0 = percentageOf(percentile, 100);
-            fi.iconColor = getIconColorRedToGreen(perc0, true);
+            fi.iconColor = getIconColorRedToGreen(perc0, useColor);
           }
         }
         //System.println(["hiit", vo2maxProfile, vo2maxHiit]);
@@ -1195,7 +1198,7 @@ class whatmetricsView extends WatchUi.DataField {
         fi.title = "normalized power";
         fi.units = "w";
         fi.number = np.format("%0d");
-        fi.iconColor = getIconColor(np, $.gTargetFtp);
+        fi.iconColor = getIconColor(useColor, np, $.gTargetFtp);
         fi.rawValue = np;
         fi.maxValue = $.gTargetFtp;
         return fi;
@@ -1331,18 +1334,19 @@ class whatmetricsView extends WatchUi.DataField {
         }
         fi.iconColor = getIconColorRedToGreen(
           percentageOf(fi.rawValue, fi.maxValue),
-          false
+          useColor
         );
         return fi;
       case FTTime2SunUp:
       case FTTime2SunDown:
       case FTTime2SunUpDown:
       case FTTime2SunUpDownLoop:
+        fi.prefix = "~";
+        fi.text = "--:--";
         if (mSunrise == null || mSunset == null) {
           fi.available = false;
           return fi;
         }
-        fi.prefix = "~";
         fi.iconParam2 = 0;
         var t2next = 0;
         if (fieldType == FTTime2SunUp) {
@@ -1404,12 +1408,10 @@ class whatmetricsView extends WatchUi.DataField {
           fi.text = $.secondsToHourMinutes(t2next);
           var secondsLeftNext = t2next.toNumber() % 60;
           fi.decimals = secondsLeftNext.format("%02d");
-        } else {
-          fi.text = "--:--";
-        }
+        } 
 
         // TODO refactor use of gShowColors - check + option to override per field
-        if ($.gShowColors) {
+        if (useColor) {
           fi.iconColor = Graphics.COLOR_YELLOW;
         } else {
           fi.iconColor = mIconColor; // TODO fade to yellow?
@@ -1474,7 +1476,7 @@ class whatmetricsView extends WatchUi.DataField {
       );
       return;
     }
-    if (fi.type == FTHeartRate || fi.type == FTAverageHeartRate) {
+    if (fi.type == FTHeartRate || fi.type == FTAverageHeartRate || fi.type == FTHeartRateZone) {
       drawHeartIcon(
         dc,
         x,
@@ -1956,11 +1958,12 @@ class whatmetricsView extends WatchUi.DataField {
   }
 
   hidden function getIconColor(
+    useColor as Boolean,
     value as Numeric,
     maxValue as Numeric
   ) as Graphics.ColorType {
     mReverseColor = false;
-    if ($.gShowColors and $.gCreateColors) {
+    if (useColor and $.gCreateColors) {
       var perc = percentageOf(value, maxValue);
       var shade = 0;
       if (getBackgroundColor() == Graphics.COLOR_BLACK) {
@@ -1977,10 +1980,10 @@ class whatmetricsView extends WatchUi.DataField {
   hidden function getIconColorGreenToRed(
     value as Numeric,
     maxValue as Numeric,
-    showColor as Boolean
+    useColor as Boolean
   ) as Graphics.ColorType {
     mReverseColor = false; // @@ TODO <-- refactor
-    if ((showColor || $.gShowColors) and $.gCreateColors) {
+    if (useColor and $.gCreateColors) {
       var perc = percentageOf(value, maxValue);
       var shade = 10;
       if (getBackgroundColor() == Graphics.COLOR_BLACK) {
@@ -1996,10 +1999,10 @@ class whatmetricsView extends WatchUi.DataField {
 
   hidden function getIconColorGreenToRed2(
     perc as Numeric,
-    showColor as Boolean
+    useColor as Boolean
   ) as Graphics.ColorType {
     mReverseColor = false; // @@ TODO <-- refactor
-    if ((showColor || $.gShowColors) and $.gCreateColors) {
+    if (useColor and $.gCreateColors) {
       // var perc = percentageOf(value, maxValue);
       var shade = 10;
       if (getBackgroundColor() == Graphics.COLOR_BLACK) {
@@ -2016,10 +2019,10 @@ class whatmetricsView extends WatchUi.DataField {
   hidden function getIconColorRedToGreen(
     perc as Numeric,
     //maxValue as Numeric,
-    showColor as Boolean
+    useColor as Boolean
   ) as Graphics.ColorType {
     mReverseColor = false;
-    if ((showColor || $.gShowColors) and $.gCreateColors) {
+    if (useColor and $.gCreateColors) {
       // var perc = percentageOf(value, maxValue);
       var shade = 10;
       if (getBackgroundColor() == Graphics.COLOR_BLACK) {

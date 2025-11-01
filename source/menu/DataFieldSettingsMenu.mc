@@ -195,7 +195,6 @@ class DataFieldSettingsMenuDelegate extends WatchUi.Menu2InputDelegate {
       mi.setSubLabel($.getStorageNumberAsString(mi.getId() as String));
       targetMenu.addItem(mi);
 
-
       var boolean = Storage.getValue("target_distance_route") ? true : false;
       targetMenu.addItem(
         new WatchUi.ToggleMenuItem(
@@ -519,6 +518,39 @@ class DataFieldSettingsMenuDelegate extends WatchUi.Menu2InputDelegate {
       return;
     }
 
+    if (id instanceof String && id.equals("fieldcolors")) {
+      var fbMenu = new WatchUi.Menu2({ :title => "Use color for field" });
+
+      var fieldsUseColor =
+        getStorageValue("fields_usecolor", []) as Array<Number>;
+      // Fields, skip 0 (field Unknown)
+      for (var i = 1; i < $.FieldTypeCount; i++) {
+        if ($.fieldHasColor(i)) {
+          var field = i as FieldType;
+
+          // If field in array then enabled
+          var useColor = fieldsUseColor.indexOf(i) > -1;
+
+          var mi = new WatchUi.ToggleMenuItem(
+            $.getFieldTypeAsString(field),
+            null,
+            "fields_usecolor|" + i.format("%d"),
+            useColor,
+            null
+          );
+
+          fbMenu.addItem(mi);
+        }
+      }
+
+      WatchUi.pushView(
+        fbMenu,
+        new $.GeneralMenuDelegate(self, fbMenu),
+        WatchUi.SLIDE_UP
+      );
+      return;
+    }
+
     if (id instanceof String && id.equals("fallbackstriggers")) {
       var fbtMenu = new WatchUi.Menu2({ :title => "Fallback triggers" });
 
@@ -588,7 +620,6 @@ class DataFieldSettingsMenuDelegate extends WatchUi.Menu2InputDelegate {
       mi.setSubLabel($.getStorageNumberAsString(mi.getId() as String));
       avMenu.addItem(mi);
 
-
       var boolean = Storage.getValue("show_shiftingbattery") ? true : false;
       avMenu.addItem(
         new WatchUi.ToggleMenuItem(
@@ -642,6 +673,36 @@ class GeneralMenuDelegate extends WatchUi.Menu2InputDelegate {
   function onSelect(item as MenuItem) as Void {
     _item = item;
     var id = item.getId() as String;
+
+    // ToggleMenuItem! UseColor fields, storage in fields_usecolor
+    if (id.find("fields_usecolor|") != null && item instanceof ToggleMenuItem) {
+      var key = stringLeft(id, "|", "");
+      var index = stringRight(id, "|", "").toNumber();
+      if (key == "" || index == null) {
+        return;
+      }
+
+      var fieldTypeNumber = index as Number;
+      var fields = getStorageValue(key, []) as Array<Number>;
+
+      if (item.isEnabled()) {
+        // Add to storage array
+        if (fields.indexOf(fieldTypeNumber) < 0) {
+          fields.add(fieldTypeNumber);
+        }
+      } else {
+        // Remove from storage array
+        if (fields.indexOf(fieldTypeNumber) > -1) {
+          fields.remove(fieldTypeNumber);
+        }
+      }
+      Storage.setValue(
+        key,
+        fields as Lang.Array<Application.PropertyValueType>
+      );
+      // System.println(fields);
+      return;
+    }
 
     if (id instanceof String && item instanceof ToggleMenuItem) {
       Storage.setValue(id as String, item.isEnabled());
@@ -1228,6 +1289,7 @@ function fieldHasFallback(fieldId as Number) as Boolean {
       FTTime2SunUp,
       FTTime2SunDown,
       FTTime2SunUpDown,
+      FTTime2SunUpDownLoop, // Only when no position!
     ].indexOf(fieldId) > -1
   );
 }
@@ -1245,6 +1307,37 @@ function fieldHasGraphic(fieldId as Number) as Boolean {
       FTHeartRate,
       FTCalories,
       FTDistance,
+    ].indexOf(fieldId) > -1
+  );
+}
+
+function fieldHasColor(fieldId as Number) as Boolean {
+  return (
+    [
+      FTDistance,
+      FTGrade,
+      FTHeartRate,
+      FTPower,
+      FTSpeed,
+      FTAverageSpeed,
+      FTAltitude,
+      FTCadence,
+      // FTPowerPerWeight,
+      // FTPowerBalance,
+      FTHeartRateZone,
+      FTAverageHeartRate,
+      FTAveragePower,
+      FTAverageCadence,
+      FTNormalizedPower,
+      // FTIntensityFactor,
+      // FTTrainingStressScore,
+      FTHiit,
+      FTVo2MaxHiit,
+      FTVo2MaxProfile,
+      FTTime2SunUp,
+      FTTime2SunDown,
+      FTTime2SunUpDown,
+      FTTime2SunUpDownLoop,
     ].indexOf(fieldId) > -1
   );
 }

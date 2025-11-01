@@ -70,6 +70,8 @@ class DataFieldSettingsDelegate extends WatchUi.BehaviorDelegate {
     mi = new WatchUi.MenuItem("Fallback triggers", null, "fallbackstriggers", null);
     menu.addItem(mi);
 
+    mi = new WatchUi.MenuItem("Color fields", null, "fieldcolors", null);
+    menu.addItem(mi);
 
     var boolean = false;
 

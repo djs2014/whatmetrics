@@ -2,15 +2,15 @@ When grey -> use color per field
  arr fields with color[] -> see fallback fields logic
 use color no == grey, all = color, perfield , set per field
 
-Delayed Zen mode x seconds.
+x Delayed Zen mode x seconds.
 
 Icon wat platter
- Time to Sun up
-Time to Sun down
-Time to Sun up/down
+x Time to Sun up
+xTime to Sun down
+xTime to Sun up/down
 
-    Active x minutes before
-    Is off after event and before x event
+x    Active x minutes before
+x    Is off after event and before x event
 HasGraphic
   -> target is towards 0 (from x before event)
 
