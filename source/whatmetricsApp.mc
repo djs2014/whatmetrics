@@ -211,6 +211,7 @@ class whatmetricsApp extends Application.AppBase {
     $.gLargeFieldZen = getStorageValue("large_field_zen", $.gLargeFieldZen) as ZenMode;
     $.gWideFieldZen = getStorageValue("wide_field_zen", $.gWideFieldZen) as ZenMode;
     $.gSmallFieldZen = getStorageValue("small_field_zen", $.gSmallFieldZen) as ZenMode;
+    $.gZenCountdown = getStorageValue("zen_countdown", $.gZenCountdown) as Number;
 
     $.gFallbackFields =
       getStorageValue("fields_fallback", $.gFallbackFields as Lang.Array<Application.PropertyValueType>) as
@@ -369,6 +370,7 @@ var gGraphic_fields as Array<Number> = [] as Array<Number>;
 var gLargeFieldZen as ZenMode = ZMOff;
 var gWideFieldZen as ZenMode = ZMOff;
 var gSmallFieldZen as ZenMode = ZMOff;
+var gZenCountdown as Number = 10;
 
 var gLargeFieldBp as BarPosition = BPBottom;
 var gWideFieldBp as BarPosition = BPTop;

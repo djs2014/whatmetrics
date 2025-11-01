@@ -1,3 +1,10 @@
+When grey -> use color per field
+ arr fields with color[] -> see fallback fields logic
+use color no == grey, all = color, perfield , set per field
+
+Delayed Zen mode x seconds.
+
+Icon wat platter
  Time to Sun up
 Time to Sun down
 Time to Sun up/down

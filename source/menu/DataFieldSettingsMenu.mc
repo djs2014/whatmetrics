@@ -579,6 +579,16 @@ class DataFieldSettingsMenuDelegate extends WatchUi.Menu2InputDelegate {
       mi.setSubLabel($.getStorageNumberAsString(mi.getId() as String));
       avMenu.addItem(mi);
 
+      mi = new WatchUi.MenuItem(
+        "zen countdown|0~",
+        null,
+        "zen_countdown",
+        null
+      );
+      mi.setSubLabel($.getStorageNumberAsString(mi.getId() as String));
+      avMenu.addItem(mi);
+
+
       var boolean = Storage.getValue("show_shiftingbattery") ? true : false;
       avMenu.addItem(
         new WatchUi.ToggleMenuItem(
