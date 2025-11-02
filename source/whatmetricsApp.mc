@@ -167,6 +167,8 @@ class whatmetricsApp extends Application.AppBase {
         FTTime2SunDown,
         FTTime2SunUpDown,
         FTTime2SunUpDownLoop,
+        FTPerc2SunUpDown,
+        FTPerc2SunUpDownLoop,
       ];
       Storage.setValue(
         "fields_usecolor",

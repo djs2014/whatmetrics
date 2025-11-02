@@ -1219,6 +1219,10 @@ function getFieldTypeAsString(fieldType as FieldType) as String {
       return "Time to sun rise/set";
     case FTTime2SunUpDownLoop:
       return "Time to sun r/s continous";
+    case FTPerc2SunUpDown:
+      return "Perc to sun r/s";
+    case FTPerc2SunUpDownLoop:
+      return "Perc to sun r/s continous";
     default:
       return "Unknown";
   }
@@ -1307,6 +1311,8 @@ function fieldHasGraphic(fieldId as Number) as Boolean {
       FTHeartRate,
       FTCalories,
       FTDistance,
+      FTPerc2SunUpDown,
+      FTPerc2SunUpDownLoop,
     ].indexOf(fieldId) > -1
   );
 }
@@ -1338,6 +1344,8 @@ function fieldHasColor(fieldId as Number) as Boolean {
       FTTime2SunDown,
       FTTime2SunUpDown,
       FTTime2SunUpDownLoop,
+      FTPerc2SunUpDown,
+      FTPerc2SunUpDownLoop,
     ].indexOf(fieldId) > -1
   );
 }

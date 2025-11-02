@@ -123,6 +123,31 @@ function drawPercentageCircle(
   dc.setPenWidth(1.0);
 }
 
+function fillPercentageCircle(
+  dc as Dc,
+  x as Number,
+  y as Number,
+  radius as Number,
+  perc as Numeric
+) as Void {
+  if (perc == null || perc == 0) {
+    return;
+  }
+
+  if (perc >= 100.0) {
+    dc.fillCircle(x, y, radius);
+    return;
+  }
+  var degrees = 3.6 * perc;
+
+  var degreeStart = 180; // 180deg == 9 o-clock
+  var degreeEnd = degreeStart - degrees; // 90deg == 12 o-clock
+
+  dc.setPenWidth(radius);
+  dc.drawArc(x, y, radius / 2, Graphics.ARC_CLOCKWISE, degreeStart, degreeEnd);
+  dc.setPenWidth(1.0);
+}
+
 function meterToFeet(meter as Numeric?) as Float {
   if (meter == null) {
     return 0.0f;
@@ -540,7 +565,17 @@ function getShortTimeString(moment as Time.Moment?) as String {
 function getLongTimeString(moment as Time.Moment?) as String {
   if (moment != null && moment instanceof Time.Moment) {
     var date = Gregorian.info(moment, Time.FORMAT_SHORT);
-    return date.day.format("%02d") + "-" + date.month.format("%02d") + "-" + date.year.format("%02d") + " " + date.hour.format("%02d") + ":" + date.min.format("%02d");
+    return (
+      date.day.format("%02d") +
+      "-" +
+      date.month.format("%02d") +
+      "-" +
+      date.year.format("%02d") +
+      " " +
+      date.hour.format("%02d") +
+      ":" +
+      date.min.format("%02d")
+    );
   }
   return "";
 }

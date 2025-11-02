@@ -46,7 +46,7 @@ enum FieldLayout {
     FL8SSFields = 4
 }
 
-const FieldTypeCount = 38; // incl the 0
+const FieldTypeCount = 40; // incl the 0
 enum FieldType {
     FTUnknown = 0,
     FTDistance = 1,
@@ -86,6 +86,8 @@ enum FieldType {
     FTTime2SunDown = 35,
     FTTime2SunUpDown = 36, // Only sun up/down for today!
     FTTime2SunUpDownLoop = 37, 
+    FTPerc2SunUpDown = 38, 
+    FTPerc2SunUpDownLoop = 39, 
     // @@ TODO
     // FTEnergyExpenditure = 24,
     // FTTrainingEffect = 25,

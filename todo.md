@@ -1,4 +1,9 @@
-When grey -> use color per field
+% to Sunset  time - sr / ss 
+% to Sunrise  time - ss  / sr tomorrow
+Graphic field
+Bar under logo
+
+x When grey -> use color per field
  arr fields with color[] -> see fallback fields logic
 use color no == grey, all = color, perfield , set per field
 
