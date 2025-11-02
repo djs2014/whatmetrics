@@ -74,6 +74,7 @@ class whatmetricsView extends WatchUi.DataField {
   hidden var mFields as Array<Number> = [] as Array<Number>;
   hidden var mFieldLayout as FieldLayout = FL8Fields;
   hidden var mZenMode as ZenMode = ZMOff;
+  hidden var mZenHideDetails as Boolean = false;
   hidden var mBarPosition as BarPosition = BPOff;
   // hidden var mDisplaySize as String = "s";
 
@@ -289,6 +290,17 @@ class whatmetricsView extends WatchUi.DataField {
         mZenCountdown--;
       }
     }
+    // mZenMode set in layout event. Hide details yes/no
+    if (mZenMode == ZMOn) {
+      mZenHideDetails = true;
+    } else if (mZenMode == ZMOff) {
+      mZenHideDetails = false;
+    } else if (mZenMode == ZMWhenMoving) {
+      // mZenActive when not paused and countdown not bewteen 0 and $.gZenCountdown.
+      mZenHideDetails =
+        !mPaused && (mZenCountdown <= 0 || mZenCountdown >= $.gZenCountdown);
+    }
+
     var power = mMetrics.getPower();
     var perc = percentageOf(power, $.gTargetFtp);
     mHiitt.compute(info, perc, power);
@@ -1422,9 +1434,8 @@ class whatmetricsView extends WatchUi.DataField {
         return fi;
       case FTPerc2SunUpDown:
       case FTPerc2SunUpDownLoop:
-        fi.text = "--";
-
         if (mSunrise == null || mSunset == null) {
+          fi.text = "--";
           fi.available = false;
           return fi;
         }
@@ -1438,18 +1449,19 @@ class whatmetricsView extends WatchUi.DataField {
           // Perc to sunrise @@TODO get sunset yesterday
           fi.title = "% to Sunrise";
           fi.tag = "night";
-          fi.prefix = "night";
+          // fi.prefix = "night";
           fi.iconParam = -1;
           // approx hack
           var ssy_sec = ss_sec - 86400; // yesterday sunset ~ sunset min 1 day in seconds.
           // percent of nighttime
-          percOfTime = 100 - $.percentageOf(now_sec - ssy_sec, sr_sec - ssy_sec);
+          percOfTime =
+            100 - $.percentageOf(now_sec - ssy_sec, sr_sec - ssy_sec);
           fi.available = true;
         } else if (now_sec < ss_sec) {
           // Perc to sunset (today) 0 - 100
           fi.title = "% to Sunset";
           fi.tag = "day";
-          fi.prefix = "day";
+          // fi.prefix = "day";
           fi.iconParam = 1;
           // percent of day time
           percOfTime = 100 - $.percentageOf(now_sec - sr_sec, ss_sec - sr_sec);
@@ -1458,7 +1470,7 @@ class whatmetricsView extends WatchUi.DataField {
           // Perc to sunrise tomorrow
           fi.title = "% to Sunrise";
           fi.tag = "night";
-          fi.prefix = "night";
+          // fi.prefix = "night";
           fi.iconParam = -1;
           // percent of nighttime
           percOfTime = 100 - $.percentageOf(now_sec - ss_sec, srt_sec - ss_sec);
@@ -1468,9 +1480,10 @@ class whatmetricsView extends WatchUi.DataField {
         // Will go from 0 - 100% when target (sunset/sunrise) reached
         fi.rawValue = 100 - percOfTime;
         fi.maxValue = 100;
-        // Day / night count down to 0% 
-        fi.text = percOfTime.format("%0d");
-        fi.units = "%";
+        // Only icon
+        // Day / night count down to 0%
+        // fi.text = percOfTime.format("%0d");
+        // fi.units = "%";
         if (useColor) {
           fi.iconColor = Graphics.COLOR_YELLOW;
         } else {
@@ -1758,18 +1771,19 @@ class whatmetricsView extends WatchUi.DataField {
       }
     }
 
-    var hideDetails = false;
+    // var hideDetails = false;
     if (fieldInfo.type != FTHiit) {
-      if (mZenMode == ZMOn) {
-        hideDetails = true;
-      } else if (mZenMode == ZMOff) {
-        hideDetails = false;
-      } else if (mZenMode == ZMWhenMoving) {
-        // Hide details when not paused and countdown not bewteen 0 and $.gZenCountdown.
-        hideDetails =
-          !mPaused && (mZenCountdown <= 0 || mZenCountdown >= $.gZenCountdown);
-      }
-      if (hideDetails) {
+      // hideDetails = mZenHideDetails;
+      // if (mZenMode == ZMOn) {
+      //   hideDetails = true;
+      // } else if (mZenMode == ZMOff) {
+      //   hideDetails = false;
+      // } else if (mZenMode == ZMWhenMoving) {
+      //   // Hide details when not paused and countdown not bewteen 0 and $.gZenCountdown.
+      //   hideDetails =
+      //     !mPaused && (mZenCountdown <= 0 || mZenCountdown >= $.gZenCountdown);
+      // }
+      if (mZenHideDetails) {
         text_botleft = "";
         text_botright = "";
         units = "";
@@ -2692,30 +2706,48 @@ class whatmetricsView extends WatchUi.DataField {
 
     var x1 = x + width / 2;
     var y1 = y + height / 2;
-    var r = (width / 2.5);
+    var r = width / 2.5;
     if (width > height) {
       r = height / 2.5;
     }
     r = r.toNumber();
 
+    System.println(["eventType", eventType]);
     if (eventType > 0) {
-      // The sun  
+      // The sun
       dc.fillCircle(x1, y1, r);
       // Remove perc of it
       setColorFillStroke(dc, mBackgroundColor);
       $.fillPercentageCircle(dc, x1, y1, r, percOfToEvent);
       setColorFillStroke(dc, color);
     } else if (eventType < 0) {
-      // The moon  
+      // The moon
       // Already drawn at the end
       // Add perc of it
-      $.fillPercentageCircle(dc, x1, y1, r, 100 -percOfToEvent);
+      $.fillPercentageCircle(dc, x1, y1, r, percOfToEvent);
     }
 
     dc.setPenWidth(2);
     dc.drawCircle(x1, y1, r);
     dc.setPenWidth(1);
 
+    if (mZenHideDetails) {
+      return;
+    }
+
+    // Perc of day/night time 100 -> 0
+    var perc = (100 - percOfToEvent).format("%0d");
+    var font =
+      $.getMatchingFont(dc, mFontsNumbers, width, height, perc) as FontType;
+
+    dc.setColor(mFontColor, Graphics.COLOR_TRANSPARENT);
+    dc.drawText(
+      x1,
+      y1,
+      font,
+      perc,
+      Graphics.TEXT_JUSTIFY_CENTER | Graphics.TEXT_JUSTIFY_VCENTER
+    );
   }
 
   hidden function drawCadenceIcon(
