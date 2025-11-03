@@ -1422,10 +1422,13 @@ class whatmetricsView extends WatchUi.DataField {
           var secondsLeftNext = t2next.toNumber() % 60;
           fi.decimals = secondsLeftNext.format("%02d");
         }
-
-        // TODO refactor use of gShowColors - check + option to override per field
+        
         if (useColor) {
-          fi.iconColor = Graphics.COLOR_YELLOW;
+          if (fi.iconParam2 >= 1) {
+            fi.iconColor = Graphics.COLOR_YELLOW;
+          } else {
+            fi.iconColor = Graphics.COLOR_RED;
+          }
         } else {
           fi.iconColor = mIconColor; // TODO fade to yellow?
         }
@@ -1689,7 +1692,7 @@ class whatmetricsView extends WatchUi.DataField {
       return;
     }
     if (fi.type == FTPerc2SunUpDown || fi.type == FTPerc2SunUpDownLoop) {
-      drawPer2SunIcon(
+      drawPerc2SunIcon(
         dc,
         x,
         y,
@@ -2691,7 +2694,7 @@ class whatmetricsView extends WatchUi.DataField {
     }
   }
 
-  hidden function drawPer2SunIcon(
+  hidden function drawPerc2SunIcon(
     dc as Dc,
     x as Number,
     y as Number,
