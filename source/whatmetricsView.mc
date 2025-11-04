@@ -1356,7 +1356,7 @@ class whatmetricsView extends WatchUi.DataField {
       case FTTime2SunUpDownLoop:
         fi.prefix = "~";
         fi.text = "--:--";
-        if (mSunrise == null || mSunset == null) {
+        if (mSunrise == null || mSunset == null || mSunriseTomorrow == null) {
           fi.available = false;
           return fi;
         }
@@ -1409,7 +1409,7 @@ class whatmetricsView extends WatchUi.DataField {
           // System.println(["FTTime2Sun next", t2next ]);
         }
 
-        // When target specified, then field availble when in range.
+        // When target specified, then field availble when in range (x min before).
         fi.available =
           t2next > 0 &&
           ($.gTargetSunEventSec == 0 ||
@@ -1417,12 +1417,13 @@ class whatmetricsView extends WatchUi.DataField {
 
         //System.println(["FTTime2Sun i.available", fi.available, t2next, $.gTargetSunEventSec ]);
 
-        if (fi.available) {
+        // Always show data, if no fallback field then still data to show
+        //if (fi.available) {
           fi.text = $.secondsToHourMinutes(t2next);
           var secondsLeftNext = t2next.toNumber() % 60;
           fi.decimals = secondsLeftNext.format("%02d");
-        }
-        
+        //}
+
         if (useColor) {
           if (fi.iconParam2 >= 1) {
             fi.iconColor = Graphics.COLOR_YELLOW;

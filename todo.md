@@ -3,6 +3,13 @@
 Graphic field
 Bar under logo
 
+Bug in sunrise/set loop -> toont -- : — ipv tijd sunset (in de ochtend)
+ -> only available before 60 m target, no bug
+
+Graphics color yellow fade to light .. Icon color sunset/rise
+-perc is bar from right to left
+onSunsetChange use part of geo loc
+
 x When grey -> use color per field
  arr fields with color[] -> see fallback fields logic
 use color no == grey, all = color, perfield , set per field
