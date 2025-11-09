@@ -97,8 +97,8 @@ enum FieldType {
 
 enum ZenMode {
     ZMOff = 0,
-    ZMOn = 2,
-    ZMWhenMoving = 3 // on when moving
+    ZMOn = 1,
+    ZMWhenMoving = 2 // on when moving
 }
 
 enum BarPosition {

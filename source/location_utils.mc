@@ -13,6 +13,8 @@ class CurrentLocation {
   hidden var mLat as Lang.Double = 0.0d;
   hidden var mLon as Lang.Double = 0.0d;
   hidden var mLocation as Location?;
+  hidden var mStorageLatestLocation as String = "latest_latlng";
+
   hidden function setLocation(location as Location?) as Void {
     if (location == null) {
       return;
@@ -23,12 +25,12 @@ class CurrentLocation {
       return;
     }
     var lat = degrees[0].toDouble();
-    var lon = degrees[1].toDouble();    
+    var lon = degrees[1].toDouble();
     if (lat == null || lon == null) {
       return;
     }
     if (lat != 0 && lon != 0 && mLat != lat && mLon != lon) {
-      Storage.setValue("latest_latlng", degrees); // [lat,lng]
+      Storage.setValue(mStorageLatestLocation, degrees); // [lat,lng]
       System.println("Update cached location lat/lon: " + degrees);
     }
     mLat = lat;
@@ -42,23 +44,47 @@ class CurrentLocation {
   hidden var mSunsetTomorrow as Moment?;
 
   var methodLocationChanged as Method?;
-  function setOnLocationChanged(objInstance as Object?, callback as Symbol) as Void {
+  function setOnLocationChanged(
+    objInstance as Object?,
+    callback as Symbol
+  ) as Void {
     methodLocationChanged = new Lang.Method(objInstance, callback) as Method;
   }
+
+  // Sunrise sunset changed @@TODO
+  var methodSunEventChanged as Method?;
+  function setOnSunEventChanged(
+    objInstance as Object?,
+    callback as Symbol
+  ) as Void {
+    methodSunEventChanged = new Lang.Method(objInstance, callback) as Method;
+  }
+
   function initialize() {}
 
   function hasLocation() as Boolean {
-    if (mLat == 0.0 && mLon == 0.0) {
-      var degrees = Storage.getValue("latest_latlng");
+    if (
+      (mLat == 0.0 || mLat >= 179.99 || mLat <= -179.99) &&
+      (mLon == 0.0 || mLon >= 179.99 || mLon <= -179.99)
+    ) {
+      var degrees = Storage.getValue(mStorageLatestLocation);
       if (degrees != null) {
         mLat = (degrees as Array)[0] as Double;
         mLon = (degrees as Array)[1] as Double;
         mAccuracy = Position.QUALITY_LAST_KNOWN;
-        System.println("Using cached location lat/lon: " + [mLat, mLon] + " accuracy: " + mAccuracy);
+        System.println(
+          "Using cached location lat/lon: " +
+            [mLat, mLon] +
+            " accuracy: " +
+            mAccuracy
+        );
       }
     }
 
-    if ((mLat == 0.0 || mLat >= 179.99 || mLat <= -179.99) && (mLon == 0.0 || mLon >= 179.99 || mLon <= -179.99)) {
+    if (
+      (mLat == 0.0 || mLat >= 179.99 || mLat <= -179.99) &&
+      (mLon == 0.0 || mLon >= 179.99 || mLon <= -179.99)
+    ) {
       //System.println("Invalid location lat/lon: " + [mLat, mLon] + " accuracy: " + mAccuracy);
       return false;
     }
@@ -91,7 +117,7 @@ class CurrentLocation {
     if (mAccuracy == null) {
       return "Not available";
     }
-    
+
     switch (mAccuracy as Quality) {
       case 0:
         return "Not available";
@@ -115,11 +141,19 @@ class CurrentLocation {
 
       if (info has :currentLocation && info.currentLocation != null) {
         location = info.currentLocation as Location;
-        if (info has :currentLocationAccuracy && info.currentLocationAccuracy != null) {
+        if (
+          info has :currentLocationAccuracy &&
+          info.currentLocationAccuracy != null
+        ) {
           mAccuracy = info.currentLocationAccuracy;
         }
         if (locationChanged(location)) {
-          System.println("Activity location lat/lon: " + location.toDegrees() + " accuracy: " + mAccuracy);
+          System.println(
+            "Activity location lat/lon: " +
+              location.toDegrees() +
+              " accuracy: " +
+              mAccuracy
+          );
           setSunRiseAndSunSet(location);
           onLocationChanged();
         }
@@ -133,7 +167,12 @@ class CurrentLocation {
             mAccuracy = posnInfo.accuracy;
           }
           if (locationChanged(location)) {
-            System.println("Position location lat/lon: " + location.toDegrees() + " accuracy: " + mAccuracy);
+            System.println(
+              "Position location lat/lon: " +
+                location.toDegrees() +
+                " accuracy: " +
+                mAccuracy
+            );
             setSunRiseAndSunSet(location);
             onLocationChanged();
           }
@@ -153,33 +192,38 @@ class CurrentLocation {
     if (methodLocationChanged == null) {
       return;
     }
-    (methodLocationChanged as Method).invoke(getCurrentDegrees() as Array<Double>);    
+    (methodLocationChanged as Method).invoke(
+      getCurrentDegrees() as Array<Double>
+    );
   }
+
   hidden function locationChanged(location as Location?) as Boolean {
+    // Ignore invalid locations
     if (location == null) {
-      if (mLocation == null) {
-        return false;
-      } else {
-        return true;
-      }
+      return false;
     }
-    if (mLocation == null) {
-      return true;
+
+    var newLocation = location as Location;
+    if (!validLocation(newLocation)) {
+      // System.println(["New location is invalid", newLocation.toDegrees()]);
+      return false;
     }
+
     // This will crash the compiler when on strict level
     // if (mLocation == null && location == null ){ return false; }
     // if ( (mLocation != null && location == null) || (mLocation == null && location != null) ){ return true; }
 
+    // No current location, so new is better.
+    if (mLocation == null) {
+      return true;
+    }
     var currentLocation = mLocation as Location;
     var currentDegrees = currentLocation.toDegrees();
 
-    var newLocation = location as Location;
-    if (!validLocation(newLocation)) {
-      return false;
-    }
-
     var newDegrees = newLocation.toDegrees();
-    return newDegrees[0] != currentDegrees[0] && newDegrees[1] != currentDegrees[1];
+    return (
+      newDegrees[0] != currentDegrees[0] && newDegrees[1] != currentDegrees[1]
+    );
   }
 
   hidden function validLocation(location as Location?) as Boolean {
@@ -188,8 +232,13 @@ class CurrentLocation {
     }
     var degrees = (location as Location).toDegrees();
 
-    if ((degrees[0] >= 179.99 || degrees[0] <= -179.99) && (degrees[1] >= 179.99 || degrees[1] <= -179.99)) {
-      //System.println("Invalid location lat/lon: " + degrees + " accuracy: " + mAccuracy);
+    if (
+      (degrees[0] >= 179.99 || degrees[0] <= -179.99) &&
+      (degrees[1] >= 179.99 || degrees[1] <= -179.99)
+    ) {
+      System.println(
+        "Invalid location lat/lon: " + degrees + " accuracy: " + mAccuracy
+      );
       return false;
     }
     return true;
@@ -200,16 +249,25 @@ class CurrentLocation {
     if (location == null) {
       return;
     }
+    
     // Note: is sunrise of current day. So will return date before now() if the sun has rised already. Same for sunset.
     mSunrise = Weather.getSunrise(location as Location, Time.now()); // ex: 13-6-2022 05:20:43
     mSunset = Weather.getSunset(location as Location, Time.now()); // ex: 13-6-2022 22:02:25
+
     // Sunrise tomorrow
     var today = new Time.Moment(Time.today().value());
     var oneDay = new Time.Duration(Gregorian.SECONDS_PER_DAY);
     var tomorrow = today.add(oneDay);
     mSunriseTomorrow = Weather.getSunrise(location as Location, tomorrow); // ex: 14-6-2022 05:20:43
     mSunsetTomorrow = Weather.getSunset(location as Location, tomorrow); // ex: 14-6-2022 05:20:43
-    System.println("Sunrise:" + $.getLongTimeString(mSunrise) + " Sunset: " + $.getLongTimeString(mSunset) + "Sunrise Tomorrow" + $.getLongTimeString(mSunriseTomorrow));
+    System.println(
+      "Sunrise: " +
+        $.getLongTimeString(mSunrise) +
+        " Sunset: " +
+        $.getLongTimeString(mSunset) +
+        "Sunrise Tomorrow: " +
+        $.getLongTimeString(mSunriseTomorrow)
+    );
   }
 
   function isAtDaylightTime(time as Moment?, defValue as Boolean) as Boolean {
@@ -230,14 +288,25 @@ class CurrentLocation {
   }
 
   // Note: is sunrise of current day. So will return date before now() if the sun has rised already.
-  function getSunrise() as Moment? { return mSunrise; }
+  function getSunrise() as Moment? {
+    return mSunrise;
+  }
   // Note: is sunrise of current day. So will return date before now() if the sun has rised already.
-  function getSunset() as Moment? { return mSunset; }
+  function getSunset() as Moment? {
+    return mSunset;
+  }
 
-  function getSunriseTomorrow() as Moment? { return mSunriseTomorrow; }
-  function getSunsetTomorrow() as Moment? { return mSunsetTomorrow; }
+  function getSunriseTomorrow() as Moment? {
+    return mSunriseTomorrow;
+  }
+  function getSunsetTomorrow() as Moment? {
+    return mSunsetTomorrow;
+  }
 
-  function getRelativeToObservation(latObservation as Double, lonObservation as Double) as String {
+  function getRelativeToObservation(
+    latObservation as Double,
+    lonObservation as Double
+  ) as String {
     if (!hasLocation() || latObservation == 0.0 || lonObservation == 0.0) {
       return "";
     }
@@ -248,16 +317,30 @@ class CurrentLocation {
     var lonCurrent = degrees[1];
 
     var distanceMetric = "km";
-    var distance = $.getDistanceFromLatLonInKm(latCurrent, lonCurrent, latObservation, lonObservation);
+    var distance = $.getDistanceFromLatLonInKm(
+      latCurrent,
+      lonCurrent,
+      latObservation,
+      lonObservation
+    );
 
     var deviceSettings = System.getDeviceSettings();
     if (deviceSettings.distanceUnits == System.UNIT_STATUTE) {
       distance = $.kilometerToMile(distance);
       distanceMetric = "m";
     }
-    var bearing = $.getRhumbLineBearing(latCurrent, lonCurrent, latObservation, lonObservation);
+    var bearing = $.getRhumbLineBearing(
+      latCurrent,
+      lonCurrent,
+      latObservation,
+      lonObservation
+    );
     var compassDirection = $.getCompassDirection(bearing);
 
-    return format("$1$ $2$ ($3$)", [distance.format("%.2f"), distanceMetric, compassDirection]);
+    return format("$1$ $2$ ($3$)", [
+      distance.format("%.2f"),
+      distanceMetric,
+      compassDirection,
+    ]);
   }
 }

@@ -82,6 +82,7 @@ class whatmetricsView extends WatchUi.DataField {
   hidden var mDemoFt as FieldType = FTUnknown;
   hidden var mDemoFields_Counter as Number = -1;
   hidden var mBackgroundColor as Graphics.ColorType = 0xffffff;
+  hidden var mBackgroundIsWhite as Boolean = false;
   hidden var mGraphicFieldHeight as Number = 0;
   hidden var mGraphicLineHeight as Number = 5;
 
@@ -89,7 +90,10 @@ class whatmetricsView extends WatchUi.DataField {
   hidden var mSunrise as Moment?;
   hidden var mSunset as Moment?;
   hidden var mSunriseTomorrow as Moment?;
+
+  hidden var mDayLiteTime as Boolean;
   // hidden var mSunsetTomorrow as Moment?;
+  hidden var mTestTick as Number = 0;
 
   // hidden var mGrade as Double = 0.0d;
   function initialize() {
@@ -126,6 +130,7 @@ class whatmetricsView extends WatchUi.DataField {
     mSunrise = mCurrentLocation.getSunrise();
     mSunset = mCurrentLocation.getSunset();
     mSunriseTomorrow = mCurrentLocation.getSunriseTomorrow();
+    mDayLiteTime = mCurrentLocation.isAtDaylightTime(Time.now(), true);
     // mSunsetTomorrow = mCurrentLocation.getSunsetTomorrow();
   }
 
@@ -291,6 +296,7 @@ class whatmetricsView extends WatchUi.DataField {
       }
     }
     // mZenMode set in layout event. Hide details yes/no
+    // So works only if one metrics field is on screen
     if (mZenMode == ZMOn) {
       mZenHideDetails = true;
     } else if (mZenMode == ZMOff) {
@@ -302,7 +308,7 @@ class whatmetricsView extends WatchUi.DataField {
     }
 
     var power = mMetrics.getPower();
-    var perc = percentageOf(power, $.gTargetFtp);
+    var perc = percentageOf(power, 0, $.gTargetFtp);
     mHiitt.compute(info, perc, power);
 
     if (power > 0.0) {
@@ -348,7 +354,9 @@ class whatmetricsView extends WatchUi.DataField {
     mIconColor = mIconColorDay;
     var barColor = mBarColorDay;
     var barDividerColor = mBackgroundColor;
+    mBackgroundIsWhite = true;
     if (mBackgroundColor == Graphics.COLOR_BLACK) {
+      mBackgroundIsWhite = false;
       mFontColor = Graphics.COLOR_WHITE;
       mDecimalsColor = mDecimalsColorNight;
       mUnitsColor = mUnitsColorNight;
@@ -424,7 +432,7 @@ class whatmetricsView extends WatchUi.DataField {
         0,
         dc.getWidth(),
         dc.getHeight(),
-        getIconColorRedToGreen(percentageOf(percentile, 100), true),
+        getIconColorRedToGreen(percentageOf(percentile, 0, 100), true),
         0,
         improving
       );
@@ -477,7 +485,7 @@ class whatmetricsView extends WatchUi.DataField {
         ) {
           if (fi.maxValue > 0 && fi.minValue <= 0) {
             // 100% if close to upperbound (ignore lowerbound)
-            focusPerc = percentageOf(fi.rawValue, fi.maxValue);
+            focusPerc = percentageOf(fi.rawValue, 0, fi.maxValue);
             hasUpper = true;
           } else if (
             fi.maxValue > 0 &&
@@ -485,14 +493,15 @@ class whatmetricsView extends WatchUi.DataField {
             fi.maxValue > fi.minValue
           ) {
             // 0% if close to lowerbound and 100% if close to upperbound
-            focusPerc = percentageOf(
-              fi.rawValue - fi.minValue,
-              fi.maxValue - fi.minValue
-            );
+            focusPerc = percentageOf(fi.rawValue, fi.minValue, fi.maxValue);
+            // focusPerc = percentageOf(
+            //   fi.rawValue - fi.minValue,
+            //   fi.maxValue - fi.minValue
+            // );
             hasUpper = true;
             hasLower = true;
           } else if (fi.maxValue <= 0 && fi.minValue > 0) {
-            focusPerc = percentageOf(fi.rawValue - fi.minValue, fi.minValue);
+            focusPerc = percentageOf(fi.rawValue - fi.minValue, 0, fi.minValue);
             hasLower = true;
           }
 
@@ -586,7 +595,7 @@ class whatmetricsView extends WatchUi.DataField {
           // if (efi.type == FTHeartRateZone) {
           //   efi.rawValue = efi.rawValue + 1;
           // }
-          var ePerc = $.percentageOf(efi.rawValue, efi.maxValue);
+          var ePerc = $.percentageOf(efi.rawValue, 0, efi.maxValue);
           var eColor = barColor;
           if ($.gCreateColors) {
             eColor = $.percentageToColor(
@@ -1003,7 +1012,7 @@ class whatmetricsView extends WatchUi.DataField {
             // fi.iconColor = COLOR_LT_BLUE;
             percentile = mHiitt.getVo2MaxPercentile(vo2max);
             fi.iconColor = getIconColorRedToGreen(
-              percentageOf(percentile, 100),
+              percentageOf(percentile, 0, 100),
               useColor
             );
           }
@@ -1028,7 +1037,7 @@ class whatmetricsView extends WatchUi.DataField {
                 //fi.iconColor = Graphics.COLOR_GREEN;
                 percentile = mHiitt.getVo2MaxPercentile(vo2max);
                 fi.iconColor = getIconColorRedToGreen(
-                  percentageOf(percentile, 100),
+                  percentageOf(percentile, 0, 100),
                   useColor
                 );
               }
@@ -1078,7 +1087,7 @@ class whatmetricsView extends WatchUi.DataField {
           vo2maxHiit = mHiitt.getAverageHiitScore();
           if (!mDrawBackgroundHiittIcon) {
             percentile = mHiitt.getVo2MaxPercentile(vo2maxHiit);
-            var perc0 = percentageOf(percentile, 100);
+            var perc0 = percentageOf(percentile, 0, 100);
             fi.iconColor = getIconColorRedToGreen(perc0, useColor);
           }
         }
@@ -1346,7 +1355,7 @@ class whatmetricsView extends WatchUi.DataField {
           }
         }
         fi.iconColor = getIconColorRedToGreen(
-          percentageOf(fi.rawValue, fi.maxValue),
+          percentageOf(fi.rawValue, fi.minValue, fi.maxValue),
           useColor
         );
         return fi;
@@ -1354,38 +1363,28 @@ class whatmetricsView extends WatchUi.DataField {
       case FTTime2SunDown:
       case FTTime2SunUpDown:
       case FTTime2SunUpDownLoop:
-        fi.prefix = "~";
         fi.text = "--:--";
         if (mSunrise == null || mSunset == null || mSunriseTomorrow == null) {
           fi.available = false;
           return fi;
         }
         fi.iconParam2 = 0;
+
         var t2next = 0;
         if (fieldType == FTTime2SunUp) {
-          fi.prefix = "^";
           fi.title = "Sunrise in";
           fi.iconParam2 = 1;
           t2next = $.getSecondsToNext(Time.now(), mSunrise);
-          // if (t2next < 0) {
-          //   t2next = $.getSecondsToNext(Time.now(), mSunriseTomorrow);
-          // }
           // System.println(["FTTime2SunUp", t2next ]);
         } else if (fieldType == FTTime2SunDown) {
-          fi.prefix = "v";
           fi.title = "Sunset in";
           fi.iconParam2 = -1;
           t2next = $.getSecondsToNext(Time.now(), mSunset);
-          // if (t2next < 0) {
-          //   t2next = $.getSecondsToNext(Time.now(), mSunsetTomorrow);
-          // }
-          // System.println(["FTTime2SunDown", t2next ]);
         } else {
           var t2sunrise = $.getSecondsToNext(Time.now(), mSunrise);
 
           if (t2sunrise > 0) {
             // Sun is not rised yet.
-            fi.prefix = "^";
             fi.title = "Sunrise in";
             fi.iconParam2 = 1;
             t2next = t2sunrise;
@@ -1393,14 +1392,12 @@ class whatmetricsView extends WatchUi.DataField {
             // Sun is already rised. Sunset will be next.
             var t2sunset = $.getSecondsToNext(Time.now(), mSunset);
             if (t2sunset > 0) {
-              fi.prefix = "v";
               fi.title = "Sunset in";
               fi.iconParam2 = -1;
               t2next = t2sunset;
             } else if (fieldType == FTTime2SunUpDownLoop) {
               // Sun already set, get sunset for tomorrow
               t2sunrise = $.getSecondsToNext(Time.now(), mSunriseTomorrow);
-              fi.prefix = "^";
               fi.title = "Sunrise in";
               fi.iconParam2 = 1;
               t2next = t2sunrise;
@@ -1415,20 +1412,24 @@ class whatmetricsView extends WatchUi.DataField {
           ($.gTargetSunEventSec == 0 ||
             (t2next < $.gTargetSunEventSec && $.gTargetSunEventSec > 0));
 
-        //System.println(["FTTime2Sun i.available", fi.available, t2next, $.gTargetSunEventSec ]);
+        // System.println([
+        //   "FTTime2Sun i.available",
+        //   fi.available,
+        //   t2next,
+        //   $.gTargetSunEventSec,
+        //   colorFactor,
+        // ]);
 
         // Always show data, if no fallback field then still data to show
-        //if (fi.available) {
-          fi.text = $.secondsToHourMinutes(t2next);
-          var secondsLeftNext = t2next.toNumber() % 60;
-          fi.decimals = secondsLeftNext.format("%02d");
-        //}
+        fi.text = $.secondsToHourMinutes(t2next);
+        var secondsLeftNext = t2next.toNumber() % 60;
+        fi.decimals = secondsLeftNext.format("%02d");
 
         if (useColor) {
-          if (fi.iconParam2 >= 1) {
-            fi.iconColor = Graphics.COLOR_YELLOW;
+          if ($.gCreateColors) {
+            fi.iconColor = getSunColor(60);
           } else {
-            fi.iconColor = Graphics.COLOR_RED;
+            fi.iconColor = Graphics.COLOR_YELLOW;
           }
         } else {
           fi.iconColor = mIconColor; // TODO fade to yellow?
@@ -1453,33 +1454,36 @@ class whatmetricsView extends WatchUi.DataField {
           // Perc to sunrise @@TODO get sunset yesterday
           fi.title = "% to Sunrise";
           fi.tag = "night";
-          // fi.prefix = "night";
           fi.iconParam = -1;
           // approx hack
           var ssy_sec = ss_sec - 86400; // yesterday sunset ~ sunset min 1 day in seconds.
           // percent of nighttime
-          percOfTime =
-            100 - $.percentageOf(now_sec - ssy_sec, sr_sec - ssy_sec);
+          percOfTime = 100 - $.percentageOf(now_sec, ssy_sec, sr_sec);
+          // percOfTime =
+          //   100 - $.percentageOf(now_sec - ssy_sec, sr_sec - ssy_sec);
           fi.available = true;
         } else if (now_sec < ss_sec) {
           // Perc to sunset (today) 0 - 100
           fi.title = "% to Sunset";
           fi.tag = "day";
-          // fi.prefix = "day";
           fi.iconParam = 1;
           // percent of day time
-          percOfTime = 100 - $.percentageOf(now_sec - sr_sec, ss_sec - sr_sec);
+          // percOfTime = 100 - $.percentageOf(now_sec - sr_sec, ss_sec - sr_sec);
+          percOfTime = 100 - $.percentageOf(now_sec, sr_sec, ss_sec);
           fi.available = true;
         } else if (fieldType == FTPerc2SunUpDownLoop) {
           // Perc to sunrise tomorrow
           fi.title = "% to Sunrise";
           fi.tag = "night";
-          // fi.prefix = "night";
           fi.iconParam = -1;
           // percent of nighttime
-          percOfTime = 100 - $.percentageOf(now_sec - ss_sec, srt_sec - ss_sec);
+          percOfTime = 100 - $.percentageOf(now_sec, ss_sec, srt_sec);
+          // percOfTime = 100 - $.percentageOf(now_sec - ss_sec, srt_sec - ss_sec);
           fi.available = true;
         }
+        // TODO test getSunColor colors
+        // mTestTick = mTestTick + 1;
+        // percOfTime = percOfTime - mTestTick;
 
         // Will go from 0 - 100% when target (sunset/sunrise) reached
         fi.rawValue = 100 - percOfTime;
@@ -1489,14 +1493,50 @@ class whatmetricsView extends WatchUi.DataField {
         // fi.text = percOfTime.format("%0d");
         // fi.units = "%";
         if (useColor) {
-          fi.iconColor = Graphics.COLOR_YELLOW;
+          if ($.gCreateColors) {
+            fi.iconColor = getSunColor(percOfTime);
+          } else {
+            fi.iconColor = Graphics.COLOR_YELLOW;
+          }
         } else {
           fi.iconColor = mIconColor; // TODO fade to yellow?
         }
+        // System.println([
+        //   "FTTPerc2Sun percOfTime mDayLiteTime",
+        //   percOfTime,
+        //   mDayLiteTime,
+        // ]);
         return fi;
     }
 
     return fi;
+  }
+
+  function getSunColor(percent as Number) as ColorType {
+    var red;
+    var green;
+    var blue;
+    if (mDayLiteTime) {
+      // Yellow
+      red = 230;
+      green = 220;
+      blue = 55;
+    } else {
+      // Orange
+      red = 250;
+      green = 190;
+      blue = 55;
+    }
+    if (mBackgroundIsWhite) {
+      // Lighten  -> towards 0 getting less lighten
+      // System.println(["SunColor light", percent / 4]);
+      return $.shadeColor(100, red, green, blue, percent / 4);
+    } else {
+      // darken -> towards 0 getting less darken
+      // System.println(["SunColor dark", -1 * (percent / 2)]);
+      return $.shadeColor(100, red, green, blue, -1 * (percent / 2));
+      //
+    }
   }
 
   function drawFieldBackground(
@@ -2058,7 +2098,7 @@ class whatmetricsView extends WatchUi.DataField {
   ) as Graphics.ColorType {
     mReverseColor = false;
     if (useColor and $.gCreateColors) {
-      var perc = percentageOf(value, maxValue);
+      var perc = percentageOf(value, 0, maxValue);
       var shade = 0;
       if (getBackgroundColor() == Graphics.COLOR_BLACK) {
         shade = -30;
@@ -2078,7 +2118,7 @@ class whatmetricsView extends WatchUi.DataField {
   ) as Graphics.ColorType {
     mReverseColor = false; // @@ TODO <-- refactor
     if (useColor and $.gCreateColors) {
-      var perc = percentageOf(value, maxValue);
+      var perc = percentageOf(value, 0, maxValue);
       var shade = 10;
       if (getBackgroundColor() == Graphics.COLOR_BLACK) {
         shade = -30;
@@ -2665,7 +2705,12 @@ class whatmetricsView extends WatchUi.DataField {
     eventType as Number
   ) as Void {
     // eventType 1 is sunrise, -1 sunset
-    setColorFillStroke(dc, color);
+    setColorFillStroke(dc, mIconColor);
+    if (eventType > 0) {
+      drawArrowUp(dc, x, y + 1, width / 5, height - 2);
+    } else {
+      drawArrowDown(dc, x, y + 1, width / 5, height - 2);
+    }
 
     var x1 = x + width / 2;
     var y1 = y + height / 2;
@@ -2674,6 +2719,7 @@ class whatmetricsView extends WatchUi.DataField {
       r = height / 3; //2.5;
     }
 
+    setColorFillStroke(dc, color);
     dc.fillCircle(x1, y1, r);
 
     if (eventType > 0) {
@@ -2716,14 +2762,13 @@ class whatmetricsView extends WatchUi.DataField {
     }
     r = r.toNumber();
 
-    System.println(["eventType", eventType]);
+    // System.println(["drawPerc2SunIcon eventType", eventType]);
     if (eventType > 0) {
       // The sun
       dc.fillCircle(x1, y1, r);
       // Remove perc of it
       setColorFillStroke(dc, mBackgroundColor);
       $.fillPercentageCircle(dc, x1, y1, r, percOfToEvent);
-      setColorFillStroke(dc, color);
     } else if (eventType < 0) {
       // The moon
       // Already drawn at the end
@@ -2731,13 +2776,18 @@ class whatmetricsView extends WatchUi.DataField {
       $.fillPercentageCircle(dc, x1, y1, r, percOfToEvent);
     }
 
-    dc.setPenWidth(2);
+    setColorFillStroke(dc, mIconColor);
+    // dc.setPenWidth(2);
     dc.drawCircle(x1, y1, r);
-    dc.setPenWidth(1);
+    // dc.setPenWidth(1);
+
+    // System.println(["Draw", percOfToEvent, mZenHideDetails]);
 
     if (mZenHideDetails) {
       return;
     }
+
+    // setColorFillStroke(dc, color);
 
     // Perc of day/night time 100 -> 0
     var perc = (100 - percOfToEvent).format("%0d");

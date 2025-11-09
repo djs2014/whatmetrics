@@ -1,14 +1,13 @@
-% to Sunset  time - sr / ss 
-% to Sunrise  time - ss  / sr tomorrow
-Graphic field
-Bar under logo
+sync location_utils to other CIQ projects!!
+?? onSunsetChange use part of geo loc (sunset/sunrise is only for current day (based on the time))
+?? cache sunrise/set data -> not working day can be diff
 
-Bug in sunrise/set loop -> toont -- : — ipv tijd sunset (in de ochtend)
- -> only available before 60 m target, no bug
+fallback when paused
+update Readme
+create arrow up / down  
 
 Graphics color yellow fade to light .. Icon color sunset/rise
 -perc is bar from right to left
-onSunsetChange use part of geo loc
 
 x When grey -> use color per field
  arr fields with color[] -> see fallback fields logic

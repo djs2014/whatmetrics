@@ -46,15 +46,34 @@ function getStorageValue(
   return dflt;
 }
 
-function percentageOf(value as Numeric?, max as Numeric?) as Numeric {
+// Given min and max value, calculate the perc of value in this range.
+function percentageOf(value as Numeric?, min as Numeric, max as Numeric?) as Numeric {
   if (value == null || max == null) {
     return 0.0f;
   }
+  
   if (max <= 0) {
     return 0.0f;
   }
-  return value / (max / 100.0);
+  var calculatedValue = value - min;
+  var calculatedMax = max - min;
+  if (calculatedMax <= 0) {
+    // min should be smaller than max
+    return 0.0f;
+  }
+
+  return calculatedValue / (calculatedMax / 100.0);
 }
+
+// function percentageOf(value as Numeric?, max as Numeric?) as Numeric {
+//   if (value == null || max == null) {
+//     return 0.0f;
+//   }
+//   if (max <= 0) {
+//     return 0.0f;
+//   }
+//   return value / (max / 100.0);
+// }
 
 function drawPercentageLine(
   dc as Dc,
@@ -320,6 +339,7 @@ function setColorFillStroke(dc as Dc, color as Graphics.ColorType) as Void {
     dc.setColor(Graphics.COLOR_TRANSPARENT, Graphics.COLOR_TRANSPARENT);
     dc.setFill(color);
     dc.setStroke(color);
+    // System.println("fill and stroke?");
   } else {
     dc.setColor(color, Graphics.COLOR_TRANSPARENT);
   }
