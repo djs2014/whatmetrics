@@ -2938,6 +2938,13 @@ class whatmetricsView extends WatchUi.DataField {
       return;
     }
 
+    setColorFillStroke(dc, mIconColor);
+    if (trend > 0) {
+      drawArrowUp(dc, x, y + 1, width / 5, height - 2);
+    } else if (trend < 0) {
+      drawArrowDown(dc, x, y + 1, width / 5, height - 2);
+    }
+
     var m0 = height / 8;
 
     var m = (height / 5).toNumber();
@@ -2968,28 +2975,28 @@ class whatmetricsView extends WatchUi.DataField {
 
     dc.drawLine(x1 - m0, y3, x5 + m0, y3);
 
-    if (trend != 0) {
-      var font;
-      var trendIndicator;
+    // if (trend != 0) {
+    //   var font;
+    //   var trendIndicator;
 
-      dc.setColor(Graphics.COLOR_LT_GRAY, Graphics.COLOR_TRANSPARENT);
-      if (trend < 0) {
-        trendIndicator = "-";
-      } else {
-        trendIndicator = "+";
-      }
-      font =
-        $.getMatchingFont(dc, mFontsNumbers, width, height, trendIndicator) as
-        FontType;
+    //   dc.setColor(Graphics.COLOR_LT_GRAY, Graphics.COLOR_TRANSPARENT);
+    //   if (trend < 0) {
+    //     trendIndicator = "-";
+    //   } else {
+    //     trendIndicator = "+";
+    //   }
+    //   font =
+    //     $.getMatchingFont(dc, mFontsNumbers, width, height, trendIndicator) as
+    //     FontType;
 
-      dc.drawText(
-        x + 1,
-        y + height - dc.getFontHeight(font),
-        font,
-        trendIndicator,
-        Graphics.TEXT_JUSTIFY_LEFT // | Graphics.TEXT_JUSTIFY_VCENTER
-      );
-    }
+    //   dc.drawText(
+    //     x + 1,
+    //     y + height - dc.getFontHeight(font),
+    //     font,
+    //     trendIndicator,
+    //     Graphics.TEXT_JUSTIFY_LEFT // | Graphics.TEXT_JUSTIFY_VCENTER
+    //   );
+    // }
   }
 
   hidden function drawPressureIcon(
@@ -3003,6 +3010,13 @@ class whatmetricsView extends WatchUi.DataField {
   ) as Void {
     if (!gShowIcon) {
       return;
+    }
+
+   setColorFillStroke(dc, mIconColor);
+    if (trend > 0) {
+      drawArrowUp(dc, x, y + 1, width / 5, height - 2);
+    } else if (trend < 0) {
+      drawArrowDown(dc, x, y + 1, width / 5, height - 2);
     }
 
     var m0 = height / 8;
@@ -3032,28 +3046,28 @@ class whatmetricsView extends WatchUi.DataField {
       ] as Array<Point2D>
     );
 
-    if (trend != 0) {
-      var font;
-      var trendIndicator;
+    // if (trend != 0) {
+    //   var font;
+    //   var trendIndicator;
 
-      dc.setColor(Graphics.COLOR_LT_GRAY, Graphics.COLOR_TRANSPARENT);
-      if (trend < 0) {
-        trendIndicator = "-";
-      } else {
-        trendIndicator = "+";
-      }
-      font =
-        $.getMatchingFont(dc, mFontsNumbers, width, height, trendIndicator) as
-        FontType;
+    //   dc.setColor(Graphics.COLOR_LT_GRAY, Graphics.COLOR_TRANSPARENT);
+    //   if (trend < 0) {
+    //     trendIndicator = "-";
+    //   } else {
+    //     trendIndicator = "+";
+    //   }
+    //   font =
+    //     $.getMatchingFont(dc, mFontsNumbers, width, height, trendIndicator) as
+    //     FontType;
 
-      dc.drawText(
-        x + 1,
-        y + height - dc.getFontHeight(font),
-        font,
-        trendIndicator,
-        Graphics.TEXT_JUSTIFY_LEFT // | Graphics.TEXT_JUSTIFY_VCENTER
-      );
-    }
+    //   dc.drawText(
+    //     x + 1,
+    //     y + height - dc.getFontHeight(font),
+    //     font,
+    //     trendIndicator,
+    //     Graphics.TEXT_JUSTIFY_LEFT // | Graphics.TEXT_JUSTIFY_VCENTER
+    //   );
+    // }
   }
 
   hidden function showDebugValues(dc as Dc) as Void {

@@ -1,3 +1,4 @@
+arrw up down pressure trend
 sync location_utils to other CIQ projects!!
 ?? onSunsetChange use part of geo loc (sunset/sunrise is only for current day (based on the time))
 ?? cache sunrise/set data -> not working day can be diff

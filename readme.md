@@ -53,7 +53,6 @@ Per different datafield size (large, wide, small) you can specify
 - Percentage to sun rise/set continuous (of current day and next day sunrise)
 
 
-@@TODO
 
 
 Configuration can be done using on-device settings.
@@ -88,6 +87,7 @@ Specify your optimal values. Based on these values the color of the icons are ca
 - Target distance. Use for the Estimated time arrival/remaining field.
 - Route as distance. When a route/course is active, use its distance as target distance.
 - Target sun rise/set in minutes. How many minutes before sunrise or sunset the field is active / displayed.
+    - This affects the time to sunrise fields, but NOT the perc to sunrise / sunset fields
 - Focus on field. 
     - When on, show a (colored) bar around the field to focus its value.
 - Focus perc of target
