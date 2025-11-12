@@ -1,4 +1,6 @@
 // 2024-05-26 setLocation lat/lon toDouble
+// 2025-11-10 location changed fix
+// 2025-11-11 do not cache sunrise/set
 import Toybox.Activity;
 import Toybox.Graphics;
 import Toybox.Lang;
@@ -38,12 +40,8 @@ class CurrentLocation {
   }
 
   hidden var mAccuracy as Quality? = Position.QUALITY_NOT_AVAILABLE;
-  hidden var mSunrise as Moment?;
-  hidden var mSunset as Moment?;
-  hidden var mSunriseTomorrow as Moment?;
-  hidden var mSunsetTomorrow as Moment?;
 
-  var methodLocationChanged as Method?;
+  hidden var methodLocationChanged as Method?;
   function setOnLocationChanged(
     objInstance as Object?,
     callback as Symbol
@@ -52,13 +50,13 @@ class CurrentLocation {
   }
 
   // Sunrise sunset changed @@TODO
-  var methodSunEventChanged as Method?;
-  function setOnSunEventChanged(
-    objInstance as Object?,
-    callback as Symbol
-  ) as Void {
-    methodSunEventChanged = new Lang.Method(objInstance, callback) as Method;
-  }
+  // var methodSunEventChanged as Method?;
+  // function setOnSunEventChanged(
+  //   objInstance as Object?,
+  //   callback as Symbol
+  // ) as Void {
+  //   methodSunEventChanged = new Lang.Method(objInstance, callback) as Method;
+  // }
 
   function initialize() {}
 
@@ -154,7 +152,7 @@ class CurrentLocation {
               " accuracy: " +
               mAccuracy
           );
-          setSunRiseAndSunSet(location);
+          // setSunRiseAndSunSet(location);
           onLocationChanged();
         }
       }
@@ -173,7 +171,7 @@ class CurrentLocation {
                 " accuracy: " +
                 mAccuracy
             );
-            setSunRiseAndSunSet(location);
+            // setSunRiseAndSunSet(location);
             onLocationChanged();
           }
         }
@@ -245,62 +243,124 @@ class CurrentLocation {
   }
 
   // Gives sunrise and sunset for current day.
-  hidden function setSunRiseAndSunSet(location as Location?) as Void {
-    if (location == null) {
-      return;
-    }
-    
-    // Note: is sunrise of current day. So will return date before now() if the sun has rised already. Same for sunset.
-    mSunrise = Weather.getSunrise(location as Location, Time.now()); // ex: 13-6-2022 05:20:43
-    mSunset = Weather.getSunset(location as Location, Time.now()); // ex: 13-6-2022 22:02:25
+  // hidden function setSunRiseAndSunSet(location as Location?) as Void {
+  //   if (location == null) {
+  //     return;
+  //   }
 
-    // Sunrise tomorrow
-    var today = new Time.Moment(Time.today().value());
-    var oneDay = new Time.Duration(Gregorian.SECONDS_PER_DAY);
-    var tomorrow = today.add(oneDay);
-    mSunriseTomorrow = Weather.getSunrise(location as Location, tomorrow); // ex: 14-6-2022 05:20:43
-    mSunsetTomorrow = Weather.getSunset(location as Location, tomorrow); // ex: 14-6-2022 05:20:43
-    System.println(
-      "Sunrise: " +
-        $.getLongTimeString(mSunrise) +
-        " Sunset: " +
-        $.getLongTimeString(mSunset) +
-        "Sunrise Tomorrow: " +
-        $.getLongTimeString(mSunriseTomorrow)
-    );
-  }
+  //   // Note: is sunrise of current day. So will return date before now() if the sun has rised already. Same for sunset.
+  //   mSunrise = Weather.getSunrise(location as Location, Time.now()); // ex: 13-6-2022 05:20:43
+  //   mSunset = Weather.getSunset(location as Location, Time.now()); // ex: 13-6-2022 22:02:25
+
+  //   // Sunrise tomorrow
+  //   var today = new Time.Moment(Time.today().value());
+  //   var oneDay = new Time.Duration(Gregorian.SECONDS_PER_DAY);
+  //   var tomorrow = today.add(oneDay);
+  //   mSunriseTomorrow = Weather.getSunrise(location as Location, tomorrow); // ex: 14-6-2022 05:20:43
+  //   mSunsetTomorrow = Weather.getSunset(location as Location, tomorrow); // ex: 14-6-2022 05:20:43
+  //   System.println(
+  //     "Sunrise: " +
+  //       $.getLongTimeString(mSunrise) +
+  //       " Sunset: " +
+  //       $.getLongTimeString(mSunset) +
+  //       "Sunrise Tomorrow: " +
+  //       $.getLongTimeString(mSunriseTomorrow)
+  //   );
+  // }
 
   function isAtDaylightTime(time as Moment?, defValue as Boolean) as Boolean {
-    if (time == null || mSunrise == null || mSunset == null) {
+    if (!validLocation(mLocation)) {
       return defValue;
     }
 
-    // System.println("Sunrise:" + $.getShortTimeString(mSunrise) + "test: " +  $.getShortTimeString(time) + " sunset: " + $.getShortTimeString(mSunset) );
-    return (
-      (mSunrise as Moment).value() <= (time as Moment).value() &&
-      (time as Moment).value() <= (mSunset as Moment).value()
-    );
+    if (time == null) {
+      return defValue;
+    }
+
+    // Note: is sunrise of current day (from time parameter).
+    var sunrise = Weather.getSunrise(mLocation as Location, time); // ex: 13-6-2022 05:20:43
+    var sunset = Weather.getSunset(mLocation as Location, time); // ex: 13-6-2022 22:02:25
+
+    var dayLightTime =
+      (sunrise as Moment).value() <= (time as Moment).value() &&
+      (time as Moment).value() <= (sunset as Moment).value();
+    System.println([
+      "IsDayLight:",
+      dayLightTime.toString(),
+      "Sunrise:",
+      $.getLongTimeString(sunrise),
+      " sunset:",
+      $.getLongTimeString(sunset),
+      " when:",
+      $.getLongTimeString(time),
+    ]);
+
+    return dayLightTime;
   }
 
   function isAtNightTime(time as Moment?, defValue as Boolean) as Boolean {
-    // mSunrise < mSunset
-    return !isAtDaylightTime(time, !defValue); // ! default value
+    if (!validLocation(mLocation)) {
+      return defValue;
+    }
+
+    if (time == null) {
+      return defValue;
+    }
+
+    // Note: is sunrise of current day (from time parameter).
+    var sunrise = Weather.getSunrise(mLocation as Location, time); // ex: 13-6-2022 05:20:43
+    var sunset = Weather.getSunset(mLocation as Location, time); // ex: 13-6-2022 22:02:25
+
+var nightTime =
+      (time as Moment).value() < (sunrise as Moment).value() ||
+      (sunset as Moment).value() <= (time as Moment).value();
+
+    System.println([
+      "IsAtNight:",
+      nightTime.toString(),
+      "Sunrise:",
+      $.getLongTimeString(sunrise),
+      " sunset:",
+      $.getLongTimeString(sunset),
+      " when:",
+      $.getLongTimeString(time),
+    ]);
+
+    return nightTime;
   }
 
   // Note: is sunrise of current day. So will return date before now() if the sun has rised already.
   function getSunrise() as Moment? {
-    return mSunrise;
+    if (!validLocation(mLocation)) {
+      return null;
+    }
+    return Weather.getSunrise(mLocation as Location, Time.now());
   }
   // Note: is sunrise of current day. So will return date before now() if the sun has rised already.
   function getSunset() as Moment? {
-    return mSunset;
+    if (!validLocation(mLocation)) {
+      return null;
+    }
+    return Weather.getSunset(mLocation as Location, Time.now());
   }
 
   function getSunriseTomorrow() as Moment? {
-    return mSunriseTomorrow;
+    if (!validLocation(mLocation)) {
+      return null;
+    }
+    var today = new Time.Moment(Time.today().value());
+    var oneDay = new Time.Duration(Gregorian.SECONDS_PER_DAY);
+    var tomorrow = today.add(oneDay);
+    return Weather.getSunrise(mLocation as Location, tomorrow); // ex: 14-6-2022 05:20:43
   }
   function getSunsetTomorrow() as Moment? {
-    return mSunsetTomorrow;
+    if (!validLocation(mLocation)) {
+      return null;
+    }
+    var today = new Time.Moment(Time.today().value());
+    var oneDay = new Time.Duration(Gregorian.SECONDS_PER_DAY);
+    var tomorrow = today.add(oneDay);
+    return Weather.getSunset(mLocation as Location, tomorrow); // ex: 14-6-2022 05:20:43
   }
 
   function getRelativeToObservation(

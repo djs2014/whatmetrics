@@ -2859,18 +2859,34 @@ class whatmetricsView extends WatchUi.DataField {
 
     var hours = (timeInMilliSeconds / (1000.0 * 60 * 60)).toNumber() % 24;
     var minutes = (timeInMilliSeconds / (1000.0 * 60.0)).toNumber() % 60;
+    var seconds = (timeInMilliSeconds / 1000.0).toNumber() % 60;
 
-    var hDeg = (hours * 30 - 90) % 360;
-    var mDeg = (minutes * 6 - 90) % 360;
-    var xc1 = pointOnCircle_x(x1, y1, r, hDeg);
-    var yc1 = pointOnCircle_y(x1, y1, r, hDeg);
-    var xc2 = pointOnCircle_x(x1, y1, r - 2, mDeg);
-    var yc2 = pointOnCircle_y(x1, y1, r - 2, mDeg);
+    // hour angle = 30 * hour + 0.5 * minute + 0.5 / 60 X second
+    var hDeg =
+      ((hours * 30 + 0.5 * minutes + (0.5 / 60) * seconds).toNumber() % 360) +
+      90;
+    // minute angle = 6 * minute + 0.1 * second
+    var mDeg = ((minutes * 6 + 0.1 * seconds)  - 90).toNumber() % 360;
+    // Second angle = 6 * second (Each minute is 6 degrees; each second adds 0.1 degrees.)
+    // var sDeg = ((seconds * 6).toNumber() % 360) - 30; // - 24;
 
-    dc.drawLine(x1, y1, xc1, yc1);
+    System.println(["h,m,s:", hDeg, mDeg]); // , sDeg]);
+
+    var xhour = pointOnCircle_x(x1, y1, r, hDeg);
+    var yhour = pointOnCircle_y(x1, y1, r, hDeg);
+
+    var xminute = pointOnCircle_x(x1, y1, r - 2, mDeg);
+    var yminute = pointOnCircle_y(x1, y1, r - 2, mDeg);
+
+    // var xsecond = pointOnCircle_x(x1, y1, r - 3, sDeg);
+    // var ysecond = pointOnCircle_y(x1, y1, r - 3, sDeg);
+
+    dc.drawLine(x1, y1, xhour, yhour);
     dc.setPenWidth(2);
-    dc.drawLine(x1, y1, xc2, yc2);
+    dc.drawLine(x1, y1, xminute, yminute);
     dc.setPenWidth(1);
+    // dc.drawLine(x1, y1, xsecond, ysecond);
+    // dc.setPenWidth(1);
 
     if (hourPart > 0) {
       var hourString = hourPart.format("%0d");
@@ -3012,7 +3028,7 @@ class whatmetricsView extends WatchUi.DataField {
       return;
     }
 
-   setColorFillStroke(dc, mIconColor);
+    setColorFillStroke(dc, mIconColor);
     if (trend > 0) {
       drawArrowUp(dc, x, y + 1, width / 5, height - 2);
     } else if (trend < 0) {
