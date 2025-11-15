@@ -620,6 +620,15 @@ class DataFieldSettingsMenuDelegate extends WatchUi.Menu2InputDelegate {
       mi.setSubLabel($.getStorageNumberAsString(mi.getId() as String));
       avMenu.addItem(mi);
 
+      mi = new WatchUi.MenuItem(
+        "Sunevent difference|0.0~10 (deg)",
+        null,
+        "sunevent_degrees_difference",
+        null
+      );
+      mi.setSubLabel($.getStorageNumberAsString(mi.getId() as String) + " deg");
+      avMenu.addItem(mi);
+
       var boolean = Storage.getValue("show_shiftingbattery") ? true : false;
       avMenu.addItem(
         new WatchUi.ToggleMenuItem(
@@ -810,9 +819,9 @@ class GeneralMenuDelegate extends WatchUi.Menu2InputDelegate {
       var idx = index as Number;
       var label = "Set fallback: " + $.getFieldTypeAsString(idx as FieldType);
       var sp = new selectionMenuPicker(label, id as String);
-      for (var i = 0; i < $.FieldTypeCount; i++) {
-        sp.add($.getFieldTypeAsString(i as FieldType), null, i);
-      }
+        for (var i = 0; i < $.FieldTypeCount; i++) {
+          sp.add($.getFieldTypeAsString(i as FieldType), null, i);
+        }
       sp.setOnSelected(self, :onSelectedFieldFallback, item);
       sp.show();
       return;
@@ -828,11 +837,11 @@ class GeneralMenuDelegate extends WatchUi.Menu2InputDelegate {
       var idx = index as Number;
       var label = "Line: " + $.getFieldTypeAsString(idx as FieldType);
       var sp = new selectionMenuPicker(label, id as String);
-      for (var i = 0; i < $.FieldTypeCount; i++) {
-        if ($.fieldHasGraphic(i)) {
-          sp.add($.getFieldTypeAsString(i as FieldType), null, i);
+        for (var i = 0; i < $.FieldTypeCount; i++) {
+          if ($.fieldHasGraphic(i)) {
+            sp.add($.getFieldTypeAsString(i as FieldType), null, i);
+          }
         }
-      }
       sp.setOnSelected(self, :onSelectedField, item);
       sp.show();
       return;
@@ -856,9 +865,9 @@ class GeneralMenuDelegate extends WatchUi.Menu2InputDelegate {
       }
 
       var sp = new selectionMenuPicker("Field " + idx, id as String);
-      for (var i = 0; i < $.FieldTypeCount; i++) {
-        sp.add($.getFieldTypeAsString(i as FieldType), null, i);
-      }
+        for (var i = 0; i < $.FieldTypeCount; i++) {
+          sp.add($.getFieldTypeAsString(i as FieldType), null, i);
+        }
       sp.setOnSelected(self, :onSelectedField, item);
       sp.show();
       return;

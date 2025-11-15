@@ -5,7 +5,7 @@ import Toybox.UserProfile;
 
 class whatmetricsApp extends Application.AppBase {
   function initialize() {
-    AppBase.initialize();
+    AppBase.initialize();    
   }
 
   // onStart() is called on application start up
@@ -162,7 +162,7 @@ class whatmetricsApp extends Application.AppBase {
       $.gUseColorFields = [
         FTHeartRate,
         FTPower,
-        FTHiit.
+        FTHiit,
         FTTime2SunUp,
         FTTime2SunDown,
         FTTime2SunUpDown,
@@ -197,6 +197,8 @@ class whatmetricsApp extends Application.AppBase {
       Storage.setValue("demohiitt", false);
 
       Storage.setValue("show_icon", true);
+
+      Storage.setValue("sunevent_degrees_difference", 1.0d);
     }
 
     hiitt.setMode(
@@ -427,16 +429,21 @@ class whatmetricsApp extends Application.AppBase {
       hiitt.setDemo(true);
     }
     $.gPause_x_offset = getStorageValue("pause_x_offset", 10) as Number;
+     $.gSunEventDegreesDifference = $.getStorageValue("sunevent_degrees_difference", 1.0d) as Double;
   }
 
   hidden function setFallbackField(
     field as FieldType,
     fallback as FieldType
   ) as Void {
+    var idx = field as Number;
+    if (idx > $.FieldTypeCount) {
+      return;
+    }
     while ($.gFallbackFields.size() < $.FieldTypeCount) {
       $.gFallbackFields.add(FTUnknown);
     }
-    $.gFallbackFields[field as Number] = fallback;
+    $.gFallbackFields[idx] = fallback;
   }
 }
 
@@ -531,3 +538,4 @@ var gFocusField as FocusField = FocusOff;
 var gFocusPerc as Number = 99;
 var gFocusBorder as Number = 5;
 var gTargetSunEventSec as Number = 3600; // 60 minutes before sunrise / sunset
+var gSunEventDegreesDifference as Double = 1.0d;

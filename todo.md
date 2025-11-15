@@ -1,17 +1,26 @@
-arrw up down pressure trend
-sync location_utils to other CIQ projects!!
-?? onSunsetChange use part of geo loc (sunset/sunrise is only for current day (based on the time))
-?? cache sunrise/set data -> not working day can be diff
+x out of memory 1030? -> disable for x30? - done
+x -> menu levels is too deep for these devices. --> only 12 fields possible 830
 
-fallback when paused
-update Readme
-create arrow up / down  
+todo
+menu settings: set diff for lat/lon and sunset change.
+
+onsunevent diff 0.0 - 10 degrees lat/long
+getNextSunEvent - is sunset 1, time, current loc
+ 
 
 Graphics color yellow fade to light .. Icon color sunset/rise
 -perc is bar from right to left
+sync location_utils to other CIQ projects!!
+fallback when paused
+ arr fields with color[] -> see fallback fields logic
+update Readme
+
+x arrw up down pressure trend
+?? onSunsetChange use part of geo loc (sunset/sunrise is only for current day (based on the time))
+?? cache sunrise/set data -> not working day can be diff
+
 
 x When grey -> use color per field
- arr fields with color[] -> see fallback fields logic
 use color no == grey, all = color, perfield , set per field
 
 x Delayed Zen mode x seconds.

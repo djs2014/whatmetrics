@@ -30,6 +30,7 @@ class FieldInfo {
     var rawValue as Numeric = 0;
     var maxValue as Numeric = 0;
     var minValue as Numeric = 0;
+    var barReversed as Boolean = false;
     
     function initialize(fieldType as FieldType, fieldIndex as Number) {
         type = fieldType;
@@ -46,7 +47,8 @@ enum FieldLayout {
     FL8SSFields = 4
 }
 
-const FieldTypeCount = 40; // incl the 0
+// Note. will be overridden for devices low on memory (1030)
+var FieldTypeCount = 40; // incl the 0
 enum FieldType {
     FTUnknown = 0,
     FTDistance = 1,

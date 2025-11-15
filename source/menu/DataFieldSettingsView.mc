@@ -24,12 +24,13 @@ class DataFieldSettingsView extends WatchUi.View {
     var mySettings = System.getDeviceSettings();
     var version = mySettings.monkeyVersion;
     var versionString = Lang.format("$1$.$2$.$3$", version);
+    var partNumber = mySettings.partNumber;
 
     dc.drawText(
       dc.getWidth() / 2,
       dc.getHeight() / 2 - 30,
       Graphics.FONT_SMALL,
-      "Press Menu \nfor settings \nCIQ " + versionString,
+      "Press Menu \nfor settings\nCIQ " + versionString + "\nDevice " + partNumber,
       Graphics.TEXT_JUSTIFY_CENTER
     );
   }

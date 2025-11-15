@@ -123,15 +123,47 @@ class whatmetricsView extends WatchUi.DataField {
     }
 
     mCurrentLocation = new CurrentLocation();
-    mCurrentLocation.setOnLocationChanged(self, :onLocationChanged);
+    mCurrentLocation.setOnSunEventChanged(self, :onSunEventChanged);
+    mCurrentLocation.setMinDegreesDifferenceSunevent(
+      $.gSunEventDegreesDifference
+    );
   }
 
-  function onLocationChanged(degrees as Array<Double>) as Void {
-    mSunrise = mCurrentLocation.getSunrise();
-    mSunset = mCurrentLocation.getSunset();
+  function onSunEventChanged(sunrise as Moment?, sunset as Moment?) {
+    mSunrise = sunrise;
+    mSunset = sunset;
     mSunriseTomorrow = mCurrentLocation.getSunriseTomorrow();
-    mDayLiteTime = mCurrentLocation.isAtDaylightTime(Time.now(), true);
-    // mSunsetTomorrow = mCurrentLocation.getSunsetTomorrow();
+
+    System.println([
+      "onSunEventChanged:",
+      " sunrise:",
+      $.getLongTimeString(sunrise),
+      " sunset:",
+      $.getLongTimeString(sunset),
+    ]);
+  }
+
+  function isAtDaylightTime(time as Moment, defValue as Boolean) as Boolean {
+    if (mSunrise == null || mSunset == null) {
+      return defValue;
+    }
+
+    var dayLightTime =
+      (mSunrise as Moment).value() <= time.value() &&
+      time.value() <= (mSunset as Moment).value();
+
+    System.println([
+      "isAtDaylightTime:",
+      dayLightTime.toString(),
+      "sunrise:",
+      $.getLongTimeString(mSunrise),
+      "sunset:",
+      $.getLongTimeString(mSunset),
+      "when:",
+      $.getLongTimeString(time),
+    ]);
+
+    return dayLightTime;
   }
 
   function onLayout(dc as Dc) as Void {
@@ -276,6 +308,7 @@ class whatmetricsView extends WatchUi.DataField {
   function compute(info as Activity.Info) as Void {
     mMetrics.compute(info);
     mCurrentLocation.onCompute(info);
+    mDayLiteTime = isAtDaylightTime(Time.now(), true);
 
     mPaused = false;
     if (info has :timerState) {
@@ -605,15 +638,28 @@ class whatmetricsView extends WatchUi.DataField {
               0
             );
           }
-          drawPercentageLine(
-            dc,
-            1,
-            ey,
-            eMaxWidth,
-            ePerc,
-            mGraphicLineHeight,
-            eColor
-          );
+          if (efi.barReversed) {
+            // Right to left
+            drawPercentageLine(
+              dc,
+              1,
+              ey,
+              eMaxWidth,
+              -1 * ePerc,
+              mGraphicLineHeight,
+              eColor
+            );
+          } else {
+            drawPercentageLine(
+              dc,
+              1,
+              ey,
+              eMaxWidth,
+              ePerc,
+              mGraphicLineHeight,
+              eColor
+            );
+          }
         }
         ey = ey + mGraphicLineHeight;
       }
@@ -1488,6 +1534,7 @@ class whatmetricsView extends WatchUi.DataField {
         // Will go from 0 - 100% when target (sunset/sunrise) reached
         fi.rawValue = 100 - percOfTime;
         fi.maxValue = 100;
+        fi.barReversed = true;
         // Only icon
         // Day / night count down to 0%
         // fi.text = percOfTime.format("%0d");
@@ -2866,11 +2913,11 @@ class whatmetricsView extends WatchUi.DataField {
       ((hours * 30 + 0.5 * minutes + (0.5 / 60) * seconds).toNumber() % 360) +
       90;
     // minute angle = 6 * minute + 0.1 * second
-    var mDeg = ((minutes * 6 + 0.1 * seconds)  - 90).toNumber() % 360;
+    var mDeg = (minutes * 6 + 0.1 * seconds - 90).toNumber() % 360;
     // Second angle = 6 * second (Each minute is 6 degrees; each second adds 0.1 degrees.)
     // var sDeg = ((seconds * 6).toNumber() % 360) - 30; // - 24;
 
-    System.println(["h,m,s:", hDeg, mDeg]); // , sDeg]);
+    // System.println(["h,m,s:", hDeg, mDeg]); // , sDeg]);
 
     var xhour = pointOnCircle_x(x1, y1, r, hDeg);
     var yhour = pointOnCircle_y(x1, y1, r, hDeg);

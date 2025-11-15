@@ -17,6 +17,10 @@ class CurrentLocation {
   hidden var mLocation as Location?;
   hidden var mStorageLatestLocation as String = "latest_latlng";
 
+  hidden var mPreviousLat as Lang.Double = 0.0d;
+  hidden var mPreviousLon as Lang.Double = 0.0d;
+  hidden var mMinDegreesDifferenceSunevent as Lang.Double = 1.0d;
+
   hidden function setLocation(location as Location?) as Void {
     if (location == null) {
       return;
@@ -49,14 +53,20 @@ class CurrentLocation {
     methodLocationChanged = new Lang.Method(objInstance, callback) as Method;
   }
 
-  // Sunrise sunset changed @@TODO
-  // var methodSunEventChanged as Method?;
-  // function setOnSunEventChanged(
-  //   objInstance as Object?,
-  //   callback as Symbol
-  // ) as Void {
-  //   methodSunEventChanged = new Lang.Method(objInstance, callback) as Method;
-  // }
+  // Sunrise sunset changed: triggers when latitude changes 1 degree
+  var methodSunEventChanged as Method?;
+  function setOnSunEventChanged(
+    objInstance as Object?,
+    callback as Symbol
+  ) as Void {
+    methodSunEventChanged = new Lang.Method(objInstance, callback) as Method;
+  }
+  // Minimal difference in lat or lon that will trigger new calculation of sunrise/sunset
+  function setMinDegreesDifferenceSunevent(
+    minDifference as Lang.Double
+  ) as Void {
+    mMinDegreesDifferenceSunevent = minDifference;
+  }
 
   function initialize() {}
 
@@ -134,6 +144,8 @@ class CurrentLocation {
 
   function onCompute(info as Activity.Info) as Void {
     try {
+      var changed = false;
+
       var location = null;
       mAccuracy = Position.QUALITY_NOT_AVAILABLE;
 
@@ -152,8 +164,8 @@ class CurrentLocation {
               " accuracy: " +
               mAccuracy
           );
-          // setSunRiseAndSunSet(location);
           onLocationChanged();
+          changed = true;
         }
       }
 
@@ -171,13 +183,16 @@ class CurrentLocation {
                 " accuracy: " +
                 mAccuracy
             );
-            // setSunRiseAndSunSet(location);
             onLocationChanged();
+            changed = true;
           }
         }
       }
       if (location != null && validLocation(location)) {
         setLocation(location);
+        if (changed && sunSetAndRiseChanged(location)) {
+          onSunEventChanged();
+        }
       } else if (mLocation != null) {
         mAccuracy = Position.QUALITY_LAST_KNOWN;
       }
@@ -193,6 +208,35 @@ class CurrentLocation {
     (methodLocationChanged as Method).invoke(
       getCurrentDegrees() as Array<Double>
     );
+  }
+  hidden function onSunEventChanged() as Void {
+    if (methodSunEventChanged == null || !validLocation(mLocation)) {
+      return;
+    }
+
+    var time = Time.now();
+    var sunrise = Weather.getSunrise(mLocation as Location, time);
+    var sunset = Weather.getSunset(mLocation as Location, time);
+
+    if (sunrise != null && sunset != null) {
+      if ((sunset as Moment).value() < (sunrise as Moment).value()) {
+        // We need the sunset after sunrise, so we got a daytime period from sunrise - to sunset
+
+        System.println(["Get sunrise next day!"]);
+        var oneDay = new Time.Duration(Gregorian.SECONDS_PER_DAY);
+        sunset = Weather.getSunset(mLocation as Location, time.add(oneDay));
+      }
+
+      System.println([
+        "onSunEventChanged",
+        "sunrise:",
+        $.getLongTimeString(sunrise),
+        "sunset:",
+        $.getLongTimeString(sunset),
+      ]);
+    }
+
+    (methodSunEventChanged as Method).invoke(sunrise, sunset);
   }
 
   hidden function locationChanged(location as Location?) as Boolean {
@@ -218,10 +262,39 @@ class CurrentLocation {
     var currentLocation = mLocation as Location;
     var currentDegrees = currentLocation.toDegrees();
 
+    // Position location lat/lon: [49.114117, 3.293631] accuracy: 1
+    // TODO: check only to x decimals. Option.
     var newDegrees = newLocation.toDegrees();
-    return (
-      newDegrees[0] != currentDegrees[0] && newDegrees[1] != currentDegrees[1]
-    );
+    var changed =
+      newDegrees[0] != currentDegrees[0] || newDegrees[1] != currentDegrees[1];
+
+    System.println(["locationChanged", changed, currentDegrees, "->", newDegrees]);
+    return changed;
+  }
+
+  hidden function sunSetAndRiseChanged(location as Location) as Boolean {
+    var degrees = location.toDegrees();
+    var lat = degrees[0];
+    var lon = degrees[1];
+
+    var changed =
+      (mPreviousLat - lat).abs() > mMinDegreesDifferenceSunevent ||
+      (mPreviousLon - lon).abs() > mMinDegreesDifferenceSunevent;
+
+    System.println([
+      "sunSetAndRiseChanged",
+      mMinDegreesDifferenceSunevent,
+      changed,
+      mPreviousLat,
+      mPreviousLon,
+      "->",
+      lat,
+      lon,
+    ]);
+
+    mPreviousLat = lat;
+    mPreviousLon = lon;
+    return changed;
   }
 
   hidden function validLocation(location as Location?) as Boolean {
@@ -242,32 +315,6 @@ class CurrentLocation {
     return true;
   }
 
-  // Gives sunrise and sunset for current day.
-  // hidden function setSunRiseAndSunSet(location as Location?) as Void {
-  //   if (location == null) {
-  //     return;
-  //   }
-
-  //   // Note: is sunrise of current day. So will return date before now() if the sun has rised already. Same for sunset.
-  //   mSunrise = Weather.getSunrise(location as Location, Time.now()); // ex: 13-6-2022 05:20:43
-  //   mSunset = Weather.getSunset(location as Location, Time.now()); // ex: 13-6-2022 22:02:25
-
-  //   // Sunrise tomorrow
-  //   var today = new Time.Moment(Time.today().value());
-  //   var oneDay = new Time.Duration(Gregorian.SECONDS_PER_DAY);
-  //   var tomorrow = today.add(oneDay);
-  //   mSunriseTomorrow = Weather.getSunrise(location as Location, tomorrow); // ex: 14-6-2022 05:20:43
-  //   mSunsetTomorrow = Weather.getSunset(location as Location, tomorrow); // ex: 14-6-2022 05:20:43
-  //   System.println(
-  //     "Sunrise: " +
-  //       $.getLongTimeString(mSunrise) +
-  //       " Sunset: " +
-  //       $.getLongTimeString(mSunset) +
-  //       "Sunrise Tomorrow: " +
-  //       $.getLongTimeString(mSunriseTomorrow)
-  //   );
-  // }
-
   function isAtDaylightTime(time as Moment?, defValue as Boolean) as Boolean {
     if (!validLocation(mLocation)) {
       return defValue;
@@ -280,6 +327,13 @@ class CurrentLocation {
     // Note: is sunrise of current day (from time parameter).
     var sunrise = Weather.getSunrise(mLocation as Location, time); // ex: 13-6-2022 05:20:43
     var sunset = Weather.getSunset(mLocation as Location, time); // ex: 13-6-2022 22:02:25
+
+    if ((sunset as Moment).value() < (sunrise as Moment).value()) {
+      // We need the sunset after sunrise, so we got a daytime period from sunrise - to sunset
+      System.println(["Get sunrise next day!"]);
+      var oneDay = new Time.Duration(Gregorian.SECONDS_PER_DAY);
+      sunset = Weather.getSunset(mLocation as Location, time.add(oneDay));
+    }
 
     var dayLightTime =
       (sunrise as Moment).value() <= (time as Moment).value() &&
@@ -311,7 +365,16 @@ class CurrentLocation {
     var sunrise = Weather.getSunrise(mLocation as Location, time); // ex: 13-6-2022 05:20:43
     var sunset = Weather.getSunset(mLocation as Location, time); // ex: 13-6-2022 22:02:25
 
-var nightTime =
+    // [IsAtNight:, true, Sunrise:, 13-11-2025 13:57,  sunset:, 13-11-2025 00:08,  when:, 13-11-2025 20:20]
+    // Bug? If sunset is before sunrise -> add 1 day to sunset.
+    if ((sunset as Moment).value() < (sunrise as Moment).value()) {
+      // We need the sunset after sunrise, so we got a daytime period from sunrise - to sunset
+      System.println(["Get sunrise next day!"]);
+      var oneDay = new Time.Duration(Gregorian.SECONDS_PER_DAY);
+      sunset = Weather.getSunset(mLocation as Location, time.add(oneDay));
+    }
+
+    var nightTime =
       (time as Moment).value() < (sunrise as Moment).value() ||
       (sunset as Moment).value() <= (time as Moment).value();
 

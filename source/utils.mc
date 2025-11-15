@@ -47,11 +47,15 @@ function getStorageValue(
 }
 
 // Given min and max value, calculate the perc of value in this range.
-function percentageOf(value as Numeric?, min as Numeric, max as Numeric?) as Numeric {
+function percentageOf(
+  value as Numeric?,
+  min as Numeric,
+  max as Numeric?
+) as Numeric {
   if (value == null || max == null) {
     return 0.0f;
   }
-  
+
   if (max <= 0) {
     return 0.0f;
   }
@@ -87,7 +91,13 @@ function drawPercentageLine(
   var wPercentage = (maxwidth / 100.0) * percentage;
   dc.setColor(color, Graphics.COLOR_TRANSPARENT);
 
-  dc.fillRectangle(x, y, wPercentage, height);
+  if (wPercentage < 0) {
+    // Bar from left to right
+    dc.fillRectangle(x + maxwidth + wPercentage, y, -1 * wPercentage, height);
+  } else {
+    // From right to left
+    dc.fillRectangle(x, y, wPercentage, height);
+  }
   dc.drawPoint(x + maxwidth, y);
 }
 
@@ -682,18 +692,13 @@ function convertToNumber(value as String, defaultValue as Number) as Number {
   return converted;
 }
 
-// o (one), l (large), w (wide), s (small)
-// function getDisplaySize(width as Number, height as Number) as String {
-//   var display = "s";
+function hasLowMemory() as Boolean {
+  var settings = System.getDeviceSettings();
+  var partNumber = settings.partNumber();
+  System.println(["Partnumber", partNumber]);
 
-//   if (width >= 246) {
-//     display = "w";
-//     if (height >= 322) {
-//       display = "o";
-//     } else if (height >= 100) {
-//       display = "l";
-//     }
-//   }
-
-//   return display;
-// }
+  //006-B3122-00 Edge830
+  //006-B2713-00 Edge1030
+  //006-B3843-00 Edge1040
+  return partNumber.equals("006-B2713-00");
+}
