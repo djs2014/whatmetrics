@@ -896,7 +896,7 @@ class GeneralMenuDelegate extends WatchUi.Menu2InputDelegate {
 
     Toybox.WatchUi.pushView(
       view,
-      new $.NumericInputDelegate(_debug, view),
+      new $.NumericInputDelegate(view),
       WatchUi.SLIDE_RIGHT
     );
   }
@@ -931,7 +931,7 @@ class GeneralMenuDelegate extends WatchUi.Menu2InputDelegate {
 
     Toybox.WatchUi.pushView(
       view,
-      new $.NumericInputDelegate(_debug, view),
+      new $.NumericInputDelegate(view),
       WatchUi.SLIDE_IMMEDIATE
     );
   }

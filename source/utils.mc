@@ -13,6 +13,19 @@ const FEET = 3.281;
 var gCreateColors as Boolean = false;
 var gUseSetFillStroke as Boolean = false;
 
+function checkFeatures() as Void {
+  $.gCreateColors = Graphics has :createColor;
+  try {
+    $.gUseSetFillStroke = Graphics.Dc has :setStroke;
+    if ($.gUseSetFillStroke) {
+      $.gUseSetFillStroke = Graphics.Dc has :setFill;
+    }
+  } catch (ex) {
+    ex.printStackTrace();
+  }
+}
+
+
 function getActivityValue(
   info as Activity.Info?,
   symbol as Symbol,
@@ -321,17 +334,6 @@ function getMatchingFont(
   return font;
 }
 
-function checkFeatures() as Void {
-  $.gCreateColors = Graphics has :createColor;
-  try {
-    $.gUseSetFillStroke = Graphics.Dc has :setStroke;
-    if ($.gUseSetFillStroke) {
-      $.gUseSetFillStroke = Graphics.Dc has :setFill;
-    }
-  } catch (ex) {
-    ex.printStackTrace();
-  }
-}
 
 function setColorByPerc(dc as Dc, perc as Numeric, alpha as Number) as Void {
   var color = percentageToColor(perc, alpha, $.PERC_COLORS_SCHEME, 0);
