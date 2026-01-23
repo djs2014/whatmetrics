@@ -1296,10 +1296,13 @@ class whatmetricsView extends WatchUi.DataField {
         // ]);
 
         // Always show data, if no fallback field then still data to show
-        fi.text = $.secondsToHourMinutes(t2next);
-        var secondsLeftNext = t2next.toNumber() % 60;
-        fi.decimals = secondsLeftNext.format("%02d");
-
+        if (t2next < 60) {
+          fi.text = t2next.format("%02d");
+        } else {
+          fi.text = $.secondsToHourMinutes(t2next);
+          var secondsLeftNext = t2next.toNumber() % 60;
+          fi.decimals = secondsLeftNext.format("%02d");
+        }
         if (useColor) {
           if ($.gCreateColors) {
             fi.iconColor = getSunColor(60);
@@ -1323,7 +1326,7 @@ class whatmetricsView extends WatchUi.DataField {
         var sr_sec = mSunrise.value();
         var ss_sec = mSunset.value();
         var srt_sec = mSunriseTomorrow.value();
-        
+
         var t2nextEvent = 0;
         var percOfTime = 0;
         if (now_sec < sr_sec) {
@@ -1334,8 +1337,8 @@ class whatmetricsView extends WatchUi.DataField {
           // approx hack
           var ssy_sec = ss_sec - 86400; // yesterday sunset ~ sunset min 1 day in seconds.
           // percent of nighttime
-          percOfTime = 100 - $.percentageOf(now_sec, ssy_sec, sr_sec);  
-          t2nextEvent = $.getSecondsToNext(Time.now(), mSunrise);        
+          percOfTime = 100 - $.percentageOf(now_sec, ssy_sec, sr_sec);
+          t2nextEvent = $.getSecondsToNext(Time.now(), mSunrise);
           fi.available = true;
         } else if (now_sec < ss_sec) {
           // Perc to sunset (today) 0 - 100
@@ -1352,8 +1355,8 @@ class whatmetricsView extends WatchUi.DataField {
           fi.tag = "night";
           fi.iconParam = -1;
           // percent of nighttime
-          percOfTime = 100 - $.percentageOf(now_sec, ss_sec, srt_sec);  
-          t2nextEvent = $.getSecondsToNext(Time.now(), mSunriseTomorrow);        
+          percOfTime = 100 - $.percentageOf(now_sec, ss_sec, srt_sec);
+          t2nextEvent = $.getSecondsToNext(Time.now(), mSunriseTomorrow);
           fi.available = true;
         }
         // TODO test getSunColor colors
@@ -1371,9 +1374,13 @@ class whatmetricsView extends WatchUi.DataField {
 
         // When paused, show time to next event
         if (!mZenHideDetails) {
-          fi.text = $.secondsToHourMinutes(t2nextEvent);
-          var secondsLeftNextEvent = t2nextEvent.toNumber() % 60;
-          fi.decimals = secondsLeftNextEvent.format("%02d");
+          if (t2nextEvent < 60) {
+            fi.text = t2nextEvent.format("%02d");
+          } else {
+            fi.text = $.secondsToHourMinutes(t2nextEvent);
+            var secondsLeftNextEvent = t2nextEvent.toNumber() % 60;
+            fi.decimals = secondsLeftNextEvent.format("%02d");
+          }
         }
 
         if (useColor) {
