@@ -1372,8 +1372,8 @@ class whatmetricsView extends WatchUi.DataField {
         // fi.text = percOfTime.format("%0d");
         // fi.units = "%";
 
-        // When paused, show time to next event
-        if (!mZenHideDetails) {
+        // When paused, show time to next event, or when within target range.
+        if (!mZenHideDetails || (t2nextEvent < $.gTargetSunEventSec && $.gTargetSunEventSec > 0)) {
           if (t2nextEvent < 60) {
             fi.text = t2nextEvent.format("%02d");
           } else {
