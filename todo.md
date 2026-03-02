@@ -1,3 +1,7 @@
+perc daylight
+-> paused or sec to event < defined -> show time to event
+
+
 x out of memory 1030? -> disable for x30? - done
 x -> menu levels is too deep for these devices. --> only 12 fields possible 830
 
