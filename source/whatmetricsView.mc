@@ -95,6 +95,7 @@ class whatmetricsView extends WatchUi.DataField {
   // hidden var mSunsetTomorrow as Moment?;
   hidden var mTestTick as Number = 0;
 
+  
   // hidden var mGrade as Double = 0.0d;
   function initialize() {
     DataField.initialize();
@@ -3304,5 +3305,33 @@ class whatmetricsView extends WatchUi.DataField {
     }
     // @@ TODO, calc during activity
     return true;
+  }
+
+  
+  hidden function getTargetFactor(currentDistanceKm as Number, targetDistanceKm as Number) as Number {
+    if (($.gTargetMode == TMDefault) || (targetDistanceKm <= 0) || (currentDistanceKm <= 0)) {
+      return 1;
+    }
+
+    if ($.gTargetMode == TMLoop){
+      if (currentDistanceKm <= targetDistanceKm) { return 1; }
+
+      // Factor: is 1 + how many times the target distance is covered (get the integer part). 
+      // So if the target is 10km, and the current distance is 15km, 
+      // then it's 1 + 15/10 = 2.5 = 2 
+      // If the current distance is 25km, then it's 1 + 25/10 = 3.5 = 3
+      // 15 / 10 -> 1.5 -> 1 (Number) + 1 -> factor 2
+      // so the targetDistance is multiplied by 2
+      var factor = (currentDistanceKm / targetDistanceKm).toNumber() + 1;
+      return factor;      
+    }
+
+    if ($.gTargetMode == TMCommute)  {
+       // TODO
+       // save start/end location and calculate distance to them?
+       // set backtohome when paused for a long time?
+       // ??
+    }
+    return 1;
   }
 }

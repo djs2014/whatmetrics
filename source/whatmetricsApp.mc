@@ -399,6 +399,12 @@ class whatmetricsApp extends Application.AppBase {
     // @@ from user profile possible?
     metrics.setFTP($.gTargetFtp);
 
+    // Target mode
+    $.gTargetMode =
+      getStorageValue("target_mode", TMDefault) as TargetMode;
+    $.gCommuteBackIfPausedMinutes =
+      getStorageValue("commute_back_if_paused_minutes", 0) as Number;
+
     // @@ TODO refactor
     var powerDualSecFallback =
       getStorageValue("power_dual_sec_fallback", 0) as Number;
@@ -539,3 +545,6 @@ var gFocusPerc as Number = 99;
 var gFocusBorder as Number = 5;
 var gTargetSunEventSec as Number = 3600; // 60 minutes before sunrise / sunset
 var gSunEventDegreesDifference as Double = 1.0d;
+
+var gTargetMode = TMDefault;
+var gCommuteBackIfPausedMinutes = 0;

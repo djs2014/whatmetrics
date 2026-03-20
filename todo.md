@@ -1,3 +1,22 @@
+target mode
+
+distance
+default
+loop - reset after target
+commute --reset after pauze for x minutes  5 hour
+* When target reached
+ loop - target * (loopcount + 1) --> target is now 2 distance
+ commute - idem but max 1 times loopcount
+ - FTDistance
+ - FTEta
+ - FTEtr
+ 
+
+
+a time field
+- do not show seconds in small fields (test with edge1050 / 1040) or use smaller font
+-> its altitude decimals
+
 perc daylight
 -> paused or sec to event < defined -> show time to event
 

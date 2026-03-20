@@ -640,6 +640,23 @@ class DataFieldSettingsMenuDelegate extends WatchUi.Menu2InputDelegate {
         )
       );
 
+      // Target mode: default|loop|commute
+      mi = new WatchUi.MenuItem("Target mode", null, "target_mode", null);
+      var value = getStorageValue(mi.getId() as String, TMDefault) as
+        TargetMode;
+      mi.setSubLabel($.getTargetModeText(value));
+      avMenu.addItem(mi);
+
+      // Commute: reset after x min pause
+      mi = new WatchUi.MenuItem(
+        "Commute back if paused|0~1440 (min)",
+        null,
+        "commute_back_if_paused_minutes",
+        null
+      );      
+      mi.setSubLabel($.getStorageNumberAsString(mi.getId() as String) + " min");
+      avMenu.addItem(mi);
+
       // var boolean = Storage.getValue("vo2maxbg") ? true : false;
       // avMenu.addItem(new WatchUi.ToggleMenuItem("Vo2Max icon", null, "vo2maxbg", boolean, null));
 
@@ -718,15 +735,24 @@ class GeneralMenuDelegate extends WatchUi.Menu2InputDelegate {
       item.setSubLabel($.subMenuToggleMenuItem(id as String));
       return;
     }
+
+    if (id instanceof String && id.equals("target_mode")) {
+      var sp = new selectionMenuPicker("Target mode", id as String);
+      for (var i = 0; i < 3; i++) {
+        sp.add($.getTargetModeText(i as TargetMode), null, i);
+      }
+   
+      sp.setOnSelected(self, :onSelectedSelection, item);
+      sp.show();
+      return;
+    }
+
     if (id instanceof String && id.equals("hiit_mode")) {
       var sp = new selectionMenuPicker("Hiit mode, visible", id as String);
       for (var i = 0; i < 3; i++) {
         sp.add($.getHiittModeText(i as WhatHiitt.HiitMode), null, i);
       }
-      // sp.add("Disabled", "hiit is not active", WhatHiitt.HiitDisabled);
-      // sp.add("Minimal", "hiit minimized", WhatHiitt.HiitWhenActive);
-      // sp.add("Normal", "hiit full screen", WhatHiitt.HiitAlwaysOn);
-
+   
       sp.setOnSelected(self, :onSelectedSelection, item);
       sp.show();
       return;
@@ -736,11 +762,7 @@ class GeneralMenuDelegate extends WatchUi.Menu2InputDelegate {
       for (var i = 0; i < 4; i++) {
         sp.add($.getHiittSoundText(i as WhatHiitt.HiitSound), null, i);
       }
-      // sp.add("No sound", null, WhatHiitt.NoSound);
-      // sp.add("Start only", null, WhatHiitt.StartOnlySound);
-      // sp.add("Low", "low noise", WhatHiitt.LowNoise);
-      // sp.add("Loud", "loud noise", WhatHiitt.LoudNoise);
-
+   
       sp.setOnSelected(self, :onSelectedSelection, item);
       sp.show();
       return;
@@ -1358,3 +1380,22 @@ function fieldHasColor(fieldId as Number) as Boolean {
     ].indexOf(fieldId) > -1
   );
 }
+
+
+enum TargetMode {
+    TMDefault = 0,
+    TMLoop = 1,
+    TMCommute = 2,    
+  }
+
+function getTargetModeText(value as TargetMode) as String {
+  switch (value) {
+    case TMDefault:
+      return "Default";
+    case TMLoop:
+      return "Loop";
+    case TMCommute:
+      return "Commute";
+    return "Disabled";
+  }
+}  
