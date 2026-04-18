@@ -820,7 +820,9 @@ class whatmetricsView extends WatchUi.DataField {
 
         fi.value = grade.format("%0.1f");
         if (mSmallField) {
-          fi.text = fi.value;
+          // fi.text = fi.value;
+          fi.number = stringLeft(fi.value, ".", fi.value);
+          fi.decimals = stringRight(fi.value, ".", "");
           fi.units_side = "%";
         } else {
           fi.units = "%";
@@ -1532,6 +1534,7 @@ class whatmetricsView extends WatchUi.DataField {
           t2nextEvent = $.getSecondsToNext(Time.now(), mSunriseTomorrow);
           fi.available = true;
         }
+        
         // TODO test getSunColor colors
         // mTestTick = mTestTick + 1;
         // percOfTime = percOfTime - mTestTick;
@@ -1579,31 +1582,45 @@ class whatmetricsView extends WatchUi.DataField {
     return fi;
   }
 
+  // Percent to sun event (sunrise/sunset) -> 100 to 0% when event reached.
   function getSunColor(percent as Number) as ColorType {
-    var red;
-    var green;
-    var blue;
+    var redFrom;
+    var greenFrom;
+    var blueFrom;
+    var redTo;
+    var greenTo;
+    var blueTo;
+    mDayLiteTime = false;
     if (mDayLiteTime) {
-      // Yellow
-      red = 230;
-      green = 220;
-      blue = 55;
+      // Yellow rgb(255, 255, 55) = rgb(186, 102, 6)
+      redFrom = 255;
+      greenFrom = 255;
+      blueFrom = 55;
+      redTo = 186;
+      greenTo = 102;
+      blueTo = 6;
     } else {
-      // Orange
-      red = 250;
-      green = 190;
-      blue = 55;
+      // Orange rgb(250, 190, 55) = rgb(245, 205, 5)
+      redFrom = 250;
+      greenFrom = 190;
+      blueFrom = 55;
+      redTo = 245;
+      greenTo = 205;
+      blueTo = 100;
     }
-    if (mBackgroundIsWhite) {
-      // Lighten  -> towards 0 getting less lighten
-      // System.println(["SunColor light", percent / 4]);
-      return $.shadeColor(100, red, green, blue, percent / 4);
-    } else {
-      // darken -> towards 0 getting less darken
-      // System.println(["SunColor dark", -1 * (percent / 2)]);
-      return $.shadeColor(100, red, green, blue, -1 * (percent / 2));
-      //
-    }
+    // System.println(["getSunColor", percent, mDayLiteTime]);
+
+    // if (mBackgroundIsWhite) {
+    return $.transitionFromTo(
+      100,
+      redFrom,
+      greenFrom,
+      blueFrom,
+      redTo,
+      greenTo,
+      blueTo,
+      percent
+    );   
   }
 
   function drawFieldBackground(
@@ -1823,7 +1840,7 @@ class whatmetricsView extends WatchUi.DataField {
     height as Number
   ) as Void {
     var title = fieldInfo.title;
-    var value = fieldInfo.value;
+    // var value = fieldInfo.value;
     var prefix = fieldInfo.prefix;
     var text = fieldInfo.text;
     var number = fieldInfo.number;
@@ -1838,6 +1855,7 @@ class whatmetricsView extends WatchUi.DataField {
     var text_middleright = fieldInfo.text_middleright;
     // var text_middletop = fieldInfo.text_middletop;
 
+    var fieldWidth = width;
     var x_offset_left = 0;
     var x_offset_right = 0;
     if (mPaused) {
@@ -1864,6 +1882,7 @@ class whatmetricsView extends WatchUi.DataField {
           } else if (fieldInfo.index == 1 || fieldInfo.index == 4) {
             x_offset_left = $.gPause_x_offset;
           }
+          fieldWidth = width - 4; // TEST
           break;
         case FL4Fields:
           if (fieldInfo.index == 2 || fieldInfo.index == 4) {
@@ -1902,8 +1921,7 @@ class whatmetricsView extends WatchUi.DataField {
       }
     }
 
-    // small fields, no decimals and units
-    // System.println([fieldInfo.index, height, width, -1, number, decimals]);
+    // small fields, no units
     var font_text_bot = Graphics.FONT_SMALL;
     var fontUnits = Graphics.FONT_SYSTEM_XTINY;
     if (height > 60 and height < 100) {
@@ -1917,8 +1935,7 @@ class whatmetricsView extends WatchUi.DataField {
       text_botright = "";
       text_botleft = "";
     }
-    if (width <= 70) {
-      decimals = "";
+    if (fieldWidth <= 70) {
       units = "";
       text_botright = "";
       text_botleft = "";
@@ -1947,6 +1964,7 @@ class whatmetricsView extends WatchUi.DataField {
     // @@ when alpha working + show in paused and until 1 minute
     if (mPaused or (mActivityStartCountdown > 0 and title.length() > 0)) {
       dc.setColor(Graphics.COLOR_LT_GRAY, Graphics.COLOR_TRANSPARENT);
+      title = $.cropTextToFit(dc, title, fontPrefix, fieldWidth - 2);
       dc.drawText(
         x + 1,
         y,
@@ -1968,30 +1986,50 @@ class whatmetricsView extends WatchUi.DataField {
       if (text.length() > 0) {
         number_or_text = text;
         font =
-          getMatchingFont(dc, mFonts, width, height, number_or_text) as
+          getMatchingFont(dc, mFonts, fieldWidth, height, number_or_text) as
           FontType;
         dims_number_or_text = dc.getTextDimensions(number_or_text, font);
-        // var fontAscent = Graphics.getFontAscent(font);
-        //   var fontDescent = Graphics.getFontDescent(font);
-        //   var fontHeight = Graphics.getFontHeight(font);
-        // if (fontAscent == 0) {
-        //   dims_number_or_text[1] = dims_number_or_text[1] + fontDescent;
-        // }
       } else if (number.length() > 0) {
         number_or_text = number;
         font =
-          getMatchingFont(dc, mFontsNumbers, width, height, number_or_text) as
-          FontType;
+          getMatchingFont(
+            dc,
+            mFontsNumbers,
+            fieldWidth,
+            height,
+            number_or_text
+          ) as FontType;
         dims_number_or_text = dc.getTextDimensions(number_or_text, font);
       }
 
+      // System.println([
+      //         "field index",
+      //         fieldInfo.index,
+      //         $.getFieldTypeAsString(fieldInfo.type),
+      //         number_or_text,
+      //         decimals,
+      //         "field width",
+      //         fieldWidth,
+      //         "height",
+      //         height,
+      //         "font",
+      //         font,
+      //         dims_number_or_text,
+      //       ]);
       var fontDecimals = Graphics.FONT_SYSTEM_MEDIUM;
       if (decimals.length() > 0) {
-        if (height < 100) {
-          fontDecimals = Graphics.FONT_SYSTEM_SMALL;
-        } else if (height < 45) {
+        if (fieldWidth < 46) {
+          fontDecimals = Graphics.FONT_SYSTEM_XTINY;
+        } else if (fieldWidth < 100) {
           fontDecimals = Graphics.FONT_SYSTEM_TINY;
+        } else if (fieldWidth < 150) {
+          fontDecimals = Graphics.FONT_SYSTEM_SMALL;
         }
+        // if (height < 100) {
+        //   fontDecimals = Graphics.FONT_SYSTEM_SMALL;
+        // } else if (height < 45) {
+        //   fontDecimals = Graphics.FONT_SYSTEM_TINY;
+        // }
         if (font == fontDecimals) {
           fontDecimals = Graphics.FONT_XTINY;
         }
@@ -2000,7 +2038,7 @@ class whatmetricsView extends WatchUi.DataField {
 
       var xSplit = (
         x +
-        (width - dims_number_or_text[0] - dims_decimals[0]) / 2 +
+        (fieldWidth - dims_number_or_text[0] - dims_decimals[0]) / 2 +
         dims_number_or_text[0]
       ).toNumber();
       //var yBase = y + (height - dims_number_or_text[1]) / 2;
@@ -2066,10 +2104,10 @@ class whatmetricsView extends WatchUi.DataField {
           dc.setColor(mUnitsColor, Graphics.COLOR_TRANSPARENT);
         }
         var xUnits = xSplit + dims_decimals[0] + 1;
-        if (xUnits + dims_units[0] > width) {
+        if (xUnits + dims_units[0] > fieldWidth) {
           // Units on center bottom when small field (@@ +1 fix for edge 1040
           // display not same as on simulator)
-          xUnits = x + width / 2 - dims_units[0] / 2;
+          xUnits = x + fieldWidth / 2 - dims_units[0] / 2;
           yUnits =
             yBase + dims_number_or_text[1] - Graphics.getFontDescent(font) + 1; // not needed on device - Graphics.getFontDescent(fontUnits)
         }
@@ -2093,7 +2131,7 @@ class whatmetricsView extends WatchUi.DataField {
         } else {
           dc.setColor(mUnitsColor, Graphics.COLOR_TRANSPARENT);
         }
-        var xUnits = x + width - 1;
+        var xUnits = x + fieldWidth - 1;
         dc.drawText(
           xUnits,
           yUnits,
@@ -2106,7 +2144,7 @@ class whatmetricsView extends WatchUi.DataField {
       if (text_botright.length() > 0) {
         dc.setColor(mDecimalsColor, Graphics.COLOR_TRANSPARENT);
         dc.drawText(
-          x + width - 1 - x_offset_right,
+          x + fieldWidth - 1 - x_offset_right,
           y + height - dc.getFontHeight(font_text_bot),
           font_text_bot,
           text_botright,
@@ -2149,7 +2187,7 @@ class whatmetricsView extends WatchUi.DataField {
     }
     if (text_middleright.length() > 0) {
       dc.drawText(
-        x + width - 1 - x_offset_right,
+        x + fieldWidth - 1 - x_offset_right,
         y + height / 4,
         Graphics.FONT_SYSTEM_TINY,
         text_middleright,

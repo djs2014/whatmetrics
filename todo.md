@@ -1,4 +1,8 @@
 perc daylight
+ -> border or color darker to event
+
+
+perc daylight
 -> paused or sec to event < defined -> show time to event
 
 

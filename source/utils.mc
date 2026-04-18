@@ -334,6 +334,22 @@ function getMatchingFont(
   return font;
 }
 
+function cropTextToFit(dc as Dc, text as String, font as FontType, maxWidth as Number) as String {
+  var dimensions = dc.getTextDimensions(text, font);
+  if (dimensions[0] <= maxWidth) {
+    return text;
+  }
+
+  var croppedText = text;
+  while (dimensions[0] > maxWidth && croppedText.length() > 0) {
+    croppedText = croppedText.substring(0, croppedText.length() - 1);
+    dimensions = dc.getTextDimensions(croppedText + "..", font);
+  }
+  if (croppedText.length() == 0) {
+    return "";
+  }
+  return croppedText + "..";
+}
 
 function setColorByPerc(dc as Dc, perc as Numeric, alpha as Number) as Void {
   var color = percentageToColor(perc, alpha, $.PERC_COLORS_SCHEME, 0);
@@ -519,6 +535,35 @@ function shadeColor(
     blue.toNumber()
   );
 }
+
+function transitionFromTo(alpha as Number, redFrom as Numeric, greenFrom as Numeric, blueFrom as Numeric,
+ redTo as Numeric, greenTo as Numeric, blueTo as Numeric, percent as Number) as ColorType {
+  var factor = percent / 100;
+  var red = Math.round(redFrom + (redTo - redFrom) * factor);
+  var green = Math.round(greenFrom + (greenTo - greenFrom) * factor);
+  var blue = Math.round(blueFrom + (blueTo - blueFrom) * factor);
+
+// System.println(["transitionFromTo", alpha, redFrom, greenFrom, blueFrom, redTo, greenTo, blueTo, percent, "%", red, green, blue]); 
+
+  return Graphics.createColor(
+    alpha,
+    red.toNumber(),
+    green.toNumber(),
+    blue.toNumber()
+  );
+}
+// function transitionToRed(percent) {
+//     // Starting color: rgb(230, 220, 55)
+//     // Target color:   rgb(255, 0, 0)
+    
+//     const factor = percent / 100;
+
+//     const r = Math.round(255 + (230 - 255) * factor);
+//     const g = Math.round(0 + (220 - 0) * factor);
+//     const b = Math.round(0 + (55 - 0) * factor);
+
+//     return `rgb(${r}, ${g}, ${b})`;
+// }
 
 function getSecondsToNext(
   momentStart as Moment?,
