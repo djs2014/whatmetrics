@@ -63,6 +63,7 @@ class whatmetricsApp extends Application.AppBase {
       Storage.setValue("show_colors", $.gShowColors);
       Storage.setValue("show_grid", $.gShowGrid);
       Storage.setValue("show_average", true);
+      Storage.setValue("show_average_progress", true);
       Storage.setValue("show_np_as_avg", $.gShowNPasAverage);
       Storage.setValue("np_skip_zero", false);
 
@@ -173,6 +174,16 @@ class whatmetricsApp extends Application.AppBase {
       Storage.setValue(
         "fields_usecolor",
         $.gUseColorFields as Lang.Array<Application.PropertyValueType>
+      );
+
+      $.gUseAvgTrendFields = [
+        FTHeartRate,
+        FTPower,
+        FTSpeed,
+        FTCadence,];
+      Storage.setValue(
+        "fields_avg_trend",
+        $.gUseAvgTrendFields as Lang.Array<Application.PropertyValueType>
       );
 
       $.gGraphic_fields =
@@ -339,6 +350,12 @@ class whatmetricsApp extends Application.AppBase {
         $.gUseColorFields as Lang.Array<Application.PropertyValueType>
       ) as Array<Number>;
 
+    $.gUseAvgTrendFields =
+      getStorageValue(
+        "fields_avg_trend",
+        $.gUseAvgTrendFields as Lang.Array<Application.PropertyValueType>
+      ) as Array<Number>;
+      
     // @@TODO refactor + barpostion
     // $.gLargeFieldGraphic = getStorageValue("large_field_bar", $.gLargeFieldGraphic) as Array<Number>;
     // $.gWideFieldGraphic = getStorageValue("wide_field_bar", $.gWideFieldGraphic) as Array<Number>;
@@ -378,7 +395,7 @@ class whatmetricsApp extends Application.AppBase {
     $.gShowGrid = getStorageValue("show_grid", $.gShowGrid) as Boolean;
     $.gShowAverageWhenPaused =
       getStorageValue("show_average", $.gShowAverageWhenPaused) as Boolean;
-
+    
     $.gAltitudeFallbackStart =
       getStorageValue("altitude_start_fb", 0) as Number;
     $.gAltitudeFallbackEnd = getStorageValue("altitude_end_fb", 0) as Number;
@@ -527,6 +544,7 @@ var gFallbackFields as Array<Number> = [] as Array<Number>;
 
 // Contains fieldtype that uses color
 var gUseColorFields as Array<Number> = [] as Array<Number>;
+var gUseAvgTrendFields as Array<Number> = [] as Array<Number>;
 
 var gDemoFieldsWait as Number = 2;
 var gDemoFieldsRoundTrip as Number = 0;

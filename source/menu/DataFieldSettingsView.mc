@@ -71,7 +71,10 @@ class DataFieldSettingsDelegate extends WatchUi.BehaviorDelegate {
     mi = new WatchUi.MenuItem("Fallback triggers", null, "fallbackstriggers", null);
     menu.addItem(mi);
 
-    mi = new WatchUi.MenuItem("Color fields", null, "fieldcolors", null);
+    mi = new WatchUi.MenuItem("Color fields", null, "fields_usecolor", null);
+    menu.addItem(mi);
+
+    mi = new WatchUi.MenuItem("Average trend", null, "fields_avg_trend", null);
     menu.addItem(mi);
 
     var boolean = false;
@@ -85,6 +88,8 @@ class DataFieldSettingsDelegate extends WatchUi.BehaviorDelegate {
     // @@TODO?? nope, on paused, always (in details)
     boolean = Storage.getValue("show_average") ? true : false;
     menu.addItem(new WatchUi.ToggleMenuItem("Average on pause", null, "show_average", boolean, null));
+    // boolean = Storage.getValue("show_average_progress") ? true : false;
+    // menu.addItem(new WatchUi.ToggleMenuItem("Avg trend arrow", null, "show_average_progress", boolean, null));
     
     // boolean = Storage.getValue("show_graphic_fields") ? true : false;
     // menu.addItem(new WatchUi.ToggleMenuItem("Graphic fields", null, "show_graphic_fields", boolean, null));

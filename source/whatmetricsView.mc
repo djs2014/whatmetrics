@@ -743,6 +743,9 @@ class whatmetricsView extends WatchUi.DataField {
       $.gShowColors || $.gUseColorFields.indexOf(fi.type as Number) > -1;
     // System.println($.gUseColorFields);
     // System.println([fi.type, useColor]);
+    var useAvgTrend = $.gUseAvgTrendFields.indexOf(fi.type as Number) > -1;
+
+    // System.println(["Field type", fi.type, "color", useColor, "avgTrend", useAvgTrend]);
 
     switch (fieldType) {
       case FTDistance:
@@ -863,7 +866,7 @@ class whatmetricsView extends WatchUi.DataField {
         fi.tag = "hr";
         fi.units = "bpm";
         if (
-          (gShowAverageWhenPaused && mPaused) ||
+          ($.gShowAverageWhenPaused && mPaused) ||
           fieldType == FTAverageHeartRate
         ) {
           fi.title = "avg heartrate";
@@ -879,6 +882,13 @@ class whatmetricsView extends WatchUi.DataField {
         fi.rawValue = heartRate;
         fi.maxValue = $.gTargetHeartRate;
         fi.iconColor = getIconColor(useColor, heartRate, $.gTargetHeartRate);
+
+        if (useAvgTrend) {
+          fi.iconParam2 = averageRatio(
+            heartRate,
+            mMetrics.getAverageHeartRate()
+          );
+        }
         return fi;
 
       case FTAveragePower:
@@ -912,6 +922,10 @@ class whatmetricsView extends WatchUi.DataField {
         fi.rawValue = power;
         fi.maxValue = $.gTargetFtp;
         fi.iconColor = getIconColor(useColor, power, $.gTargetFtp);
+
+        if (useAvgTrend) {
+          fi.iconParam2 = averageRatio(power, mMetrics.getAveragePower());
+        }
         return fi;
 
       case FTBearing:
@@ -940,6 +954,10 @@ class whatmetricsView extends WatchUi.DataField {
         fi.iconColor = getIconColor(useColor, speed, $.gTargetSpeed);
         fi.rawValue = speed;
         fi.maxValue = $.gTargetSpeed;
+
+        if (useAvgTrend) {
+          fi.iconParam2 = averageRatio(speed, mMetrics.getAverageSpeed());
+        }
         return fi;
 
       case FTAltitude:
@@ -1028,6 +1046,9 @@ class whatmetricsView extends WatchUi.DataField {
         fi.rawValue = cadence;
         fi.maxValue = $.gTargetCadence;
         fi.minValue = $.gTargetCadenceLow;
+        if (useAvgTrend) {
+          fi.iconParam2 = averageRatio(cadence, mMetrics.getAverageCadence());
+        }
         return fi;
 
       case FTHiit:
@@ -1207,7 +1228,7 @@ class whatmetricsView extends WatchUi.DataField {
           powerpw > 0 and
           (mPowerFallbackCountdown > 0 or $.gPowerCountdownToFallBack == 0);
         fi.rawValue = mMetrics.getPower();
-        fi.maxValue = $.gTargetFtp;
+        fi.maxValue = $.gTargetFtp;        
         return fi;
 
       case FTPowerBalance:
@@ -1534,7 +1555,7 @@ class whatmetricsView extends WatchUi.DataField {
           t2nextEvent = $.getSecondsToNext(Time.now(), mSunriseTomorrow);
           fi.available = true;
         }
-        
+
         // TODO test getSunColor colors
         // mTestTick = mTestTick + 1;
         // percOfTime = percOfTime - mTestTick;
@@ -1620,7 +1641,7 @@ class whatmetricsView extends WatchUi.DataField {
       greenTo,
       blueTo,
       percent
-    );   
+    );
   }
 
   function drawFieldBackground(
@@ -1687,7 +1708,8 @@ class whatmetricsView extends WatchUi.DataField {
         width,
         height,
         fi.iconColor,
-        fi.iconParam.toNumber()
+        fi.iconParam.toNumber(),
+        fi.iconParam2
       );
       return;
     }
@@ -1696,7 +1718,7 @@ class whatmetricsView extends WatchUi.DataField {
       fi.type == FTAveragePower ||
       fi.type == FTNormalizedPower
     ) {
-      drawPowerIcon(dc, x, y, width, height, fi.iconColor);
+      drawPowerIcon(dc, x, y, width, height, fi.iconColor, fi.iconParam2);
 
       if ($.gShowPowerBattery) {
         drawPowerBatteryLevel(
@@ -1715,7 +1737,7 @@ class whatmetricsView extends WatchUi.DataField {
       return;
     }
     if (fi.type == FTSpeed || fi.type == FTAverageSpeed) {
-      drawSpeedIcon(dc, x, y, width, height, fi.iconColor);
+      drawSpeedIcon(dc, x, y, width, height, fi.iconColor, fi.iconParam2);
       return;
     }
     if (fi.type == FTAltitude) {
@@ -1747,7 +1769,7 @@ class whatmetricsView extends WatchUi.DataField {
       return;
     }
     if (fi.type == FTCadence || fi.type == FTAverageCadence) {
-      drawCadenceIcon(dc, x, y, width, height, fi.iconColor);
+      drawCadenceIcon(dc, x, y, width, height, fi.iconColor, fi.iconParam2);
       return;
     }
     if (fi.type == FTHiit) {
@@ -2295,9 +2317,11 @@ class whatmetricsView extends WatchUi.DataField {
     width as Number,
     height as Number,
     color as ColorType,
-    hrZone as Number
+    hrZone as Number,
+    avgRatio as Numeric
   ) as Void {
     if (!gShowIcon) {
+      drawTrendArrow(dc, x, y, width, height, avgRatio, 0.2, true);
       return;
     }
 
@@ -2341,6 +2365,7 @@ class whatmetricsView extends WatchUi.DataField {
       zone,
       Graphics.TEXT_JUSTIFY_LEFT // | Graphics.TEXT_JUSTIFY_VCENTER
     );
+    drawTrendArrow(dc, x, y, width, height, avgRatio, 0.2, true);
   }
   hidden function drawGradeIcon(
     dc as Dc,
@@ -2434,9 +2459,11 @@ class whatmetricsView extends WatchUi.DataField {
     y as Number,
     width as Number,
     height as Number,
-    color as ColorType
+    color as ColorType,
+    avgRatio as Numeric
   ) as Void {
     if (!gShowIcon) {
+      drawTrendArrow(dc, x, y, width, height, avgRatio, 0.2, false);
       return;
     }
 
@@ -2458,6 +2485,8 @@ class whatmetricsView extends WatchUi.DataField {
         [x3, y3],
       ] as Array<Point2D>
     );
+
+    drawTrendArrow(dc, x, y, width, height, avgRatio, 0.2, false);
   }
   hidden function drawDistanceIcon(
     dc as Dc,
@@ -2590,9 +2619,11 @@ class whatmetricsView extends WatchUi.DataField {
     y as Number,
     width as Number,
     height as Number,
-    color as ColorType
+    color as ColorType,
+    avgRatio as Numeric
   ) as Void {
     if (!gShowIcon) {
+      drawTrendArrow(dc, x, y, width, height, avgRatio, 0.2, false);
       return;
     }
 
@@ -2632,6 +2663,8 @@ class whatmetricsView extends WatchUi.DataField {
         [x6, y6],
       ] as Array<Point2D>
     );
+
+    drawTrendArrow(dc, x, y, width, height, avgRatio, 0.2, false);
   }
 
   hidden function drawPowerBatteryLevel(
@@ -2914,9 +2947,11 @@ class whatmetricsView extends WatchUi.DataField {
     y as Number,
     width as Number,
     height as Number,
-    color as ColorType
+    color as ColorType,
+    avgRatio as Numeric
   ) as Void {
     if (!gShowIcon) {
+      drawTrendArrow(dc, x, y, width, height, avgRatio, 0.1, true);
       return;
     }
 
@@ -2931,6 +2966,7 @@ class whatmetricsView extends WatchUi.DataField {
     setColorFillStroke(dc, color);
     dc.drawCircle(x1, y1, r);
     dc.setPenWidth(1);
+    drawTrendArrow(dc, x, y, width, height, avgRatio, 0.1, true);
   }
 
   hidden function drawElapsedTimeIcon(
@@ -3165,29 +3201,6 @@ class whatmetricsView extends WatchUi.DataField {
         [x5, y1],
       ] as Array<Point2D>
     );
-
-    // if (trend != 0) {
-    //   var font;
-    //   var trendIndicator;
-
-    //   dc.setColor(Graphics.COLOR_LT_GRAY, Graphics.COLOR_TRANSPARENT);
-    //   if (trend < 0) {
-    //     trendIndicator = "-";
-    //   } else {
-    //     trendIndicator = "+";
-    //   }
-    //   font =
-    //     $.getMatchingFont(dc, mFontsNumbers, width, height, trendIndicator) as
-    //     FontType;
-
-    //   dc.drawText(
-    //     x + 1,
-    //     y + height - dc.getFontHeight(font),
-    //     font,
-    //     trendIndicator,
-    //     Graphics.TEXT_JUSTIFY_LEFT // | Graphics.TEXT_JUSTIFY_VCENTER
-    //   );
-    // }
   }
 
   hidden function showDebugValues(dc as Dc) as Void {
@@ -3342,5 +3355,112 @@ class whatmetricsView extends WatchUi.DataField {
     }
     // @@ TODO, calc during activity
     return true;
+  }
+  hidden function averageRatio(
+    current as Numeric,
+    average as Numeric
+  ) as Numeric {
+    if (average == 0) {
+      return 0;
+    }
+
+    return current / average.toDouble();
+    //System.println(["current", current, "average", average, "ratio", ratio]);    
+  }
+
+  // $$L = \text{clamp}\left( \frac{R - 1.0}{1.2 - 1.0} \right) \times L_{max}$$
+  // clamp 100-120 == 0.2, (cadence) 100-110 == 0.1
+  // reverseColor true: above average is red, below average is green (for cadence/heartrate, higher is not always better)
+  function drawTrendArrow(
+    dc as Dc,
+    x as Number,
+    y as Number,
+    width as Number,
+    height as Number,
+    ratio as Numeric,
+    clamp as Numeric,
+    reverseColor as Boolean
+  ) {
+    if (ratio <= 0) {
+      return;
+    }
+    var maxArrowWidth = width * 0.35; // Iets kleiner om ruimte te laten aan beide kanten
+    var centerX = x + width / 2; // Startpunt in het midden van het veld
+    var centerY = y + height - 6; // 6 pixels boven de onderrand
+    if (clamp == 0) {
+      clamp = 0.2; // Default clamp
+    }
+    // 1. Situatie: Boven gemiddelde (Pijl naar rechts, Groen)
+    if (ratio > 1.02) {
+      // Iets boven 1.0 om kleine afwijkingen te negeren
+      var scale = (ratio - 1.0) / clamp; // Max bij 1.2 if clamp is 0.2
+      if (scale > 1.0) {
+        scale = 1.0;
+      }
+
+      var arrowLen = scale * maxArrowWidth;
+      if (reverseColor) {
+        dc.setColor(Graphics.COLOR_RED, Graphics.COLOR_TRANSPARENT);
+      } else {
+        dc.setColor(Graphics.COLOR_GREEN, Graphics.COLOR_TRANSPARENT);
+      }
+
+      // Teken lijn vanaf midden naar rechts
+      dc.setPenWidth(2);
+      dc.drawLine(centerX, centerY, centerX + arrowLen, centerY);
+      dc.setPenWidth(1);
+      // Pijlpunt naar rechts
+      if (arrowLen > 4) {
+        dc.drawLine(
+          centerX + arrowLen,
+          centerY,
+          centerX + arrowLen - 5,
+          centerY - 3
+        );
+        dc.drawLine(
+          centerX + arrowLen,
+          centerY,
+          centerX + arrowLen - 5,
+          centerY + 3
+        );
+      }
+    }
+    // 2. Situatie: Onder gemiddelde (Pijl naar links, Rood)
+    else if (ratio < 0.98) {
+      centerX = x + width - 10; // Startpunt rechts
+    
+      // Ratio iets onder 1.0 om kleine afwijkingen te negeren
+      var scale = (1.0 - ratio) / clamp; // Max bij 0.8 if clamp is 0.2
+      if (scale > 1.0) {
+        scale = 1.0;
+      }
+
+      var arrowLen = scale * maxArrowWidth;
+      if (reverseColor) {
+        dc.setColor(Graphics.COLOR_GREEN, Graphics.COLOR_TRANSPARENT);
+      } else {
+        dc.setColor(Graphics.COLOR_RED, Graphics.COLOR_TRANSPARENT);
+      }
+
+      // Teken lijn vanaf midden naar links
+      dc.setPenWidth(2);
+      dc.drawLine(centerX, centerY, centerX - arrowLen, centerY);
+      dc.setPenWidth(1);
+      // Pijlpunt naar links
+      if (arrowLen > 4) {
+        dc.drawLine(
+          centerX - arrowLen,
+          centerY,
+          centerX - arrowLen + 5,
+          centerY - 3
+        );
+        dc.drawLine(
+          centerX - arrowLen,
+          centerY,
+          centerX - arrowLen + 5,
+          centerY + 3
+        );
+      }
+    }
   }
 }

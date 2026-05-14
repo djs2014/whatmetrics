@@ -116,6 +116,12 @@ The `rules` when a field is active or not.
     - Good for Netherlands. It will get active if we are climbing a mountain.
 - Grade start / end. The range when the grade field is not active.
 
+## Show average trend
+
+For some fields where average is available. When enabled an arrow is shown:
+
+- current below average: arrow to the left 
+- current above average: arrow to the right
 
 ---
 And there are probably more things to configure..

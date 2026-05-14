@@ -518,8 +518,8 @@ class DataFieldSettingsMenuDelegate extends WatchUi.Menu2InputDelegate {
       return;
     }
 
-    if (id instanceof String && id.equals("fieldcolors")) {
-      var fbMenu = new WatchUi.Menu2({ :title => "Use color for field" });
+    if (id instanceof String && id.equals("fields_usecolor")) {
+      var fcolMenu = new WatchUi.Menu2({ :title => "Use color for field" });
 
       var fieldsUseColor =
         getStorageValue("fields_usecolor", []) as Array<Number>;
@@ -539,13 +539,46 @@ class DataFieldSettingsMenuDelegate extends WatchUi.Menu2InputDelegate {
             null
           );
 
-          fbMenu.addItem(mi);
+          fcolMenu.addItem(mi);
         }
       }
 
       WatchUi.pushView(
-        fbMenu,
-        new $.GeneralMenuDelegate(self, fbMenu),
+        fcolMenu,
+        new $.GeneralMenuDelegate(self, fcolMenu),
+        WatchUi.SLIDE_UP
+      );
+      return;
+    }
+
+    if (id instanceof String && id.equals("fields_avg_trend")) {
+      var favgMenu = new WatchUi.Menu2({ :title => "Avg trend for field" });
+
+      var fieldsUseAvgTrend =
+        getStorageValue("fields_avg_trend", []) as Array<Number>;
+      // Fields, skip 0 (field Unknown)
+      for (var i = 1; i < $.FieldTypeCount; i++) {
+        if ($.fieldHasAvgTrend(i)) {
+          var field = i as FieldType;
+
+          // If field in array then enabled
+          var useAvgTrend = fieldsUseAvgTrend.indexOf(i) > -1;
+
+          var mi = new WatchUi.ToggleMenuItem(
+            $.getFieldTypeAsString(field),
+            null,
+            "fields_avg_trend|" + i.format("%d"),
+            useAvgTrend,
+            null
+          );
+
+          favgMenu.addItem(mi);
+        }
+      }
+
+      WatchUi.pushView(
+        favgMenu,
+        new $.GeneralMenuDelegate(self, favgMenu),
         WatchUi.SLIDE_UP
       );
       return;
@@ -713,6 +746,39 @@ class GeneralMenuDelegate extends WatchUi.Menu2InputDelegate {
       return;
     }
 
+    // ToggleMenuItem! UseAvgTrend fields, storage in fields_avg_trend
+    if (
+      id.find("fields_avg_trend|") != null &&
+      item instanceof ToggleMenuItem
+    ) {
+      var key = stringLeft(id, "|", "");
+      var index = stringRight(id, "|", "").toNumber();
+      if (key == "" || index == null) {
+        return;
+      }
+
+      var fieldTypeNumber = index as Number;
+      var fields = getStorageValue(key, []) as Array<Number>;
+
+      if (item.isEnabled()) {
+        // Add to storage array
+        if (fields.indexOf(fieldTypeNumber) < 0) {
+          fields.add(fieldTypeNumber);
+        }
+      } else {
+        // Remove from storage array
+        if (fields.indexOf(fieldTypeNumber) > -1) {
+          fields.remove(fieldTypeNumber);
+        }
+      }
+      Storage.setValue(
+        key,
+        fields as Lang.Array<Application.PropertyValueType>
+      );
+      // System.println(fields);
+      return;
+    }
+
     if (id instanceof String && item instanceof ToggleMenuItem) {
       Storage.setValue(id as String, item.isEnabled());
       item.setSubLabel($.subMenuToggleMenuItem(id as String));
@@ -819,9 +885,9 @@ class GeneralMenuDelegate extends WatchUi.Menu2InputDelegate {
       var idx = index as Number;
       var label = "Set fallback: " + $.getFieldTypeAsString(idx as FieldType);
       var sp = new selectionMenuPicker(label, id as String);
-        for (var i = 0; i < $.FieldTypeCount; i++) {
-          sp.add($.getFieldTypeAsString(i as FieldType), null, i);
-        }
+      for (var i = 0; i < $.FieldTypeCount; i++) {
+        sp.add($.getFieldTypeAsString(i as FieldType), null, i);
+      }
       sp.setOnSelected(self, :onSelectedFieldFallback, item);
       sp.show();
       return;
@@ -837,11 +903,11 @@ class GeneralMenuDelegate extends WatchUi.Menu2InputDelegate {
       var idx = index as Number;
       var label = "Line: " + $.getFieldTypeAsString(idx as FieldType);
       var sp = new selectionMenuPicker(label, id as String);
-        for (var i = 0; i < $.FieldTypeCount; i++) {
-          if ($.fieldHasGraphic(i)) {
-            sp.add($.getFieldTypeAsString(i as FieldType), null, i);
-          }
+      for (var i = 0; i < $.FieldTypeCount; i++) {
+        if ($.fieldHasGraphic(i)) {
+          sp.add($.getFieldTypeAsString(i as FieldType), null, i);
         }
+      }
       sp.setOnSelected(self, :onSelectedField, item);
       sp.show();
       return;
@@ -865,9 +931,9 @@ class GeneralMenuDelegate extends WatchUi.Menu2InputDelegate {
       }
 
       var sp = new selectionMenuPicker("Field " + idx, id as String);
-        for (var i = 0; i < $.FieldTypeCount; i++) {
-          sp.add($.getFieldTypeAsString(i as FieldType), null, i);
-        }
+      for (var i = 0; i < $.FieldTypeCount; i++) {
+        sp.add($.getFieldTypeAsString(i as FieldType), null, i);
+      }
       sp.setOnSelected(self, :onSelectedField, item);
       sp.show();
       return;
@@ -1357,4 +1423,7 @@ function fieldHasColor(fieldId as Number) as Boolean {
       FTPerc2SunUpDownLoop,
     ].indexOf(fieldId) > -1
   );
+}
+function fieldHasAvgTrend(fieldId as Number) as Boolean {
+  return [FTHeartRate, FTPower, FTSpeed, FTCadence].indexOf(fieldId) > -1;
 }
