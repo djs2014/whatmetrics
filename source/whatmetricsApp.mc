@@ -9,7 +9,7 @@ class whatmetricsApp extends Application.AppBase {
   }
 
   // onStart() is called on application start up
-  function onStart(state as Dictionary?) as Void {}
+  function onStart(state as Dictionary?) as Void { }
 
   // onStop() is called when your application is exiting
   function onStop(state as Dictionary?) as Void {}
@@ -32,7 +32,6 @@ class whatmetricsApp extends Application.AppBase {
     var hiitt = getHiitt();
     hiitt.updateProfile();
     hiitt.setDemo(false);
-
     var version = getStorageValue("version", "") as String;
     if (!version.equals("1.0.4")) {
       Storage.clearValues();
@@ -242,6 +241,8 @@ class whatmetricsApp extends Application.AppBase {
     $.gVo2MaxBackGround =
       getStorageValue("hiit_vo2maxbg", Vo2BgHiit) as Vo2MaxBackGround;
 
+    $.gVo2MaxBackGround = getStorageValue("hiit_vo2maxbg", Vo2BgHiit) as Vo2MaxBackGround;
+    
     var metrics = $.getWhatMetrics();
     metrics.setPowerPerSec(getStorageValue("metric_ppersec", 0) as Number);
     metrics.setGradeWindowSize(getStorageValue("metric_gradews", 0) as Number);
@@ -295,6 +296,10 @@ class whatmetricsApp extends Application.AppBase {
     var targetSunEvent = getStorageValue("target_sunevent", 60) as Number;
     $.gTargetSunEventSec = targetSunEvent * 60;
 
+    $.gFocusField = getStorageValue("focus_field", $.gFocusField) as FocusField;
+    $.gFocusPerc = getStorageValue("focus_perc", $.gFocusPerc) as Number;
+    $.gFocusBorder = getStorageValue("focus_border", $.gFocusBorder) as Number;
+    
     var targetHrZone = getStorageValue("target_hrzone", 4) as Number;
     var heartRateZones = UserProfile.getHeartRateZones(
       UserProfile.HR_ZONE_SPORT_BIKING
@@ -390,7 +395,6 @@ class whatmetricsApp extends Application.AppBase {
       getStorageValue("gf_zones", $.gGraphic_fields_zones) as Number;
 
     $.gDebug = getStorageValue("debug", $.gDebug) as Boolean;
-
     $.gShowColors = getStorageValue("show_colors", $.gShowColors) as Boolean;
     $.gShowGrid = getStorageValue("show_grid", $.gShowGrid) as Boolean;
     $.gShowAverageWhenPaused =

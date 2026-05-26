@@ -763,14 +763,3 @@ function convertToNumber(value as String, defaultValue as Number) as Number {
   }
   return converted;
 }
-
-function hasLowMemory() as Boolean {
-  var settings = System.getDeviceSettings();
-  var partNumber = settings.partNumber();
-  System.println(["Partnumber", partNumber]);
-
-  //006-B3122-00 Edge830
-  //006-B2713-00 Edge1030
-  //006-B3843-00 Edge1040
-  return partNumber.equals("006-B2713-00");
-}
