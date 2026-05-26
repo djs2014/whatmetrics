@@ -30,13 +30,6 @@ class WhatMetrics {
   hidden var mUserWeightKg as Float = 0.0f;
   hidden var mUserFTP as Number = 0;
 
-  // Normalized power
-  hidden var mPowerDataPer30Sec as Array<Number> = [] as Array<Number>;
-  hidden var mAvgPowerToFourthPer30Sec as Array<Decimal> = [] as Array<Decimal>;
-  hidden var mNPSkipZero as Boolean = false;
-  hidden var mPowerTicks as Number = 0;
-  hidden var mCurrentNP as Double = 0.0d;
-
   // detect if l/r power is not 0 for x seconds
   hidden var mPowerDualSecFallback as Number = 0;
   hidden var mPowerTimesTwo as Boolean = false;
@@ -91,9 +84,6 @@ class WhatMetrics {
 
   // @@TODO initPwrZones
 
-  function initNP(skipZeroPower as Boolean) as Void {
-    mNPSkipZero = skipZeroPower;
-  }
   function setFTP(ftp as Number) as Void {
     mUserFTP = ftp;
   }
@@ -174,7 +164,6 @@ class WhatMetrics {
       (mAveragePressure * (mPressureTicks - 1) + pressure) /
       mPressureTicks.toDouble();
     // System.println(Lang.format("p $1$ ticks $2$ avg $3$", [pressure, mPressureTicks, mAveragePressure]));
-
 
     return trend;
   }
@@ -304,7 +293,7 @@ class WhatMetrics {
   }
 
   function getNormalizedPower() as Number {
-    return mCurrentNP.toNumber();
+    return mCurrentNP;
   }
 
   function getUserFTP() as Number {
@@ -423,28 +412,18 @@ class WhatMetrics {
 
   // called per second
   function compute(info as Activity.Info) as Void {
-    var previousState = $.getActivityValue(
-      a_info,
-      :timerState,
-      Activity.TIMER_STATE_OFF
-    );
     var currentState = $.getActivityValue(
       info,
       :timerState,
       Activity.TIMER_STATE_OFF
     );
+
     mPaused =
       currentState == Activity.TIMER_STATE_PAUSED or
       currentState == Activity.TIMER_STATE_OFF;
-    if (
-      previousState == Activity.TIMER_STATE_OFF &&
-      currentState == Activity.TIMER_STATE_ON
-    ) {
+    if (currentState == Activity.TIMER_STATE_OFF) {
       resetAverageNP();
     }
-    // if (info has :timerState) {
-    //   mPaused = info.timerState == Activity.TIMER_STATE_PAUSED or info.timerState == Activity.TIMER_STATE_OFF;
-    // }
 
     var intermediateAltitude = getAltitude();
     if (previousAltitude == 0.0f) {
@@ -475,13 +454,9 @@ class WhatMetrics {
     checkForFalingDualPower();
     mCurrentPowerPerX = calculatePower(power);
 
+    // TODO NP calc also when paused?
     if (!mPaused) {
-      if (power > 0 || (!mNPSkipZero && power == 0)) {
-        var currentNP = calculateNormalizedPower(calculatePower30(power));
-        if (currentNP > 0) {
-          mCurrentNP = addAverageNP(mCurrentNP, currentNP);
-        }
-      }
+      mCurrentNP = calculateNormalizedPower(calculatePower30(power));
     }
   }
 
@@ -497,6 +472,14 @@ class WhatMetrics {
     return Math.mean(mPowerDataPerSec as Array<Numeric>).toNumber();
   }
 
+  // Normalized power
+  hidden var mPowerDataPer30Sec as Array<Number> = [] as Array<Number>;
+  hidden var mCurrentNP as Number = 0;
+
+  // Low-memory running registers for global NP
+  hidden var mSumPowerToFourth as Double = 0.0d;
+  hidden var mTotalNPSamples as Long = 0l;
+
   hidden function calculatePower30(power as Number) as Number {
     if (mPowerDataPer30Sec.size() >= 30) {
       mPowerDataPer30Sec = mPowerDataPer30Sec.slice(1, 30);
@@ -510,17 +493,20 @@ class WhatMetrics {
   }
 
   hidden function calculateNormalizedPower(PowerPer30 as Number) as Number {
-    if (mAvgPowerToFourthPer30Sec.size() >= 30) {
-      mAvgPowerToFourthPer30Sec = mAvgPowerToFourthPer30Sec.slice(1, 30);
-    }
-
-    mAvgPowerToFourthPer30Sec.add(Math.pow(PowerPer30, 4));
-
-    if (mAvgPowerToFourthPer30Sec.size() < 30) {
+    // Only start accumulating data once our initial 30-second buffer fills up
+    if (mPowerDataPer30Sec.size() < 30) {
       return 0;
     }
-    var avg = Math.mean(mAvgPowerToFourthPer30Sec as Array<Numeric>).toDouble();
-    return Math.pow(avg, 0.25).toNumber();
+
+    // Add the current 30s rolling average (raised to the 4th power) to our lifetime total
+    mSumPowerToFourth += Math.pow(PowerPer30, 4);
+    mTotalNPSamples++; // Track total seconds spent calculating NP
+
+    // Calculate the mean over the ENTIRE ride duration
+    var globalAvg = mSumPowerToFourth / mTotalNPSamples;
+
+    // Return the 4th root
+    return Math.pow(globalAvg, 0.25).toNumber();
   }
 
   hidden function checkForFalingDualPower() as Void {
@@ -601,20 +587,7 @@ class WhatMetrics {
   }
 
   hidden function resetAverageNP() as Void {
-    mPowerTicks = 0;
-    mCurrentNP = 0.0d;
-  }
-  hidden function addAverageNP(
-    averagePower as Double,
-    power as Number
-  ) as Double {
-    // [ avg' * (n-1) + x ] / n
-    mPowerTicks = mPowerTicks + 1;
-    averagePower =
-      (averagePower * (mPowerTicks - 1) + power) / mPowerTicks.toDouble();
-
-    // System.println(Lang.format("p $1$ ticks $2$ avg $3$", [power, mPowerTicks, averagePower]));
-    return averagePower;
+    mCurrentNP = 0;
   }
 }
 

@@ -64,7 +64,6 @@ class whatmetricsApp extends Application.AppBase {
       Storage.setValue("show_average", true);
       Storage.setValue("show_average_progress", true);
       Storage.setValue("show_np_as_avg", $.gShowNPasAverage);
-      Storage.setValue("np_skip_zero", false);
 
       // @@
       Storage.setValue("show_shiftingbattery", $.gShowShiftingBattery);
@@ -415,8 +414,7 @@ class whatmetricsApp extends Application.AppBase {
       getStorageValue("show_powerbattery", $.gShowPowerBattery) as Boolean;
     $.gShowNPasAverage =
       getStorageValue("show_np_as_avg", $.gShowNPasAverage) as Boolean;
-    var NPSkipZero = getStorageValue("np_skip_zero", false) as Boolean;
-    metrics.initNP(NPSkipZero);
+    
     // @@ from user profile possible?
     metrics.setFTP($.gTargetFtp);
 

@@ -307,17 +307,6 @@ class DataFieldSettingsMenuDelegate extends WatchUi.Menu2InputDelegate {
         )
       );
 
-      boolean = Storage.getValue("np_skip_zero") ? true : false;
-      powerMenu.addItem(
-        new WatchUi.ToggleMenuItem(
-          "NP skip zeros",
-          null,
-          "np_skip_zero",
-          boolean,
-          null
-        )
-      );
-
       mi = new WatchUi.MenuItem(
         "Dualpwr sec fallback",
         null,
