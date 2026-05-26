@@ -13,7 +13,23 @@ const FEET = 3.281;
 var gCreateColors as Boolean = false;
 var gUseSetFillStroke as Boolean = false;
 
-function getActivityValue(info as Activity.Info?, symbol as Symbol, dflt as Lang.Object) as Lang.Object {
+function checkFeatures() as Void {
+  $.gCreateColors = Graphics has :createColor;
+  try {
+    $.gUseSetFillStroke = Graphics.Dc has :setStroke;
+    if ($.gUseSetFillStroke) {
+      $.gUseSetFillStroke = Graphics.Dc has :setFill;
+    }
+  } catch (ex) {
+    ex.printStackTrace();
+  }
+}
+
+function getActivityValue(
+  info as Activity.Info?,
+  symbol as Symbol,
+  dflt as Lang.Object
+) as Lang.Object {
   if (info == null) {
     return dflt;
   }
@@ -42,15 +58,38 @@ function getStorageValue(
   return dflt;
 }
 
-function percentageOf(value as Numeric?, max as Numeric?) as Numeric {
+// Given min and max value, calculate the perc of value in this range.
+function percentageOf(
+  value as Numeric?,
+  min as Numeric,
+  max as Numeric?
+) as Numeric {
   if (value == null || max == null) {
     return 0.0f;
   }
+
   if (max <= 0) {
     return 0.0f;
   }
-  return value / (max / 100.0);
+  var calculatedValue = value - min;
+  var calculatedMax = max - min;
+  if (calculatedMax <= 0) {
+    // min should be smaller than max
+    return 0.0f;
+  }
+
+  return calculatedValue / (calculatedMax / 100.0);
 }
+
+// function percentageOf(value as Numeric?, max as Numeric?) as Numeric {
+//   if (value == null || max == null) {
+//     return 0.0f;
+//   }
+//   if (max <= 0) {
+//     return 0.0f;
+//   }
+//   return value / (max / 100.0);
+// }
 
 function drawPercentageLine(
   dc as Dc,
@@ -64,7 +103,13 @@ function drawPercentageLine(
   var wPercentage = (maxwidth / 100.0) * percentage;
   dc.setColor(color, Graphics.COLOR_TRANSPARENT);
 
-  dc.fillRectangle(x, y, wPercentage, height);
+  if (wPercentage < 0) {
+    // Bar from left to right
+    dc.fillRectangle(x + maxwidth + wPercentage, y, -1 * wPercentage, height);
+  } else {
+    // From right to left
+    dc.fillRectangle(x, y, wPercentage, height);
+  }
   dc.drawPoint(x + maxwidth, y);
 }
 
@@ -116,6 +161,31 @@ function drawPercentageCircle(
 
   dc.setPenWidth(penWidth);
   dc.drawArc(x, y, radius, Graphics.ARC_CLOCKWISE, degreeStart, degreeEnd);
+  dc.setPenWidth(1.0);
+}
+
+function fillPercentageCircle(
+  dc as Dc,
+  x as Number,
+  y as Number,
+  radius as Number,
+  perc as Numeric
+) as Void {
+  if (perc == null || perc == 0) {
+    return;
+  }
+
+  if (perc >= 100.0) {
+    dc.fillCircle(x, y, radius);
+    return;
+  }
+  var degrees = 3.6 * perc;
+
+  var degreeStart = 180; // 180deg == 9 o-clock
+  var degreeEnd = degreeStart - degrees; // 90deg == 12 o-clock
+
+  dc.setPenWidth(radius);
+  dc.drawArc(x, y, radius / 2, Graphics.ARC_CLOCKWISE, degreeStart, degreeEnd);
   dc.setPenWidth(1.0);
 }
 
@@ -263,16 +333,26 @@ function getMatchingFont(
   return font;
 }
 
-function checkFeatures() as Void {
-  $.gCreateColors = Graphics has :createColor;
-  try {
-    $.gUseSetFillStroke = Graphics.Dc has :setStroke;
-    if ($.gUseSetFillStroke) {
-      $.gUseSetFillStroke = Graphics.Dc has :setFill;
-    }
-  } catch (ex) {
-    ex.printStackTrace();
+function cropTextToFit(
+  dc as Dc,
+  text as String,
+  font as FontType,
+  maxWidth as Number
+) as String {
+  var dimensions = dc.getTextDimensions(text, font);
+  if (dimensions[0] <= maxWidth) {
+    return text;
   }
+
+  var croppedText = text;
+  while (dimensions[0] > maxWidth && croppedText.length() > 0) {
+    croppedText = croppedText.substring(0, croppedText.length() - 1);
+    dimensions = dc.getTextDimensions(croppedText + "..", font);
+  }
+  if (croppedText.length() == 0) {
+    return "";
+  }
+  return croppedText + "..";
 }
 
 function setColorByPerc(dc as Dc, perc as Numeric, alpha as Number) as Void {
@@ -291,6 +371,7 @@ function setColorFillStroke(dc as Dc, color as Graphics.ColorType) as Void {
     dc.setColor(Graphics.COLOR_TRANSPARENT, Graphics.COLOR_TRANSPARENT);
     dc.setFill(color);
     dc.setStroke(color);
+    // System.println("fill and stroke?");
   } else {
     dc.setColor(color, Graphics.COLOR_TRANSPARENT);
   }
@@ -312,7 +393,7 @@ const PERC_COLORS_GREEN_RED =
     [80, 230, 116, 341],
     [90, 211, 84, 0],
     [100, 255, 0, 0],
-    [999, 0, 0, 0], 
+    [999, 0, 0, 0],
   ] as Array<Array<Number> >;
 
 const PERC_COLORS_GREEN_TO_RED =
@@ -327,17 +408,17 @@ const PERC_COLORS_GREEN_TO_RED =
     [60, 255, 187, 51], // Saffron
     [70, 255, 153, 51], // Deep saffron
     [80, 255, 119, 51], // Mango tango
-    [90, 255, 85, 51],  // portland orange
-    [100, 255, 51, 51],   // deep carmine pink
-    [200, 128, 0, 0],   // maroon
-    [999, 102, 0, 0],   // rosewood
+    [90, 255, 85, 51], // portland orange
+    [100, 255, 51, 51], // deep carmine pink
+    [200, 128, 0, 0], // maroon
+    [999, 102, 0, 0], // rosewood
   ] as Array<Array<Number> >;
 
 // https://rgbcolorcode.com/color/FF3333
 const PERC_COLORS_RED_TO_GREEN =
   [
-    [0, 255, 51, 51],   // deep carmine pink
-    [10, 255, 85, 51],  // portland orange
+    [0, 255, 51, 51], // deep carmine pink
+    [10, 255, 85, 51], // portland orange
     [15, 255, 119, 51], // Mango tango
     [20, 255, 153, 51], // Deep saffron
     [30, 255, 187, 51], // Saffron
@@ -350,7 +431,6 @@ const PERC_COLORS_RED_TO_GREEN =
     [100, 51, 255, 85], // malachite
     [200, 51, 255, 255], // aqua
     [999, 102, 25, 255], // han purple
-     
   ] as Array<Array<Number> >;
 
 const PERC_COLORS_SCHEME =
@@ -371,7 +451,7 @@ const PERC_COLORS_SCHEME =
     [145, 215, 189, 226], // COLOR_WHITE_PURPLE_3
     [155, 210, 180, 222], // COLOR_WHITE_DK_PURPLE_3
     [165, 187, 143, 206], // COLOR_WHITE_DK_PURPLE_4
-    [999, 0, 0, 0], 
+    [999, 0, 0, 0],
   ] as Array<Array<Number> >;
 
 // alpha, 255 is solid, 0 is transparent
@@ -379,7 +459,7 @@ function percentageToColor(
   percentage as Numeric?,
   alpha as Number,
   colorScheme as Array<Array<Number> >,
-  shadePercentage as Number  
+  shadePercentage as Number
 ) as ColorType {
   var pcolor = 0;
   var pColors = colorScheme;
@@ -419,14 +499,14 @@ function percentageToColor(
   return shadeColor(alpha, red, green, blue, shadePercentage);
 }
 
-function min(valueA as Numeric, valueB as Numeric ) as Numeric {
+function min(valueA as Numeric, valueB as Numeric) as Numeric {
   if (valueA > valueB) {
     return valueB;
   }
   return valueA;
 }
 
-function max(valueA as Numeric, valueB as Numeric ) as Numeric {
+function max(valueA as Numeric, valueB as Numeric) as Numeric {
   if (valueA > valueB) {
     return valueA;
   }
@@ -434,72 +514,179 @@ function max(valueA as Numeric, valueB as Numeric ) as Numeric {
 }
 
 // percent > 0 lighten  color, percent < 0 darken
-function shadeColor(alpha as Number, red as Numeric, green as Numeric, blue as Numeric, percent as Number) as ColorType 
-{
+function shadeColor(
+  alpha as Number,
+  red as Numeric,
+  green as Numeric,
+  blue as Numeric,
+  percent as Number
+) as ColorType {
   if (percent != 0) {
     // System.println(["shadeColor - 1", alpha, red, green, blue, percent]);
-    red = (red * (100 + percent) / 100.0);
-    green = (green * (100 + percent) / 100.0);
-    blue = (blue * (100 + percent) / 100.0);
+    red = (red * (100 + percent)) / 100.0;
+    green = (green * (100 + percent)) / 100.0;
+    blue = (blue * (100 + percent)) / 100.0;
 
     red = min(red, 255);
     green = min(green, 255);
     blue = min(blue, 255);
     // System.println(["shadeColor - 2", alpha, red, green, blue, percent]);
   }
-  return Graphics.createColor(alpha, red.toNumber(), green.toNumber(), blue.toNumber());
+  return Graphics.createColor(
+    alpha,
+    red.toNumber(),
+    green.toNumber(),
+    blue.toNumber()
+  );
+}
+
+function transitionFromTo(
+  alpha as Number,
+  redFrom as Numeric,
+  greenFrom as Numeric,
+  blueFrom as Numeric,
+  redTo as Numeric,
+  greenTo as Numeric,
+  blueTo as Numeric,
+  percent as Number
+) as ColorType {
+  var factor = percent / 100;
+  var red = Math.round(redFrom + (redTo - redFrom) * factor);
+  var green = Math.round(greenFrom + (greenTo - greenFrom) * factor);
+  var blue = Math.round(blueFrom + (blueTo - blueFrom) * factor);
+
+  // System.println(["transitionFromTo", alpha, redFrom, greenFrom, blueFrom, redTo, greenTo, blueTo, percent, "%", red, green, blue]);
+
+  return Graphics.createColor(
+    alpha,
+    red.toNumber(),
+    green.toNumber(),
+    blue.toNumber()
+  );
+}
+// function transitionToRed(percent) {
+//     // Starting color: rgb(230, 220, 55)
+//     // Target color:   rgb(255, 0, 0)
+
+//     const factor = percent / 100;
+
+//     const r = Math.round(255 + (230 - 255) * factor);
+//     const g = Math.round(0 + (220 - 0) * factor);
+//     const b = Math.round(0 + (55 - 0) * factor);
+
+//     return `rgb(${r}, ${g}, ${b})`;
+// }
+
+function getSecondsToNext(
+  momentStart as Moment?,
+  momentNext as Moment?
+) as Number {
+  if (momentStart == null || momentNext == null) {
+    return 0;
+  }
+  // remainingSeconds
+  return momentNext.value() - momentStart.value();
 }
 
 // template: "{h}:{m}:{s}:{ms}"
-function millisecondsToShortTimeString(totalMilliSeconds as Number, template as String) as String {
-  if (totalMilliSeconds != null && totalMilliSeconds instanceof Lang.Number) {
-    var hours = (totalMilliSeconds / (1000.0 * 60 * 60)).toNumber() % 24;
-    var minutes = (totalMilliSeconds / (1000.0 * 60.0)).toNumber() % 60;
-    var seconds = (totalMilliSeconds / 1000.0).toNumber() % 60;
-    var mseconds = totalMilliSeconds.toNumber() % 1000;
-
-    if (template.length() == 0) {
-      template = "{h}:{m}:{s}:{ms}";
-    }
-    var time = stringReplace(template, "{h}", hours.format("%01d"));
-    time = stringReplace(time, "{m}", minutes.format("%02d"));
-    time = stringReplace(time, "{s}", seconds.format("%02d"));
-    time = stringReplace(time, "{ms}", mseconds.format("%03d"));
-
-    return time;
+function millisecondsToShortTimeString(
+  totalMilliSeconds as Numeric?,
+  template as String
+) as String {
+  if (totalMilliSeconds == null) {
+    return "";
   }
-  return "";
+
+  var totalMilliSecondsInt = totalMilliSeconds.toNumber();
+
+  var hours = (totalMilliSecondsInt / 3600000) % 24; // (1000 * 60 * 60)
+  var minutes = (totalMilliSecondsInt / 60000) % 60; // (1000 * 60)
+  var seconds = (totalMilliSecondsInt / 1000) % 60;
+  var mseconds = totalMilliSecondsInt % 1000;
+
+  if (template.length() == 0) {
+    template = "{h}:{m}:{s}:{ms}";
+  }
+  var time = stringReplace(template, "{h}", hours.format("%01d"));
+  time = stringReplace(time, "{m}", minutes.format("%02d"));
+  time = stringReplace(time, "{s}", seconds.format("%02d"));
+  time = stringReplace(time, "{ms}", mseconds.format("%03d"));
+
+  return time;
 }
 
 // 1:40 or 150:40
-function secondsToCompactTimeString(totalSeconds as Number, template as String) as String {
-  if (totalSeconds != null && totalSeconds instanceof Lang.Number) {
-    var minutes = (totalSeconds / 60.0).toNumber();
-    var seconds = totalSeconds.toNumber() % 60;
-
-    var time = stringReplace(template, "{m}", minutes.format("%01d"));
-    time = stringReplace(time, "{s}", seconds.format("%02d"));
-
-    return time;
+function secondsToCompactTimeString(
+  totalSeconds as Numeric?,
+  template as String
+) as String {
+  if (totalSeconds == null) {
+    return "";
   }
-  return "";
+  // Force conversion to a standard integer Number to prevent UnexpectedTypeException
+  var totalSecondsInt = totalSeconds.toNumber();
+
+  var minutes = totalSecondsInt / 60;
+  var timeString = stringReplace(template, "{m}", minutes.format("%01d"));
+
+  var seconds = totalSecondsInt % 60;
+  timeString = stringReplace(timeString, "{s}", seconds.format("%02d"));
+
+  return timeString;
 }
 
 // 1:40 or 150:40 (if no {h} in template)
-function secondsToHourMinutes(totalSeconds as Number) as String {
-  if (totalSeconds != null && totalSeconds instanceof Lang.Number) {
-    var timeString = "{h}:{m}";
-    var hours = (totalSeconds / (60 * 60)).toNumber(); // % 24;
-    timeString = $.stringReplace(timeString, "{h}", hours.format("%01d"));
-    var minutes = (totalSeconds / 60.0).toNumber() % 60;
-    timeString = $.stringReplace(timeString, "{m}", minutes.format("%02d"));
+function secondsToHourMinutes(totalSeconds as Numeric?) as String {
+  if (totalSeconds == null) {
+    return "";
+  }
 
-    return timeString;
+  // Force conversion to a standard integer Number to prevent UnexpectedTypeException
+  var totalSecondsInt = totalSeconds.toNumber();
+
+  var timeString = "{h}:{m}";
+  // Pure integer division for hours
+  var hours = totalSecondsInt / 3600;
+  timeString = $.stringReplace(timeString, "{h}", hours.format("%01d"));
+
+  // Get total remaining minutes, then modulo 60 using integers
+  var minutes = (totalSecondsInt / 60) % 60;
+  timeString = $.stringReplace(timeString, "{m}", minutes.format("%02d"));
+
+  return timeString;
+}
+
+function getShortTimeString(moment as Time.Moment?) as String {
+  if (moment != null && moment instanceof Time.Moment) {
+    var date = Gregorian.info(moment, Time.FORMAT_SHORT);
+    return date.hour.format("%02d") + ":" + date.min.format("%02d");
   }
   return "";
 }
 
-function stringReplace(str as String, oldString as String, newString as String) as String {
+function getLongTimeString(moment as Time.Moment?) as String {
+  if (moment != null && moment instanceof Time.Moment) {
+    var date = Gregorian.info(moment, Time.FORMAT_SHORT);
+    return (
+      date.day.format("%02d") +
+      "-" +
+      date.month.format("%02d") +
+      "-" +
+      date.year.format("%02d") +
+      " " +
+      date.hour.format("%02d") +
+      ":" +
+      date.min.format("%02d")
+    );
+  }
+  return "";
+}
+
+function stringReplace(
+  str as String,
+  oldString as String,
+  newString as String
+) as String {
   //str = str.toString(); // @@ TODO why crash here? -> because of too many nested function calls?
   if (str.length() == 0 || oldString.length() == 0) {
     return str;
@@ -510,7 +697,10 @@ function stringReplace(str as String, oldString as String, newString as String) 
   var count = 0;
   while (index != null && count < 30) {
     var indexEnd = index + oldString.length();
-    var res = result.substring(0, index) + newString + result.substring(indexEnd, result.length());
+    var res =
+      result.substring(0, index) +
+      newString +
+      result.substring(indexEnd, result.length());
     result = res;
     index = result.find(oldString);
     count = count + 1;
@@ -531,7 +721,11 @@ function stringLeft(str as String, marker as String, dflt as String) as String {
   return str.substring(0, index) as String;
 }
 
-function stringRight(str as String, marker as String, dflt as String) as String {
+function stringRight(
+  str as String,
+  marker as String,
+  dflt as String
+) as String {
   if (str.length() == 0 || marker.length() == 0) {
     return dflt;
   }
@@ -543,11 +737,21 @@ function stringRight(str as String, marker as String, dflt as String) as String 
   return str.substring(index + 1, str.length()) as String;
 }
 
-function pointOnCircle_x(x as Number, y as Number, radius as Number, angleInDegrees as Number) as Number {
+function pointOnCircle_x(
+  x as Number,
+  y as Number,
+  radius as Number,
+  angleInDegrees as Number
+) as Number {
   // Convert from degrees to radians
   return (radius * Math.cos(deg2rad(angleInDegrees)) + x).toNumber();
 }
-function pointOnCircle_y(x as Number, y as Number, radius as Number, angleInDegrees as Number) as Number {
+function pointOnCircle_y(
+  x as Number,
+  y as Number,
+  radius as Number,
+  angleInDegrees as Number
+) as Number {
   // Convert from degrees to radians
   return (radius * Math.sin(deg2rad(angleInDegrees)) + y).toNumber();
 }
@@ -559,19 +763,3 @@ function convertToNumber(value as String, defaultValue as Number) as Number {
   }
   return converted;
 }
-
-// o (one), l (large), w (wide), s (small)
-// function getDisplaySize(width as Number, height as Number) as String {
-//   var display = "s";
-
-//   if (width >= 246) {
-//     display = "w";
-//     if (height >= 322) {
-//       display = "o";
-//     } else if (height >= 100) {
-//       display = "l";
-//     }
-//   }
-
-//   return display;
-// }

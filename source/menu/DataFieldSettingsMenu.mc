@@ -123,14 +123,24 @@ class DataFieldSettingsMenuDelegate extends WatchUi.Menu2InputDelegate {
       );
       mi.setSubLabel($.getStorageNumberAsString(mi.getId() as String));
       targetMenu.addItem(mi);
+
       mi = new WatchUi.MenuItem(
-        "Target cadence rpm",
+        "Target cadence rpm low",
+        null,
+        "target_cadence_low",
+        null
+      );
+      mi.setSubLabel($.getStorageNumberAsString(mi.getId() as String));
+      targetMenu.addItem(mi);
+      mi = new WatchUi.MenuItem(
+        "Target cadence rpm high",
         null,
         "target_cadence",
         null
       );
       mi.setSubLabel($.getStorageNumberAsString(mi.getId() as String));
       targetMenu.addItem(mi);
+
       mi = new WatchUi.MenuItem(
         "Target calories kcal",
         null,
@@ -171,6 +181,15 @@ class DataFieldSettingsMenuDelegate extends WatchUi.Menu2InputDelegate {
         "Target distance km",
         null,
         "target_distance",
+        null
+      );
+      mi.setSubLabel($.getStorageNumberAsString(mi.getId() as String));
+      targetMenu.addItem(mi);
+
+      mi = new WatchUi.MenuItem(
+        "Target sunrise/set min|0~",
+        null,
+        "target_sunevent",
         null
       );
       mi.setSubLabel($.getStorageNumberAsString(mi.getId() as String));
@@ -499,6 +518,72 @@ class DataFieldSettingsMenuDelegate extends WatchUi.Menu2InputDelegate {
       return;
     }
 
+    if (id instanceof String && id.equals("fields_usecolor")) {
+      var fcolMenu = new WatchUi.Menu2({ :title => "Use color for field" });
+
+      var fieldsUseColor =
+        getStorageValue("fields_usecolor", []) as Array<Number>;
+      // Fields, skip 0 (field Unknown)
+      for (var i = 1; i < $.FieldTypeCount; i++) {
+        if ($.fieldHasColor(i)) {
+          var field = i as FieldType;
+
+          // If field in array then enabled
+          var useColor = fieldsUseColor.indexOf(i) > -1;
+
+          var mi = new WatchUi.ToggleMenuItem(
+            $.getFieldTypeAsString(field),
+            null,
+            "fields_usecolor|" + i.format("%d"),
+            useColor,
+            null
+          );
+
+          fcolMenu.addItem(mi);
+        }
+      }
+
+      WatchUi.pushView(
+        fcolMenu,
+        new $.GeneralMenuDelegate(self, fcolMenu),
+        WatchUi.SLIDE_UP
+      );
+      return;
+    }
+
+    if (id instanceof String && id.equals("fields_avg_trend")) {
+      var favgMenu = new WatchUi.Menu2({ :title => "Avg trend for field" });
+
+      var fieldsUseAvgTrend =
+        getStorageValue("fields_avg_trend", []) as Array<Number>;
+      // Fields, skip 0 (field Unknown)
+      for (var i = 1; i < $.FieldTypeCount; i++) {
+        if ($.fieldHasAvgTrend(i)) {
+          var field = i as FieldType;
+
+          // If field in array then enabled
+          var useAvgTrend = fieldsUseAvgTrend.indexOf(i) > -1;
+
+          var mi = new WatchUi.ToggleMenuItem(
+            $.getFieldTypeAsString(field),
+            null,
+            "fields_avg_trend|" + i.format("%d"),
+            useAvgTrend,
+            null
+          );
+
+          favgMenu.addItem(mi);
+        }
+      }
+
+      WatchUi.pushView(
+        favgMenu,
+        new $.GeneralMenuDelegate(self, favgMenu),
+        WatchUi.SLIDE_UP
+      );
+      return;
+    }
+
     if (id instanceof String && id.equals("fallbackstriggers")) {
       var fbtMenu = new WatchUi.Menu2({ :title => "Fallback triggers" });
 
@@ -559,6 +644,24 @@ class DataFieldSettingsMenuDelegate extends WatchUi.Menu2InputDelegate {
       mi.setSubLabel($.getStorageNumberAsString(mi.getId() as String));
       avMenu.addItem(mi);
 
+      mi = new WatchUi.MenuItem(
+        "zen countdown|0~",
+        null,
+        "zen_countdown",
+        null
+      );
+      mi.setSubLabel($.getStorageNumberAsString(mi.getId() as String));
+      avMenu.addItem(mi);
+
+      mi = new WatchUi.MenuItem(
+        "Sunevent difference|0.0~10 (deg)",
+        null,
+        "sunevent_degrees_difference",
+        null
+      );
+      mi.setSubLabel($.getStorageNumberAsString(mi.getId() as String) + " deg");
+      avMenu.addItem(mi);
+
       var boolean = Storage.getValue("show_shiftingbattery") ? true : false;
       avMenu.addItem(
         new WatchUi.ToggleMenuItem(
@@ -612,6 +715,69 @@ class GeneralMenuDelegate extends WatchUi.Menu2InputDelegate {
   function onSelect(item as MenuItem) as Void {
     _item = item;
     var id = item.getId() as String;
+
+    // ToggleMenuItem! UseColor fields, storage in fields_usecolor
+    if (id.find("fields_usecolor|") != null && item instanceof ToggleMenuItem) {
+      var key = stringLeft(id, "|", "");
+      var index = stringRight(id, "|", "").toNumber();
+      if (key == "" || index == null) {
+        return;
+      }
+
+      var fieldTypeNumber = index as Number;
+      var fields = getStorageValue(key, []) as Array<Number>;
+
+      if (item.isEnabled()) {
+        // Add to storage array
+        if (fields.indexOf(fieldTypeNumber) < 0) {
+          fields.add(fieldTypeNumber);
+        }
+      } else {
+        // Remove from storage array
+        if (fields.indexOf(fieldTypeNumber) > -1) {
+          fields.remove(fieldTypeNumber);
+        }
+      }
+      Storage.setValue(
+        key,
+        fields as Lang.Array<Application.PropertyValueType>
+      );
+      // System.println(fields);
+      return;
+    }
+
+    // ToggleMenuItem! UseAvgTrend fields, storage in fields_avg_trend
+    if (
+      id.find("fields_avg_trend|") != null &&
+      item instanceof ToggleMenuItem
+    ) {
+      var key = stringLeft(id, "|", "");
+      var index = stringRight(id, "|", "").toNumber();
+      if (key == "" || index == null) {
+        return;
+      }
+
+      var fieldTypeNumber = index as Number;
+      var fields = getStorageValue(key, []) as Array<Number>;
+
+      if (item.isEnabled()) {
+        // Add to storage array
+        if (fields.indexOf(fieldTypeNumber) < 0) {
+          fields.add(fieldTypeNumber);
+        }
+      } else {
+        // Remove from storage array
+        if (fields.indexOf(fieldTypeNumber) > -1) {
+          fields.remove(fieldTypeNumber);
+        }
+      }
+      Storage.setValue(
+        key,
+        fields as Lang.Array<Application.PropertyValueType>
+      );
+      // System.println(fields);
+      return;
+    }
 
     if (id instanceof String && item instanceof ToggleMenuItem) {
       Storage.setValue(id as String, item.isEnabled());
@@ -796,7 +962,7 @@ class GeneralMenuDelegate extends WatchUi.Menu2InputDelegate {
 
     Toybox.WatchUi.pushView(
       view,
-      new $.NumericInputDelegate(_debug, view),
+      new $.NumericInputDelegate(view),
       WatchUi.SLIDE_RIGHT
     );
   }
@@ -831,7 +997,7 @@ class GeneralMenuDelegate extends WatchUi.Menu2InputDelegate {
 
     Toybox.WatchUi.pushView(
       view,
-      new $.NumericInputDelegate(_debug, view),
+      new $.NumericInputDelegate(view),
       WatchUi.SLIDE_IMMEDIATE
     );
   }
@@ -1042,6 +1208,10 @@ function getFieldLayoutAsString(fieldLayout as FieldLayout) as String {
       return "6 fields";
     case FL4Fields:
       return "4 fields";
+    case FL6SSFields:
+      return "6 fields same size";
+    case FL8SSFields:
+      return "8 fields same size";
     default:
       return "unknown";
   }
@@ -1049,65 +1219,65 @@ function getFieldLayoutAsString(fieldLayout as FieldLayout) as String {
 function getFieldTypeAsString(fieldType as FieldType) as String {
   switch (fieldType) {
     case FTUnknown:
-      return "unknown";
+      return "Unknown";
     case FTDistance:
-      return "distance";
+      return "Distance";
     case FTDistanceNext:
-      return "distance next";
+      return "Distance next";
     case FTDistanceDest:
-      return "distance dest";
+      return "Distance dest";
     case FTGrade:
-      return "grade";
+      return "Grade";
     case FTClock:
-      return "clock";
+      return "Clock";
     case FTHeartRate:
-      return "heartrate";
+      return "Heartrate";
     case FTPower:
-      return "power";
+      return "Power";
     case FTBearing:
-      return "bearing";
+      return "Bearing";
     case FTSpeed:
-      return "speed";
+      return "Speed";
     case FTAltitude:
-      return "altitude";
+      return "Altitude";
     case FTPressureAtSea:
-      return "pressure at sea";
+      return "Pressure at sea";
     case FTPressure:
-      return "pressure";
+      return "Pressure";
     case FTCadence:
-      return "cadence";
+      return "Cadence";
     case FTHiit:
-      return "hiit";
+      return "Hiit";
     case FTTimer:
-      return "timer";
+      return "Timer";
     case FTTimeElapsed:
-      return "time elapsed";
+      return "Time elapsed";
     case FTGearCombo:
-      return "gear combo";
+      return "Gear combo";
     case FTPowerPerWeight:
-      return "power per weight";
+      return "Power per weight";
     case FTPowerBalance:
-      return "power balance";
+      return "Power balance";
     case FTHeartRateZone:
-      return "heartrate zone";
+      return "Heartrate zone";
     case FTGearIndex:
-      return "gear index";
+      return "Gear index";
     case FTAverageSpeed:
-      return "avg speed";
+      return "Avg speed";
     case FTAverageHeartRate:
-      return "avg heartrate";
+      return "Avg heartrate";
     case FTAveragePower:
-      return "avg power";
+      return "Avg power";
     case FTAverageCadence:
-      return "avg cadence";
+      return "Avg cadence";
     case FTNormalizedPower:
-      return "normalized power";
+      return "Normalized power";
     case FTIntensityFactor:
-      return "intensity factor";
+      return "Intensity factor";
     case FTTrainingStressScore:
-      return "training stress score";
+      return "Training stress score";
     case FTCalories:
-      return "calories";
+      return "Calories";
     case FTEta:
       return "ET Arrival";
     case FTEtr:
@@ -1116,8 +1286,20 @@ function getFieldTypeAsString(fieldType as FieldType) as String {
       return "Vo2Max hiit";
     case FTVo2MaxProfile:
       return "Vo2Max profile";
+    case FTTime2SunUp:
+      return "Time to sun rise";
+    case FTTime2SunDown:
+      return "Time to sun set";
+    case FTTime2SunUpDown:
+      return "Time to sun rise/set";
+    case FTTime2SunUpDownLoop:
+      return "Time to sun r/s continous";
+    case FTPerc2SunUpDown:
+      return "Perc to sun r/s";
+    case FTPerc2SunUpDownLoop:
+      return "Perc to sun r/s continous";
     default:
-      return "unknown";
+      return "Unknown";
   }
 }
 
@@ -1183,6 +1365,10 @@ function fieldHasFallback(fieldId as Number) as Boolean {
       FTEtr,
       FTVo2MaxHiit,
       FTVo2MaxProfile,
+      FTTime2SunUp,
+      FTTime2SunDown,
+      FTTime2SunUpDown,
+      FTTime2SunUpDownLoop, // Only when no position!
     ].indexOf(fieldId) > -1
   );
 }
@@ -1200,6 +1386,44 @@ function fieldHasGraphic(fieldId as Number) as Boolean {
       FTHeartRate,
       FTCalories,
       FTDistance,
+      FTPerc2SunUpDown,
+      FTPerc2SunUpDownLoop,
     ].indexOf(fieldId) > -1
   );
+}
+
+function fieldHasColor(fieldId as Number) as Boolean {
+  return (
+    [
+      FTDistance,
+      FTGrade,
+      FTHeartRate,
+      FTPower,
+      FTSpeed,
+      FTAverageSpeed,
+      FTAltitude,
+      FTCadence,
+      // FTPowerPerWeight,
+      // FTPowerBalance,
+      FTHeartRateZone,
+      FTAverageHeartRate,
+      FTAveragePower,
+      FTAverageCadence,
+      FTNormalizedPower,
+      // FTIntensityFactor,
+      // FTTrainingStressScore,
+      FTHiit,
+      FTVo2MaxHiit,
+      FTVo2MaxProfile,
+      FTTime2SunUp,
+      FTTime2SunDown,
+      FTTime2SunUpDown,
+      FTTime2SunUpDownLoop,
+      FTPerc2SunUpDown,
+      FTPerc2SunUpDownLoop,
+    ].indexOf(fieldId) > -1
+  );
+}
+function fieldHasAvgTrend(fieldId as Number) as Boolean {
+  return [FTHeartRate, FTPower, FTSpeed, FTCadence].indexOf(fieldId) > -1;
 }

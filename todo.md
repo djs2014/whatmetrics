@@ -1,13 +1,15 @@
-+2 fields -> circles ex. rpm / slp
-readme update
+Test globalNP
 
-focus -> no / yes / color
+perc daylight
+ -> border or color darker to event
 
-vo2max bg
- - OFF 
- - dURING Hiit - when active
-  - Hiit only - only show hiit scores
- - Continuous - hiit scores / actual vo2max
+
+perc daylight
+-> paused or sec to event < defined -> show time to event
+
+
+x out of memory 1030? -> disable for x30? - done
+x -> menu levels is too deep for these devices. --> only 12 fields possible 830
 
 
 vo2max rolling

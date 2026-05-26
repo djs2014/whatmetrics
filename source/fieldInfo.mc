@@ -29,6 +29,8 @@ class FieldInfo {
 
     var rawValue as Numeric = 0;
     var maxValue as Numeric = 0;
+    var minValue as Numeric = 0;
+    var barReversed as Boolean = false;
     
     function initialize(fieldType as FieldType, fieldIndex as Number) {
         type = fieldType;
@@ -36,14 +38,17 @@ class FieldInfo {
     }
 }
 
-const FieldLayoutCount = 3;
+const FieldLayoutCount = 5;
 enum FieldLayout {
     FL8Fields = 0,
     FL6Fields = 1,
-    FL4Fields = 2
+    FL4Fields = 2,
+    FL6SSFields = 3,
+    FL8SSFields = 4
 }
 
-const FieldTypeCount = 34; // incl the 0
+// Note. will be overridden for devices low on memory (1030)
+var FieldTypeCount = 40; // incl the 0
 enum FieldType {
     FTUnknown = 0,
     FTDistance = 1,
@@ -79,6 +84,12 @@ enum FieldType {
     FTEtr = 31, // Estimated Time Remaining   x hour, x min
     FTVo2MaxHiit = 32, // Hiit Vo2max default
     FTVo2MaxProfile = 33, // Profile Vo2max default
+    FTTime2SunUp = 34,
+    FTTime2SunDown = 35,
+    FTTime2SunUpDown = 36, // Only sun up/down for today!
+    FTTime2SunUpDownLoop = 37, 
+    FTPerc2SunUpDown = 38, 
+    FTPerc2SunUpDownLoop = 39, 
     // @@ TODO
     // FTEnergyExpenditure = 24,
     // FTTrainingEffect = 25,
@@ -88,8 +99,8 @@ enum FieldType {
 
 enum ZenMode {
     ZMOff = 0,
-    ZMOn = 2,
-    ZMWhenMoving = 3 // on when moving
+    ZMOn = 1,
+    ZMWhenMoving = 2 // on when moving
 }
 
 enum BarPosition {

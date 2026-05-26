@@ -24,12 +24,13 @@ class DataFieldSettingsView extends WatchUi.View {
     var mySettings = System.getDeviceSettings();
     var version = mySettings.monkeyVersion;
     var versionString = Lang.format("$1$.$2$.$3$", version);
+    var partNumber = mySettings.partNumber;
 
     dc.drawText(
       dc.getWidth() / 2,
       dc.getHeight() / 2 - 30,
       Graphics.FONT_SMALL,
-      "Press Menu \nfor settings \nCIQ " + versionString,
+      "Press Menu \nfor settings\nCIQ " + versionString + "\nDevice " + partNumber,
       Graphics.TEXT_JUSTIFY_CENTER
     );
   }
@@ -70,6 +71,11 @@ class DataFieldSettingsDelegate extends WatchUi.BehaviorDelegate {
     mi = new WatchUi.MenuItem("Fallback triggers", null, "fallbackstriggers", null);
     menu.addItem(mi);
 
+    mi = new WatchUi.MenuItem("Color fields", null, "fields_usecolor", null);
+    menu.addItem(mi);
+
+    mi = new WatchUi.MenuItem("Average trend", null, "fields_avg_trend", null);
+    menu.addItem(mi);
 
     var boolean = false;
 
@@ -82,6 +88,8 @@ class DataFieldSettingsDelegate extends WatchUi.BehaviorDelegate {
     // @@TODO?? nope, on paused, always (in details)
     boolean = Storage.getValue("show_average") ? true : false;
     menu.addItem(new WatchUi.ToggleMenuItem("Average on pause", null, "show_average", boolean, null));
+    // boolean = Storage.getValue("show_average_progress") ? true : false;
+    // menu.addItem(new WatchUi.ToggleMenuItem("Avg trend arrow", null, "show_average_progress", boolean, null));
     
     // boolean = Storage.getValue("show_graphic_fields") ? true : false;
     // menu.addItem(new WatchUi.ToggleMenuItem("Graphic fields", null, "show_graphic_fields", boolean, null));
