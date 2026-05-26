@@ -25,7 +25,6 @@ function checkFeatures() as Void {
   }
 }
 
-
 function getActivityValue(
   info as Activity.Info?,
   symbol as Symbol,
@@ -334,7 +333,12 @@ function getMatchingFont(
   return font;
 }
 
-function cropTextToFit(dc as Dc, text as String, font as FontType, maxWidth as Number) as String {
+function cropTextToFit(
+  dc as Dc,
+  text as String,
+  font as FontType,
+  maxWidth as Number
+) as String {
   var dimensions = dc.getTextDimensions(text, font);
   if (dimensions[0] <= maxWidth) {
     return text;
@@ -536,14 +540,22 @@ function shadeColor(
   );
 }
 
-function transitionFromTo(alpha as Number, redFrom as Numeric, greenFrom as Numeric, blueFrom as Numeric,
- redTo as Numeric, greenTo as Numeric, blueTo as Numeric, percent as Number) as ColorType {
+function transitionFromTo(
+  alpha as Number,
+  redFrom as Numeric,
+  greenFrom as Numeric,
+  blueFrom as Numeric,
+  redTo as Numeric,
+  greenTo as Numeric,
+  blueTo as Numeric,
+  percent as Number
+) as ColorType {
   var factor = percent / 100;
   var red = Math.round(redFrom + (redTo - redFrom) * factor);
   var green = Math.round(greenFrom + (greenTo - greenFrom) * factor);
   var blue = Math.round(blueFrom + (blueTo - blueFrom) * factor);
 
-// System.println(["transitionFromTo", alpha, redFrom, greenFrom, blueFrom, redTo, greenTo, blueTo, percent, "%", red, green, blue]); 
+  // System.println(["transitionFromTo", alpha, redFrom, greenFrom, blueFrom, redTo, greenTo, blueTo, percent, "%", red, green, blue]);
 
   return Graphics.createColor(
     alpha,
@@ -555,7 +567,7 @@ function transitionFromTo(alpha as Number, redFrom as Numeric, greenFrom as Nume
 // function transitionToRed(percent) {
 //     // Starting color: rgb(230, 220, 55)
 //     // Target color:   rgb(255, 0, 0)
-    
+
 //     const factor = percent / 100;
 
 //     const r = Math.round(255 + (230 - 255) * factor);
@@ -578,57 +590,70 @@ function getSecondsToNext(
 
 // template: "{h}:{m}:{s}:{ms}"
 function millisecondsToShortTimeString(
-  totalMilliSeconds as Number,
+  totalMilliSeconds as Numeric?,
   template as String
 ) as String {
-  if (totalMilliSeconds != null && totalMilliSeconds instanceof Lang.Number) {
-    var hours = (totalMilliSeconds / (1000.0 * 60 * 60)).toNumber() % 24;
-    var minutes = (totalMilliSeconds / (1000.0 * 60.0)).toNumber() % 60;
-    var seconds = (totalMilliSeconds / 1000.0).toNumber() % 60;
-    var mseconds = totalMilliSeconds.toNumber() % 1000;
-
-    if (template.length() == 0) {
-      template = "{h}:{m}:{s}:{ms}";
-    }
-    var time = stringReplace(template, "{h}", hours.format("%01d"));
-    time = stringReplace(time, "{m}", minutes.format("%02d"));
-    time = stringReplace(time, "{s}", seconds.format("%02d"));
-    time = stringReplace(time, "{ms}", mseconds.format("%03d"));
-
-    return time;
+  if (totalMilliSeconds == null) {
+    return "";
   }
-  return "";
+
+  var totalMilliSecondsInt = totalMilliSeconds.toNumber();
+
+  var hours = (totalMilliSecondsInt / 3600000) % 24; // (1000 * 60 * 60)
+  var minutes = (totalMilliSecondsInt / 60000) % 60; // (1000 * 60)
+  var seconds = (totalMilliSecondsInt / 1000) % 60;
+  var mseconds = totalMilliSecondsInt % 1000;
+
+  if (template.length() == 0) {
+    template = "{h}:{m}:{s}:{ms}";
+  }
+  var time = stringReplace(template, "{h}", hours.format("%01d"));
+  time = stringReplace(time, "{m}", minutes.format("%02d"));
+  time = stringReplace(time, "{s}", seconds.format("%02d"));
+  time = stringReplace(time, "{ms}", mseconds.format("%03d"));
+
+  return time;
 }
 
 // 1:40 or 150:40
 function secondsToCompactTimeString(
-  totalSeconds as Number,
+  totalSeconds as Numeric?,
   template as String
 ) as String {
-  if (totalSeconds != null && totalSeconds instanceof Lang.Number) {
-    var minutes = (totalSeconds / 60.0).toNumber();
-    var seconds = totalSeconds.toNumber() % 60;
-
-    var time = stringReplace(template, "{m}", minutes.format("%01d"));
-    time = stringReplace(time, "{s}", seconds.format("%02d"));
-
-    return time;
+  if (totalSeconds == null) {
+    return "";
   }
-  return "";
+  // Force conversion to a standard integer Number to prevent UnexpectedTypeException
+  var totalSecondsInt = totalSeconds.toNumber();
+
+  var minutes = totalSecondsInt / 60;
+  var timeString = stringReplace(template, "{m}", minutes.format("%01d"));
+
+  var seconds = totalSecondsInt % 60;
+  timeString = stringReplace(timeString, "{s}", seconds.format("%02d"));
+
+  return timeString;
 }
 
 // 1:40 or 150:40 (if no {h} in template)
-function secondsToHourMinutes(totalSeconds as Number) as String {
-  if (totalSeconds != null && totalSeconds instanceof Lang.Number) {
-    var timeString = "{h}:{m}";
-    var hours = (totalSeconds / (60 * 60)).toNumber(); // % 24;
-    timeString = $.stringReplace(timeString, "{h}", hours.format("%01d"));
-    var minutes = (totalSeconds / 60.0).toNumber() % 60;
-    timeString = $.stringReplace(timeString, "{m}", minutes.format("%02d"));
-
-    return timeString;
+function secondsToHourMinutes(totalSeconds as Numeric?) as String {
+  if (totalSeconds == null) {
+    return "";
   }
-  return "";
+
+  // Force conversion to a standard integer Number to prevent UnexpectedTypeException
+  var totalSecondsInt = totalSeconds.toNumber();
+
+  var timeString = "{h}:{m}";
+  // Pure integer division for hours
+  var hours = totalSecondsInt / 3600;
+  timeString = $.stringReplace(timeString, "{h}", hours.format("%01d"));
+
+  // Get total remaining minutes, then modulo 60 using integers
+  var minutes = (totalSecondsInt / 60) % 60;
+  timeString = $.stringReplace(timeString, "{m}", minutes.format("%02d"));
+
+  return timeString;
 }
 
 function getShortTimeString(moment as Time.Moment?) as String {

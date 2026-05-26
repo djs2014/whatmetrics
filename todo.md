@@ -1,3 +1,5 @@
+Test globalNP
+
 perc daylight
  -> border or color darker to event
 
@@ -8,60 +10,6 @@ perc daylight
 
 x out of memory 1030? -> disable for x30? - done
 x -> menu levels is too deep for these devices. --> only 12 fields possible 830
-
-todo
-menu settings: set diff for lat/lon and sunset change.
-
-onsunevent diff 0.0 - 10 degrees lat/long
-getNextSunEvent - is sunset 1, time, current loc
- 
-
-Graphics color yellow fade to light .. Icon color sunset/rise
--perc is bar from right to left
-sync location_utils to other CIQ projects!!
-fallback when paused
- arr fields with color[] -> see fallback fields logic
-update Readme
-
-x arrw up down pressure trend
-?? onSunsetChange use part of geo loc (sunset/sunrise is only for current day (based on the time))
-?? cache sunrise/set data -> not working day can be diff
-
-
-x When grey -> use color per field
-use color no == grey, all = color, perfield , set per field
-
-x Delayed Zen mode x seconds.
-
-Icon wat platter
-x Time to Sun up
-xTime to Sun down
-xTime to Sun up/down
-
-x    Active x minutes before
-x    Is off after event and before x event
-HasGraphic
-  -> target is towards 0 (from x before event)
-
-x Pressure  
-    If avg < current -> - down indicator
-    If > -> + up indicator
-
-
-lower bound rpm
-
-time to night / morning -> 1hour before is off (config) -> show diff field
-layout mondriaan ..
-+2 fields -> circles ex. rpm / slp
-readme update
-
-focus -> no / yes / color
-
-vo2max bg
- - OFF 
- - dURING Hiit - when active
-  - Hiit only - only show hiit scores
- - Continuous - hiit scores / actual vo2max
 
 
 vo2max rolling
