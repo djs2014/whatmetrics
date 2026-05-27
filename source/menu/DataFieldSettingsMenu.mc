@@ -235,31 +235,33 @@ class DataFieldSettingsMenuDelegate extends WatchUi.Menu2InputDelegate {
       return;
     }
     if (id instanceof String && id.equals("gradient")) {
-      var gradientMenu = new WatchUi.Menu2({ :title => "Gradient" });
+      var gradientMenu = new WatchUi.Menu2({ :title => "Grade" });
 
       var mi = new WatchUi.MenuItem(
-        "Window size",
+        "Max window size|1-20",
         null,
-        "metric_gradews",
+        "metric_grade_maxwindow",
         null
       );
       mi.setSubLabel($.getStorageNumberAsString(mi.getId() as String));
       gradientMenu.addItem(mi);
+
       mi = new WatchUi.MenuItem(
-        "Minimal rise in cm",
+        "Distance interval|1.0~10(m)",
         null,
-        "metric_grademinrise",
+        "metric_grade_distance",
         null
       );
       mi.setSubLabel($.getStorageNumberAsString(mi.getId() as String));
       gradientMenu.addItem(mi);
+
       mi = new WatchUi.MenuItem(
-        "Minimal run in cm",
+        "Rolling window (tap)",
         null,
-        "metric_grademinrun",
+        "metric_grade_rollingwindow",
         null
       );
-      mi.setSubLabel($.getStorageNumberAsString(mi.getId() as String));
+      mi.setSubLabel($.getGradeRollingWindowAsString());
       gradientMenu.addItem(mi);
 
       WatchUi.pushView(
@@ -942,6 +944,12 @@ class GeneralMenuDelegate extends WatchUi.Menu2InputDelegate {
       return;
     }
 
+    if (id instanceof String && id.equals("metric_grade_rollingwindow")) {
+      // Update subLabel 
+      item.setSubLabel($.getGradeRollingWindowAsString());
+      return;
+    }
+
     // Numeric input
     var prompt = item.getLabel();
     var value = $.getStorageValue(id as String, 0) as Numeric;
@@ -1415,4 +1423,11 @@ function fieldHasColor(fieldId as Number) as Boolean {
 }
 function fieldHasAvgTrend(fieldId as Number) as Boolean {
   return [FTHeartRate, FTPower, FTSpeed, FTCadence].indexOf(fieldId) > -1;
+}
+
+function getGradeRollingWindowAsString() as String {
+  var windowSize = getStorageValue("metric_grade_maxwindow", 0) as Number;
+  var distance = getStorageValue("metric_grade_distance", 0.0f) as Float;
+  
+  return (windowSize * distance).format("%0.1f") + " m";
 }

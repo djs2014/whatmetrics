@@ -268,7 +268,7 @@ class CurrentLocation {
     var changed =
       newDegrees[0] != currentDegrees[0] || newDegrees[1] != currentDegrees[1];
 
-    System.println(["locationChanged", changed, currentDegrees, "->", newDegrees]);
+    //System.println(["locationChanged", changed, currentDegrees, "->", newDegrees]);
     return changed;
   }
 

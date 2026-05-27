@@ -5,11 +5,11 @@ import Toybox.UserProfile;
 
 class whatmetricsApp extends Application.AppBase {
   function initialize() {
-    AppBase.initialize();    
+    AppBase.initialize();
   }
 
   // onStart() is called on application start up
-  function onStart(state as Dictionary?) as Void { }
+  function onStart(state as Dictionary?) as Void {}
 
   // onStop() is called when your application is exiting
   function onStop(state as Dictionary?) as Void {}
@@ -38,6 +38,15 @@ class whatmetricsApp extends Application.AppBase {
       Storage.setValue("version", "1.0.4");
       Storage.setValue("resetDefaults", true);
     }
+    var gradeWindowSize =
+      getStorageValue("metric_grade_maxwindow", null) as Number?;
+    if (gradeWindowSize == null) {
+      Storage.setValue("metric_grade_maxwindow", 8);
+      Storage.setValue("metric_grade_distance", 2.0f);
+      Storage.deleteValue("metric_grademinrise");
+      Storage.deleteValue("metric_grademinrun");
+      Storage.deleteValue("metric_gradews");
+    }
 
     var reset = Storage.getValue("resetDefaults");
     if (reset == null || (reset as Boolean)) {
@@ -54,9 +63,8 @@ class whatmetricsApp extends Application.AppBase {
       Storage.setValue("hiit_vo2maxbg", Vo2BgHiit);
 
       Storage.setValue("metric_ppersec", 3);
-      Storage.setValue("metric_gradews", 4);
-      Storage.setValue("metric_grademinrise", 0);
-      Storage.setValue("metric_grademinrun", 20);
+      Storage.setValue("metric_grade_maxwindow", 8);
+      Storage.setValue("metric_grade_distance", 2.0f);
 
       Storage.setValue("debug", $.gDebug);
       Storage.setValue("show_colors", $.gShowColors);
@@ -174,11 +182,7 @@ class whatmetricsApp extends Application.AppBase {
         $.gUseColorFields as Lang.Array<Application.PropertyValueType>
       );
 
-      $.gUseAvgTrendFields = [
-        FTHeartRate,
-        FTPower,
-        FTSpeed,
-        FTCadence,];
+      $.gUseAvgTrendFields = [FTHeartRate, FTPower, FTSpeed, FTCadence];
       Storage.setValue(
         "fields_avg_trend",
         $.gUseAvgTrendFields as Lang.Array<Application.PropertyValueType>
@@ -240,16 +244,17 @@ class whatmetricsApp extends Application.AppBase {
     $.gVo2MaxBackGround =
       getStorageValue("hiit_vo2maxbg", Vo2BgHiit) as Vo2MaxBackGround;
 
-    $.gVo2MaxBackGround = getStorageValue("hiit_vo2maxbg", Vo2BgHiit) as Vo2MaxBackGround;
-    
+    $.gVo2MaxBackGround =
+      getStorageValue("hiit_vo2maxbg", Vo2BgHiit) as Vo2MaxBackGround;
+
     var metrics = $.getWhatMetrics();
     metrics.setPowerPerSec(getStorageValue("metric_ppersec", 0) as Number);
-    metrics.setGradeWindowSize(getStorageValue("metric_gradews", 0) as Number);
-    metrics.setGradeMinimalRise(
-      getStorageValue("metric_grademinrise", 0) as Number
+
+    metrics.setGradeWindowSize(
+      $.getStorageValue("metric_grade_maxwindow", 8) as Number
     );
-    metrics.setGradeMinimalRun(
-      getStorageValue("metric_grademinrun", 20) as Number
+    metrics.setGradeDistanceInterval(
+      $.getStorageValue("metric_grade_distance", 2.0f) as Float
     );
 
     if ((getStorageValue("target_ftp", 0) as Number) == 0) {
@@ -298,7 +303,7 @@ class whatmetricsApp extends Application.AppBase {
     $.gFocusField = getStorageValue("focus_field", $.gFocusField) as FocusField;
     $.gFocusPerc = getStorageValue("focus_perc", $.gFocusPerc) as Number;
     $.gFocusBorder = getStorageValue("focus_border", $.gFocusBorder) as Number;
-    
+
     var targetHrZone = getStorageValue("target_hrzone", 4) as Number;
     var heartRateZones = UserProfile.getHeartRateZones(
       UserProfile.HR_ZONE_SPORT_BIKING
@@ -359,7 +364,7 @@ class whatmetricsApp extends Application.AppBase {
         "fields_avg_trend",
         $.gUseAvgTrendFields as Lang.Array<Application.PropertyValueType>
       ) as Array<Number>;
-      
+
     // @@TODO refactor + barpostion
     // $.gLargeFieldGraphic = getStorageValue("large_field_bar", $.gLargeFieldGraphic) as Array<Number>;
     // $.gWideFieldGraphic = getStorageValue("wide_field_bar", $.gWideFieldGraphic) as Array<Number>;
@@ -398,7 +403,7 @@ class whatmetricsApp extends Application.AppBase {
     $.gShowGrid = getStorageValue("show_grid", $.gShowGrid) as Boolean;
     $.gShowAverageWhenPaused =
       getStorageValue("show_average", $.gShowAverageWhenPaused) as Boolean;
-    
+
     $.gAltitudeFallbackStart =
       getStorageValue("altitude_start_fb", 0) as Number;
     $.gAltitudeFallbackEnd = getStorageValue("altitude_end_fb", 0) as Number;
@@ -414,7 +419,7 @@ class whatmetricsApp extends Application.AppBase {
       getStorageValue("show_powerbattery", $.gShowPowerBattery) as Boolean;
     $.gShowNPasAverage =
       getStorageValue("show_np_as_avg", $.gShowNPasAverage) as Boolean;
-    
+
     // @@ from user profile possible?
     metrics.setFTP($.gTargetFtp);
 
@@ -448,7 +453,8 @@ class whatmetricsApp extends Application.AppBase {
       hiitt.setDemo(true);
     }
     $.gPause_x_offset = getStorageValue("pause_x_offset", 10) as Number;
-     $.gSunEventDegreesDifference = $.getStorageValue("sunevent_degrees_difference", 1.0d) as Double;
+    $.gSunEventDegreesDifference =
+      $.getStorageValue("sunevent_degrees_difference", 1.0d) as Double;
   }
 
   hidden function setFallbackField(

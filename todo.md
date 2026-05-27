@@ -1,5 +1,18 @@
-Test globalNP
+Test globalNP vs Garmin NP
+Test grade
+Check how to decrease memory -> string manipulation , arrays
 
+
+
+In your main DataField.onUpdate(dc) method, you can check slopeCalc.isPausedShowingSummary.
+
+    If it is false, just draw the single currentDisplayedGrade in massive numbers.
+
+    If it is true, draw a split layout showing slopeCalc.maxGrade and slopeCalc.getAverageClimbingGrade().
+
+It acts as a mini "achievements" screen every time they take a breather!
+
+----------
 perc daylight
  -> border or color darker to event
 

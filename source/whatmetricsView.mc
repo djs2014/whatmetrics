@@ -152,16 +152,16 @@ class whatmetricsView extends WatchUi.DataField {
       (mSunrise as Moment).value() <= time.value() &&
       time.value() <= (mSunset as Moment).value();
 
-    System.println([
-      "isAtDaylightTime:",
-      dayLightTime.toString(),
-      "sunrise:",
-      $.getLongTimeString(mSunrise),
-      "sunset:",
-      $.getLongTimeString(mSunset),
-      "when:",
-      $.getLongTimeString(time),
-    ]);
+    // System.println([
+    //   "isAtDaylightTime:",
+    //   dayLightTime.toString(),
+    //   "sunrise:",
+    //   $.getLongTimeString(mSunrise),
+    //   "sunset:",
+    //   $.getLongTimeString(mSunset),
+    //   "when:",
+    //   $.getLongTimeString(time),
+    // ]);
 
     return dayLightTime;
   }
@@ -822,17 +822,28 @@ class whatmetricsView extends WatchUi.DataField {
         }
 
         fi.value = grade.format("%0.1f");
+        fi.number = stringLeft(fi.value, ".", fi.value);
+        fi.decimals = stringRight(fi.value, ".", "");
         if (mSmallField) {
           // fi.text = fi.value;
-          fi.number = stringLeft(fi.value, ".", fi.value);
-          fi.decimals = stringRight(fi.value, ".", "");
           fi.units_side = "%";
         } else {
           fi.units = "%";
-          fi.number = stringLeft(fi.value, ".", fi.value);
-          fi.decimals = stringRight(fi.value, ".", "");
         }
         var g = grade;
+        if (!mMetrics.getUserIsMoving()) {
+            // TODO: no movement -> grade smaller / show max and avg grade
+          if (grade == 0) {
+            fi.text = mMetrics.getMaxClimbingGrade().format("%0.1f") + "/" + mMetrics.getAverageClimbingGrade().format("%0.1f");
+            fi.title = "max/avg grade";
+            fi.units = "%";
+            fi.number = "";
+            fi.decimals = "";            
+            grade = mMetrics.getMaxClimbingGrade();
+          }
+          
+        }
+
         if (grade < 0) {
           grade = grade * -1;
         }
@@ -1228,7 +1239,7 @@ class whatmetricsView extends WatchUi.DataField {
           powerpw > 0 and
           (mPowerFallbackCountdown > 0 or $.gPowerCountdownToFallBack == 0);
         fi.rawValue = mMetrics.getPower();
-        fi.maxValue = $.gTargetFtp;        
+        fi.maxValue = $.gTargetFtp;
         return fi;
 
       case FTPowerBalance:
@@ -3227,26 +3238,6 @@ class whatmetricsView extends WatchUi.DataField {
     );
 
     y = y + l;
-    var grades = "";
-    for (var i = 0; i < mMetrics.getGradeArray().size(); i++) {
-      grades = grades + mMetrics.getGradeArray()[i].format("%0.2f") + " ";
-    }
-    dc.drawText(
-      x,
-      y,
-      Graphics.FONT_SMALL,
-      Lang.format("Grade: $1$", [grades]),
-      Graphics.TEXT_JUSTIFY_LEFT
-    );
-    // y = y + l;
-    // dc.drawText(
-    //   x,
-    //   y,
-    //   font,
-    //   Lang.format("Bearing: $1$", [getCompassDirection(mMetrics.getBearing())]),
-    //   Graphics.TEXT_JUSTIFY_LEFT
-    // );
-    y = y + l;
     dc.drawText(
       x,
       y,
@@ -3365,7 +3356,7 @@ class whatmetricsView extends WatchUi.DataField {
     }
 
     return current / average.toDouble();
-    //System.println(["current", current, "average", average, "ratio", ratio]);    
+    //System.println(["current", current, "average", average, "ratio", ratio]);
   }
 
   // $$L = \text{clamp}\left( \frac{R - 1.0}{1.2 - 1.0} \right) \times L_{max}$$
@@ -3428,7 +3419,7 @@ class whatmetricsView extends WatchUi.DataField {
     // 2. Situatie: Onder gemiddelde (Pijl naar links, Rood)
     else if (ratio < 0.98) {
       centerX = x + width - 10; // Startpunt rechts
-    
+
       // Ratio iets onder 1.0 om kleine afwijkingen te negeren
       var scale = (1.0 - ratio) / clamp; // Max bij 0.8 if clamp is 0.2
       if (scale > 1.0) {

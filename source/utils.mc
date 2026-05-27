@@ -763,3 +763,50 @@ function convertToNumber(value as String, defaultValue as Number) as Number {
   }
   return converted;
 }
+
+// Helper function to calculate the median of an array of floats (median filter)
+// Example: If you use a Median Filter:Isolate the window: [100.1, 100.3, 150.0, 100.4, 100.6]
+// Sort the window numerically: [100.1, 100.3, 100.4, 100.6, 150.0]
+// Pick the middle index (Index 2): 100.4
+// The Result: The 150.0 glitch is pushed to the absolute end of the array and completely ignored.
+// The output (100.4) perfectly tracks your actual climb.
+
+// Use a small rawArray with the latest values (e.g., 5-10) to calculate the median grade, and update it every second. This will help smooth out the grade calculation and reduce the impact of GPS glitches or sudden changes in altitude/distance readings. 
+//The median value will be more representative of the actual grade over that time window, rather than being skewed by outliers.
+function getMedianValue(rawArray) {
+    var size = rawArray.size();
+    if (size == 0) { return 0.0d; }
+    
+    // Create a copy so we don't mutate the original history array
+    var sortedArray = new [size];
+    for (var i = 0; i < size; i++) {
+        sortedArray[i] = rawArray[i];
+    }
+
+    // Simple Bubble Sort
+    for (var i = 0; i < size; i++) {
+        for (var j = 0; j < size - i - 1; j++) {
+            if (sortedArray[j] > sortedArray[j + 1]) {
+                var temp = sortedArray[j];
+                sortedArray[j] = sortedArray[j + 1];
+                sortedArray[j + 1] = temp;
+            }
+        }
+    }
+
+    // Return the middle element
+    if (size % 2 != 0) {
+        // Odd number of elements, return exact middle
+        return sortedArray[size / 2];
+    } else {
+        // Even number of elements, return average of the two middle elements
+        return (sortedArray[(size / 2) - 1] + sortedArray[size / 2]) / 2.0;
+    }
+}
+
+function abs(value as Numeric) as Numeric {
+  if (value < 0) {
+    return -value;
+  }
+  return value;
+}

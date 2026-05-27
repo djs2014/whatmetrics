@@ -95,11 +95,32 @@ Specify your optimal values. Based on these values the color of the icons are ca
 
 # Gradient
 
-Own simple gradient calculation.
+Grade calculation.
 
-- Window size. How many sample seconds
-- Minimal rise. Minimal height difference, to use its value.
-- Minimal run. Minimal distance, to use its value.
+- Changing the distance interval (The Sampling Frequency)
+  Smaller interval, more responsive but more sensitive to noise. Larger interval, smoother but more lag.
+  
+- Changing the max window size (The History Depth)  
+  Smaller window, more responsive to recent changes but more sensitive to noise. Larger window, smoother but more lag.
+  
+Sweet spots seem to be around 3-5m interval and 6-10 window size, depending on the terrain.
+  
+- Snappy: distanceInterval = 2.0f, maxWindowSize = 12.
+- Balanced: distanceInterval = 3.0f, maxWindowSize = 8.
+- Steady: distanceInterval = 4.0f, maxWindowSize = 6.
+  
+Tip: if grade stable, but takes too long to react to changes, try reducing the window size first by 2 before reducing the distance interval. This shrinks the lag.
+
+Dynamically change the sampling frequency based on speed.
+
+For road cyclist, set distance interval to 2.0 meter.
+At slow climbing speeds, it drops down to 1.0m for hyper-responsive steep slope tracking, and expands to 3.0m on descents.
+
+Speed Range |Typical Activity Scenario|Ideal distanceInterval
+------------|-------------------------|----------------------
+Fast (>20 km/h)|Cycling Flats / Descents |4.0 meters
+Medium (10−20 km/h)|Moderate Cycling Climbs / Fast Running |3.0 meters
+Slow (<10 km/h)|Steep Grinds / Jogging / Hiking|1.5 meters
 
 ## Colors 
 
