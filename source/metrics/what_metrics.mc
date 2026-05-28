@@ -8,9 +8,7 @@ import Toybox.AntPlus;
 class WhatMetrics {
   hidden var a_info as Activity.Info?;
   hidden var mPaused as Boolean = true;
-  // grade
-  hidden var mCurrentGrade as Double = 0.0d;
-
+ 
   // bearing
   hidden var previousTrack as Float = 0.0f;
   // power
@@ -400,12 +398,6 @@ class WhatMetrics {
 
     a_info = info;
 
-    mCurrentGrade = calculateGrade(
-      getAltitude(),
-      getElapsedDistance(),
-      getSpeed()
-    );
-
     var power = getActivityValue(a_info, :currentPower, 0) as Number;
 
     checkForFalingDualPower();
@@ -495,188 +487,8 @@ class WhatMetrics {
     mCurrentNP = 0;
   }
 
-  function setGradeWindowSize(size as Number) as Void {
-    maxWindowSize = size;
-  }
 
-  function setGradeDistanceInterval(distance as Float) as Void {
-    distanceInterval = distance;
-  }
 
-  // % grade
-  function getGrade() as Double {
-    return mCurrentGrade;
-  }
-
-  function getMaxClimbingGrade() as Double {
-    return maxGrade;
-  }
-  function getAverageClimbingGrade() as Float {
-    if (validGradeSamples == 0) {
-      return 0.0f;
-    }
-    return totalGradeSum / validGradeSamples;
-  }
-
-  function getUserIsMoving() as Boolean {
-    return userIsMoving;
-  }
-
-  private var userIsMoving = false;
-  private var filteredAltitudeHistory = [] as Array<Float>;
-  private var distanceHistory = [] as Array<Float>;
-  private var lastTriggerDistance = 0.0f;
-
-  // Changing the distanceInterval (The Sampling Frequency)
-  // Smaller interval, more responsive but more sensitive to noise. Larger interval, smoother but more lag.
-  private var distanceInterval = 3.0f; // Insert a node every 3 meters
-  // Changing the maxWindowSize (The History Depth)
-  // Smaller window, more responsive to recent changes but more sensitive to noise. Larger window, smoother but more lag.
-  private var maxWindowSize = 8; // 8 samples * 3m = 24-meter rolling window
-  // Sweet spots seem to be around 3-5m interval and 6-10 window size, depending on the terrain.
-
-  private var stoppedTimer = 0; // Tracks consecutive seconds stopped
-  private var currentDisplayedGrade = 0.0d;
-
-  public var maxGrade = 0.0d;
-  public var totalGradeSum = 0.0f;
-  public var validGradeSamples = 0;
-
-  function calculateGrade(
-    rawAltitude as Float,
-    currentDistance as Float,
-    currentSpeed as Float
-  ) as Double {
-    if (rawAltitude == 0.0f || currentDistance == 0.0f) {
-      return 0.0d; // No valid data to calculate grade
-    }
-
-    // DYNAMICALLY ADJUST THE INTERVAL BASED ON SPEED
-    // Lower speed = smaller distance interval (more frequent samples)
-    // Higher speed = larger distance interval (more smoothing)
-    var dynamicDistanceInterval = distanceInterval; // Base interval (e.g., 3.0 meters)
-    if (currentSpeed != null) {
-      var speedKmh = currentSpeed * 3.6f;
-
-      if (speedKmh < 10.0f) {
-        // Slow speed: Scale down to 50% of the base interval (e.g., 3.0 -> 1.5m)
-        dynamicDistanceInterval = distanceInterval * 0.5f;
-      } else if (speedKmh > 25.0f) {
-        // Fast speed: Scale up to 1.5x the base interval (e.g., 3.0 -> 4.5m)
-        dynamicDistanceInterval = distanceInterval * 1.5f;
-      } else {
-        // Medium speed (10 to 25 km/h): Smooth linear interpolation
-        // Scales smoothly between 0.5x and 1.5x of your base distance
-        var factor = 0.5f + (speedKmh - 10.0f) / 15.0f;
-        dynamicDistanceInterval = distanceInterval * factor;
-      }
-    }
-    // 1. Always feed the raw altitude into your median filter first
-    var smoothedAltitude = getSmoothedAltitude(rawAltitude);
-
-    // Initialize distance on the very first frame
-    if (lastTriggerDistance == 0.0f) {
-      lastTriggerDistance = currentDistance;
-    }
-
-    // 2. Check if we have traveled far enough to record a new milestone
-    var traveledSinceLastNode = currentDistance - lastTriggerDistance;
-
-    // THE USER IS MOVING ---
-    if (traveledSinceLastNode >= dynamicDistanceInterval) {
-      stoppedTimer = 0;
-      userIsMoving = true;
-      // Record the data point
-      filteredAltitudeHistory.add(smoothedAltitude);
-      distanceHistory.add(currentDistance);
-
-      // Set the new checkpoint
-      lastTriggerDistance = currentDistance;
-
-      // Manage queue size
-      if (filteredAltitudeHistory.size() > maxWindowSize) {
-        filteredAltitudeHistory = filteredAltitudeHistory.slice(1, null);
-        distanceHistory = distanceHistory.slice(1, null);
-      }
-
-      currentDisplayedGrade = computeRegressionSlope();
-
-      // Track Max Grade
-      if (currentDisplayedGrade > maxGrade) {
-        maxGrade = currentDisplayedGrade;
-      }
-
-      // Track Average Active Grade (only when actually climbing)
-      if (currentDisplayedGrade > 0.5f) {
-        totalGradeSum += currentDisplayedGrade;
-        validGradeSamples++;
-      }
-
-      return currentDisplayedGrade;
-    }
-
-    // --- THE USER HAS STOPPED (OR IS MOVING INSIGNIFICANTLY) ---
-    // We check if their overall speed is practically zero
-    if (traveledSinceLastNode == 0.0f) {
-      stoppedTimer++; // Increment every second this block is hit
-      userIsMoving = false;
-      // Give them a 2-second grace period for GPS jitter, then start decaying
-      if (stoppedTimer > 2) {
-        // Smoothly decay (bleed) the grade by 50% each second
-        currentDisplayedGrade = currentDisplayedGrade * 0.5;
-
-        // If it gets close enough to zero, snap it to absolute zero
-        if ($.abs(currentDisplayedGrade) < 0.2) {
-          currentDisplayedGrade = 0.0d;
-
-          // Clear the history so it doesn't rubber-band when they start moving again
-          filteredAltitudeHistory = [] as Array<Float>;
-          distanceHistory = [] as Array<Float>;
-        }
-      }
-    }
-
-    return currentDisplayedGrade;
-  }
-
-  private function computeRegressionSlope() as Double {
-    var n = filteredAltitudeHistory.size();
-    var sumX = 0.0;
-    var sumY = 0.0;
-    var sumXY = 0.0;
-    var sumX2 = 0.0;
-
-    for (var i = 0; i < n; i++) {
-      var x = distanceHistory[i];
-      var y = filteredAltitudeHistory[i];
-
-      sumX += x;
-      sumY += y;
-      sumXY += x * y;
-      sumX2 += x * x;
-    }
-
-    var denominator = n * sumX2 - sumX * sumX;
-    if (denominator == 0) {
-      return 0.0d;
-    }
-
-    var slope = (n * sumXY - sumX * sumY) / denominator;
-    return slope * 100.0; // Return percentage
-  }
-
-  private var rawAltitudeHistory = [] as Array<Float>;
-  private var medianWindowSize = 5;
-
-  function getSmoothedAltitude(currentAltitude as Float) as Float {
-    rawAltitudeHistory.add(currentAltitude);
-
-    if (rawAltitudeHistory.size() > medianWindowSize) {
-      rawAltitudeHistory = rawAltitudeHistory.slice(1, null);
-    }
-
-    return $.getMedianValue(rawAltitudeHistory);
-  }
 }
 
 class ShiftListener {

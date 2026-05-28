@@ -264,6 +264,15 @@ class DataFieldSettingsMenuDelegate extends WatchUi.Menu2InputDelegate {
       mi.setSubLabel($.getGradeRollingWindowAsString());
       gradientMenu.addItem(mi);
 
+      mi = new WatchUi.MenuItem(
+        "Min dist regression|1.0~10(m)",
+        null,
+        "metric_grade_minimal_distance",
+        null
+      );
+      mi.setSubLabel($.getStorageNumberAsString(mi.getId() as String));
+      gradientMenu.addItem(mi);
+
       WatchUi.pushView(
         gradientMenu,
         new $.GeneralMenuDelegate(self, gradientMenu),
@@ -945,7 +954,7 @@ class GeneralMenuDelegate extends WatchUi.Menu2InputDelegate {
     }
 
     if (id instanceof String && id.equals("metric_grade_rollingwindow")) {
-      // Update subLabel 
+      // Update subLabel
       item.setSubLabel($.getGradeRollingWindowAsString());
       return;
     }
@@ -1428,6 +1437,6 @@ function fieldHasAvgTrend(fieldId as Number) as Boolean {
 function getGradeRollingWindowAsString() as String {
   var windowSize = getStorageValue("metric_grade_maxwindow", 0) as Number;
   var distance = getStorageValue("metric_grade_distance", 0.0f) as Float;
-  
+
   return (windowSize * distance).format("%0.1f") + " m";
 }

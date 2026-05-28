@@ -68,9 +68,9 @@ class whatmetricsView extends WatchUi.DataField {
 
   hidden var mHiitt as WhatHiitt;
   hidden var mDrawBackgroundHiittIcon as Boolean = false;
-  // hidden var hiitBgColor as Graphics.ColorType = -1;
-  // hidden var hiitBgImproving as Number = 0;
   hidden var mMetrics as WhatMetrics;
+  hidden var mSlopeCalc as SlopeCalc;
+
   hidden var mFields as Array<Number> = [] as Array<Number>;
   hidden var mFieldLayout as FieldLayout = FL8Fields;
   hidden var mZenMode as ZenMode = ZMOff;
@@ -102,7 +102,7 @@ class whatmetricsView extends WatchUi.DataField {
 
     mHiitt = $.getHiitt() as WhatHiitt;
     mMetrics = $.getWhatMetrics() as WhatMetrics;
-
+    mSlopeCalc = $.getSlopeCalc() as SlopeCalc;
     $.checkFeatures();
     if ($.gCreateColors) {
       mDecimalsColorDay = Graphics.createColor(180, 50, 50, 50);
@@ -134,13 +134,13 @@ class whatmetricsView extends WatchUi.DataField {
     mSunset = sunset;
     mSunriseTomorrow = mCurrentLocation.getSunriseTomorrow();
 
-    System.println([
-      "onSunEventChanged:",
-      " sunrise:",
-      $.getLongTimeString(sunrise),
-      " sunset:",
-      $.getLongTimeString(sunset),
-    ]);
+    // System.println([
+    //   "onSunEventChanged:",
+    //   " sunrise:",
+    //   $.getLongTimeString(sunrise),
+    //   " sunset:",
+    //   $.getLongTimeString(sunset),
+    // ]);
   }
 
   function isAtDaylightTime(time as Moment, defValue as Boolean) as Boolean {
@@ -356,13 +356,10 @@ class whatmetricsView extends WatchUi.DataField {
       mCadenceFallbackCountdown--;
     }
 
-    // @@TEST
-    // var tss = mMetrics.getTrainingStressScore();
-    // var ifactor = mMetrics.getIntensityFactor();
-    // var np = mMetrics.getNormalizedPower();
-    // var tt = mMetrics.getTimerTime();
-    // var timerTime = millisecondsToShortTimeString(tt, "{h}.{m}:{s}");
-    // System.println("tt " + timerTime + " tt " + tt + "np " + np + " if " + ifactor + " tss " + tss);
+    var altitude = $.getActivityValue(info, :altitude, 0.0f) as Float;
+    var distance = $.getActivityValue(info, :elapsedDistance, 0.0f) as Float;
+    var speed = $.getActivityValue(info, :currentSpeed, 0.0f) as Float;
+    mSlopeCalc.calculateGrade(altitude, distance, speed);
   }
 
   function onUpdate(dc as Dc) as Void {
@@ -814,7 +811,7 @@ class whatmetricsView extends WatchUi.DataField {
 
       case FTGrade:
         fi.title = "grade";
-        var grade = mMetrics.getGrade();
+        var grade = mSlopeCalc.getGrade();
 
         if (gGradeFallbackStart < $.gGradeFallbackEnd) {
           fi.available =
@@ -831,17 +828,17 @@ class whatmetricsView extends WatchUi.DataField {
           fi.units = "%";
         }
         var g = grade;
-        if (!mMetrics.getUserIsMoving()) {
-            // TODO: no movement -> grade smaller / show max and avg grade
-          if (grade == 0) {
-            fi.text = mMetrics.getMaxClimbingGrade().format("%0.1f") + "/" + mMetrics.getAverageClimbingGrade().format("%0.1f");
-            fi.title = "max/avg grade";
-            fi.units = "%";
-            fi.number = "";
-            fi.decimals = "";            
-            grade = mMetrics.getMaxClimbingGrade();
-          }
-          
+        if (!mSlopeCalc.getUserIsMoving() && grade == 0) {
+          // TODO: no movement -> grade font smaller / show max and avg grade
+          fi.text =
+            mSlopeCalc.getMaxClimbingGrade().format("%0.1f") +
+            "/" +
+            mSlopeCalc.getAverageClimbingGrade().format("%0.1f");
+          fi.title = "max/avg grade";
+          fi.units = "%";
+          fi.number = "";
+          fi.decimals = "";
+          grade = mSlopeCalc.getMaxClimbingGrade();
         }
 
         if (grade < 0) {

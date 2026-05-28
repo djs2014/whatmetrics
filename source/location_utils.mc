@@ -1,6 +1,7 @@
 // 2024-05-26 setLocation lat/lon toDouble
 // 2025-11-10 location changed fix
 // 2025-11-11 do not cache sunrise/set
+// 2026-06-01 added debug mode to slope calc and location
 import Toybox.Activity;
 import Toybox.Graphics;
 import Toybox.Lang;
@@ -12,6 +13,10 @@ import Toybox.Time.Gregorian;
 import Toybox.Application.Storage;
 
 class CurrentLocation {
+  hidden var debugMode = false;
+  function setDebugMode(enabled as Boolean) as Void {
+    debugMode = enabled;
+  }
   hidden var mLat as Lang.Double = 0.0d;
   hidden var mLon as Lang.Double = 0.0d;
   hidden var mLocation as Location?;
@@ -37,7 +42,9 @@ class CurrentLocation {
     }
     if (lat != 0 && lon != 0 && mLat != lat && mLon != lon) {
       Storage.setValue(mStorageLatestLocation, degrees); // [lat,lng]
-      System.println("Update cached location lat/lon: " + degrees);
+      if (debugMode) {
+        System.println("Update cached location lat/lon: " + degrees);
+      }
     }
     mLat = lat;
     mLon = lon;
@@ -80,12 +87,14 @@ class CurrentLocation {
         mLat = (degrees as Array)[0] as Double;
         mLon = (degrees as Array)[1] as Double;
         mAccuracy = Position.QUALITY_LAST_KNOWN;
-        System.println(
-          "Using cached location lat/lon: " +
-            [mLat, mLon] +
-            " accuracy: " +
-            mAccuracy
-        );
+        if (debugMode) {
+          System.println(
+            "Using cached location lat/lon: " +
+              [mLat, mLon] +
+              " accuracy: " +
+              mAccuracy
+          );
+        }
       }
     }
 
@@ -158,12 +167,14 @@ class CurrentLocation {
           mAccuracy = info.currentLocationAccuracy;
         }
         if (locationChanged(location)) {
-          System.println(
-            "Activity location lat/lon: " +
-              location.toDegrees() +
-              " accuracy: " +
-              mAccuracy
-          );
+          if (debugMode) {
+            System.println(
+              "Activity location lat/lon: " +
+                location.toDegrees() +
+                " accuracy: " +
+                mAccuracy
+            );
+          }
           onLocationChanged();
           changed = true;
         }
@@ -177,12 +188,14 @@ class CurrentLocation {
             mAccuracy = posnInfo.accuracy;
           }
           if (locationChanged(location)) {
-            System.println(
-              "Position location lat/lon: " +
-                location.toDegrees() +
-                " accuracy: " +
-                mAccuracy
-            );
+            if (debugMode) {
+              System.println(
+                "Position location lat/lon: " +
+                  location.toDegrees() +
+                  " accuracy: " +
+                  mAccuracy
+              );
+            }
             onLocationChanged();
             changed = true;
           }
@@ -221,19 +234,24 @@ class CurrentLocation {
     if (sunrise != null && sunset != null) {
       if ((sunset as Moment).value() < (sunrise as Moment).value()) {
         // We need the sunset after sunrise, so we got a daytime period from sunrise - to sunset
-
-        System.println(["Get sunrise next day!"]);
+        if (debugMode) {
+          System.println(
+            "Sunset is before sunrise, adjusting sunset to next day."
+          );
+        }
         var oneDay = new Time.Duration(Gregorian.SECONDS_PER_DAY);
         sunset = Weather.getSunset(mLocation as Location, time.add(oneDay));
       }
 
-      System.println([
-        "onSunEventChanged",
-        "sunrise:",
-        $.getLongTimeString(sunrise),
-        "sunset:",
-        $.getLongTimeString(sunset),
-      ]);
+      if (debugMode) {
+        System.println([
+          "onSunEventChanged",
+          "sunrise:",
+          $.getLongTimeString(sunrise),
+          "sunset:",
+          $.getLongTimeString(sunset),
+        ]);
+      }
     }
 
     (methodSunEventChanged as Method).invoke(sunrise, sunset);
@@ -281,16 +299,16 @@ class CurrentLocation {
       (mPreviousLat - lat).abs() > mMinDegreesDifferenceSunevent ||
       (mPreviousLon - lon).abs() > mMinDegreesDifferenceSunevent;
 
-    System.println([
-      "sunSetAndRiseChanged",
-      mMinDegreesDifferenceSunevent,
-      changed,
-      mPreviousLat,
-      mPreviousLon,
-      "->",
-      lat,
-      lon,
-    ]);
+    if (debugMode) {
+      System.println(
+        "Checking sun event change. Previous lat/lon: " +
+          [mPreviousLat, mPreviousLon] +
+          " New lat/lon: " +
+          [lat, lon] +
+          " Changed: " +
+          changed
+      );
+    }
 
     mPreviousLat = lat;
     mPreviousLon = lon;
@@ -307,9 +325,11 @@ class CurrentLocation {
       (degrees[0] >= 179.99 || degrees[0] <= -179.99) &&
       (degrees[1] >= 179.99 || degrees[1] <= -179.99)
     ) {
-      System.println(
-        "Invalid location lat/lon: " + degrees + " accuracy: " + mAccuracy
-      );
+      if (debugMode) {
+        System.println(
+          "Invalid location lat/lon: " + degrees + " accuracy: " + mAccuracy
+        );
+      }
       return false;
     }
     return true;
@@ -330,7 +350,9 @@ class CurrentLocation {
 
     if ((sunset as Moment).value() < (sunrise as Moment).value()) {
       // We need the sunset after sunrise, so we got a daytime period from sunrise - to sunset
-      System.println(["Get sunrise next day!"]);
+      if (debugMode) {
+        System.println(["Get sunrise next day!"]);
+      }
       var oneDay = new Time.Duration(Gregorian.SECONDS_PER_DAY);
       sunset = Weather.getSunset(mLocation as Location, time.add(oneDay));
     }
@@ -369,7 +391,9 @@ class CurrentLocation {
     // Bug? If sunset is before sunrise -> add 1 day to sunset.
     if ((sunset as Moment).value() < (sunrise as Moment).value()) {
       // We need the sunset after sunrise, so we got a daytime period from sunrise - to sunset
-      System.println(["Get sunrise next day!"]);
+      if (debugMode) {
+        System.println(["Get sunrise next day!"]);
+      }
       var oneDay = new Time.Duration(Gregorian.SECONDS_PER_DAY);
       sunset = Weather.getSunset(mLocation as Location, time.add(oneDay));
     }

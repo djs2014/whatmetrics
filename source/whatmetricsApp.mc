@@ -43,6 +43,7 @@ class whatmetricsApp extends Application.AppBase {
     if (gradeWindowSize == null) {
       Storage.setValue("metric_grade_maxwindow", 8);
       Storage.setValue("metric_grade_distance", 2.0f);
+      Storage.setValue("metric_grade_minimal_distance", 6.0f);
       Storage.deleteValue("metric_grademinrise");
       Storage.deleteValue("metric_grademinrun");
       Storage.deleteValue("metric_gradews");
@@ -65,6 +66,7 @@ class whatmetricsApp extends Application.AppBase {
       Storage.setValue("metric_ppersec", 3);
       Storage.setValue("metric_grade_maxwindow", 8);
       Storage.setValue("metric_grade_distance", 2.0f);
+      Storage.setValue("metric_grade_minimal_distance", 6.0f);
 
       Storage.setValue("debug", $.gDebug);
       Storage.setValue("show_colors", $.gShowColors);
@@ -250,11 +252,15 @@ class whatmetricsApp extends Application.AppBase {
     var metrics = $.getWhatMetrics();
     metrics.setPowerPerSec(getStorageValue("metric_ppersec", 0) as Number);
 
-    metrics.setGradeWindowSize(
+    var slopeCalc = $.getSlopeCalc();
+    slopeCalc.setGradeWindowSize(
       $.getStorageValue("metric_grade_maxwindow", 8) as Number
     );
-    metrics.setGradeDistanceInterval(
+    slopeCalc.setGradeDistanceInterval(
       $.getStorageValue("metric_grade_distance", 2.0f) as Float
+    );
+    slopeCalc.setMinimalDistanceForRegression(
+      $.getStorageValue("metric_grade_minimal_distance", 6.0f) as Float
     );
 
     if ((getStorageValue("target_ftp", 0) as Number) == 0) {
@@ -488,8 +494,16 @@ function getWhatMetrics() as WhatMetrics {
   }
   return $.gMetrics as WhatMetrics;
 }
+
+function getSlopeCalc() as SlopeCalc {
+  if (gSlopeCalc == null) {
+    $.gSlopeCalc = new SlopeCalc();
+  }
+  return $.gSlopeCalc as SlopeCalc;
+}
 var gHiitt as WhatHiitt?;
 var gMetrics as WhatMetrics?;
+var gSlopeCalc as SlopeCalc?;
 
 var gTargetFtp as Number = 250;
 var gTargetSpeed as Number = 30;
