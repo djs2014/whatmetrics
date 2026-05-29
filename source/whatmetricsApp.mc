@@ -39,15 +39,25 @@ class whatmetricsApp extends Application.AppBase {
       Storage.setValue("resetDefaults", true);
     }
     var gradeWindowSize =
-      getStorageValue("metric_grade_maxwindow", null) as Number?;
+      getStorageValue("grade_maxwindow", null) as Number?;
     if (gradeWindowSize == null) {
-      Storage.setValue("metric_grade_maxwindow", 8);
-      Storage.setValue("metric_grade_distance", 2.0f);
-      Storage.setValue("metric_grade_minimal_distance", 6.0f);
+      Storage.setValue("grade_maxwindow", 8);
+      Storage.setValue("grade_distance", 2.0f);
+      Storage.setValue("grade_minimal_distance", 6.0f);
+      Storage.setValue("grade_show_maxavg", true);
+      // Climb start when minimal 3% for 30 meters, stop when less than 1.5% for 50 meters
+      Storage.setValue("grade_climb_start_slope", 3.0f);
+      Storage.setValue("grade_climb_start_distance", 30f);
+      Storage.setValue("grade_climb_stop_slope", 1.5f);
+      Storage.setValue("grade_climb_stop_distance", 50.0f);
       Storage.deleteValue("metric_grademinrise");
       Storage.deleteValue("metric_grademinrun");
       Storage.deleteValue("metric_gradews");
-    }
+      Storage.deleteValue("metric_grade_maxwindow");
+      Storage.deleteValue("metric_grade_distance");
+      Storage.deleteValue("metric_grade_minimal_distance");
+      Storage.deleteValue("metric_grade_show_maxavg");
+    } 
 
     var reset = Storage.getValue("resetDefaults");
     if (reset == null || (reset as Boolean)) {
@@ -64,9 +74,16 @@ class whatmetricsApp extends Application.AppBase {
       Storage.setValue("hiit_vo2maxbg", Vo2BgHiit);
 
       Storage.setValue("metric_ppersec", 3);
-      Storage.setValue("metric_grade_maxwindow", 8);
-      Storage.setValue("metric_grade_distance", 2.0f);
-      Storage.setValue("metric_grade_minimal_distance", 6.0f);
+      
+      Storage.setValue("grade_maxwindow", 8);
+      Storage.setValue("grade_distance", 2.0f);
+      Storage.setValue("grade_minimal_distance", 6.0f);
+      Storage.setValue("grade_show_maxavg", true);
+      // Climb start when minimal 3% for 30 meters, stop when less than 1.5% for 50 meters
+      Storage.setValue("grade_climb_start_slope", 3.0f);
+      Storage.setValue("grade_climb_start_distance", 30f);
+      Storage.setValue("grade_climb_stop_slope", 1.5f);
+      Storage.setValue("grade_climb_stop_distance", 50.0f);
 
       Storage.setValue("debug", $.gDebug);
       Storage.setValue("show_colors", $.gShowColors);
@@ -254,15 +271,31 @@ class whatmetricsApp extends Application.AppBase {
 
     var slopeCalc = $.getSlopeCalc();
     slopeCalc.setGradeWindowSize(
-      $.getStorageValue("metric_grade_maxwindow", 8) as Number
+      $.getStorageValue("grade_maxwindow", 8) as Number
     );
     slopeCalc.setGradeDistanceInterval(
-      $.getStorageValue("metric_grade_distance", 2.0f) as Float
+      $.getStorageValue("grade_distance", 2.0f) as Float
     );
     slopeCalc.setMinimalDistanceForRegression(
-      $.getStorageValue("metric_grade_minimal_distance", 6.0f) as Float
+      $.getStorageValue("grade_minimal_distance", 6.0f) as Float
     );
 
+    $.gGradeShowMaxAvg =
+      getStorageValue("grade_show_maxavg", true) as Boolean;
+    if ($.gGradeShowMaxAvg) {
+      var climbTracker = $.getClimbTracker();
+      climbTracker.minimalClimbStartGrade =
+        getStorageValue("grade_climb_start_slope", 3.0f) as Float;
+      climbTracker.minimalClimbStartDistance =
+        getStorageValue("grade_climb_start_distance", 30.0f) as Float;
+      climbTracker.minimalClimbStopGrade =
+        getStorageValue("grade_climb_stop_slope", 1.5f) as Float;
+      climbTracker.minimalClimbStopDistance =
+        getStorageValue("grade_climb_stop_distance", 50.0f) as Float;
+    }  else {      
+      $.getClimbTracker().resetClimbStats();
+    }    
+    
     if ((getStorageValue("target_ftp", 0) as Number) == 0) {
       Storage.setValue("target_ftp", $.gTargetFtp);
       Storage.setValue("target_speed", $.gTargetSpeed);
@@ -501,9 +534,17 @@ function getSlopeCalc() as SlopeCalc {
   }
   return $.gSlopeCalc as SlopeCalc;
 }
+
+function getClimbTracker() as ClimbTracker {
+  if (gClimbTracker == null) {
+    $.gClimbTracker = new ClimbTracker();
+  }
+  return $.gClimbTracker as ClimbTracker;
+}
 var gHiitt as WhatHiitt?;
 var gMetrics as WhatMetrics?;
 var gSlopeCalc as SlopeCalc?;
+var gClimbTracker as ClimbTracker?;
 
 var gTargetFtp as Number = 250;
 var gTargetSpeed as Number = 30;
@@ -579,3 +620,5 @@ var gFocusPerc as Number = 99;
 var gFocusBorder as Number = 5;
 var gTargetSunEventSec as Number = 3600; // 60 minutes before sunrise / sunset
 var gSunEventDegreesDifference as Double = 1.0d;
+
+var gGradeShowMaxAvg as Boolean = true;

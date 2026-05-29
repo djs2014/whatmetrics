@@ -3,7 +3,7 @@ import Toybox.System;
 import Toybox.Math;
 
 class SlopeCalc {
-    hidden var debugMode = false;
+    hidden var debugMode = true;
     function setDebugMode(enabled as Boolean) as Void {
         debugMode = enabled;
     }
@@ -23,18 +23,8 @@ class SlopeCalc {
     }
 
     // % grade
-    function getGrade() as Double {
+    function getGrade() as Float {
         return currentDisplayedGrade;
-    }
-
-    function getMaxClimbingGrade() as Double {
-        return maxGrade;
-    }
-    function getAverageClimbingGrade() as Float {
-        if (validGradeSamples == 0) {
-            return 0.0f;
-        }
-        return totalGradeSum / validGradeSamples;
     }
 
     function getUserIsMoving() as Boolean {
@@ -53,36 +43,34 @@ class SlopeCalc {
     // Smaller window, more responsive to recent changes but more sensitive to noise. Larger window, smoother but more lag.
     private var maxWindowSize = 8; // 8 samples * 3m = 24-meter rolling window
     // Sweet spots seem to be around 3-5m interval and 6-10 window size, depending on the terrain.
-    
+
     private var minimalDistanceForRegression = 6.0f; // Must have at least 6 meters of total distance in the window to run regression
 
     private var stoppedTimer = 0; // Tracks consecutive seconds stopped
-    private var currentDisplayedGrade = 0.0d;
-
-    public var maxGrade = 0.0d;
-    public var totalGradeSum = 0.0f;
-    public var validGradeSamples = 0;
+    private var currentDisplayedGrade = 0.0f;
 
     function calculateGrade(
         rawAltitude as Float,
         currentDistance as Float,
         currentSpeed as Float
-    ) as Double {
+    ) as Float {
         if (rawAltitude == 0.0f || currentDistance == 0.0f) {
-            return 0.0d; // No valid data to calculate grade
+            return 0.0f; // No valid data to calculate grade
         }
 
         if (currentSpeed != null && currentSpeed < 0.7f) {
             // Speed is too slow to trust GPS distance changes.
             // Do not log a milestone. Go straight to your stopped/decay logic.
             userHasStopped();
-            return;
+            return 0.0f;
         }
 
         var dynamicDistanceInterval = getDynamicDistanceInterval(currentSpeed);
         if (debugMode) {
             System.println("Current Speed: " + currentSpeed);
-            System.println("Dynamic Distance Interval: " + dynamicDistanceInterval);
+            System.println(
+                "Dynamic Distance Interval: " + dynamicDistanceInterval
+            );
         }
         // Always feed the raw altitude into your median filter first
         var smoothedAltitude = getSmoothedAltitude(rawAltitude);
@@ -98,8 +86,15 @@ class SlopeCalc {
         // THE USER IS MOVING ---
         if (traveledSinceLastNode >= dynamicDistanceInterval) {
             if (debugMode) {
-                System.println("Traveled since last node: " + traveledSinceLastNode);
-                System.println("Recording new data point. Smoothed Altitude: " + smoothedAltitude + ", Distance: " + currentDistance);
+                System.println(
+                    "Traveled since last node: " + traveledSinceLastNode
+                );
+                System.println(
+                    "Recording new data point. Smoothed Altitude: " +
+                        smoothedAltitude +
+                        ", Distance: " +
+                        currentDistance
+                );
             }
             stoppedTimer = 0;
             userIsMoving = true;
@@ -109,7 +104,7 @@ class SlopeCalc {
 
             if (filteredAltitudeHistory.size() < maxWindowSize) {
                 // Not enough data yet to run regression
-                return currentDisplayedGrade; 
+                return currentDisplayedGrade;
             }
 
             // Set the new checkpoint
@@ -131,29 +126,14 @@ class SlopeCalc {
             var totalSpan = newestDistance - oldestDistance;
 
             if (totalSpan < minimalDistanceForRegression) {
-                return currentDisplayedGrade; // Keep old grade or return 0.0d until they move 6 meters
+                return currentDisplayedGrade; // Keep old grade or return 0.0f until they move 6 meters     
             }
 
             currentDisplayedGrade = computeRegressionSlope();
             if (debugMode) {
-                System.println("Computed Regression Slope: " + currentDisplayedGrade);
-            }
-
-            // Track Max Grade
-            if (currentDisplayedGrade > maxGrade) {
-                maxGrade = currentDisplayedGrade;
-                if (debugMode) {
-                    System.println("New Max Grade: " + maxGrade);
-                }
-            }
-
-            // Track Average Active Grade (only when actually climbing)
-            if (currentDisplayedGrade > 0.5f) {
-                totalGradeSum += currentDisplayedGrade;
-                validGradeSamples++;
-                if (debugMode) {
-                    System.println("Updated Average Active Grade: " + (totalGradeSum / validGradeSamples));
-                }
+                System.println(
+                    "Computed Regression Slope: " + currentDisplayedGrade
+                );
             }
 
             return currentDisplayedGrade;
@@ -197,20 +177,20 @@ class SlopeCalc {
     private function userHasStopped() {
         stoppedTimer++; // Increment every second this block is hit
         userIsMoving = false;
-        if(debugMode) {
+        if (debugMode) {
             System.println("User stopped: Stopped timer: " + stoppedTimer);
         }
         // Give them a 2-second grace period for GPS jitter, then start decaying
         if (stoppedTimer > 2) {
             // Smoothly decay (bleed) the grade by 50% each second
-            currentDisplayedGrade = currentDisplayedGrade * 0.5;
+            currentDisplayedGrade = currentDisplayedGrade * 0.5f;
 
             // If it gets close enough to zero, snap it to absolute zero
-            if ($.abs(currentDisplayedGrade) < 0.2) {
+            if ($.abs(currentDisplayedGrade) < 0.2f) {
                 if (debugMode) {
                     System.println("User stopped: Grade decayed to zero.");
                 }
-                currentDisplayedGrade = 0.0d;
+                currentDisplayedGrade = 0.0f;
 
                 // Clear the history so it doesn't rubber-band when they start moving again
                 filteredAltitudeHistory = [] as Array<Float>;
@@ -219,12 +199,12 @@ class SlopeCalc {
         }
     }
 
-    private function computeRegressionSlope() as Double {
+    private function computeRegressionSlope() as Float {
         var n = filteredAltitudeHistory.size();
-        var sumX = 0.0;
-        var sumY = 0.0;
-        var sumXY = 0.0;
-        var sumX2 = 0.0;
+        var sumX = 0.0f;
+        var sumY = 0.0f;
+        var sumXY = 0.0f;
+        var sumX2 = 0.0f;
 
         for (var i = 0; i < n; i++) {
             var x = distanceHistory[i];
@@ -238,11 +218,11 @@ class SlopeCalc {
 
         var denominator = n * sumX2 - sumX * sumX;
         if (denominator == 0) {
-            return 0.0d;
+            return 0.0f;
         }
 
         var slope = (n * sumXY - sumX * sumY) / denominator;
-        return slope * 100.0; // Return percentage
+        return slope * 100.0f; // Return percentage
     }
 
     private var rawAltitudeHistory = [] as Array<Float>;
@@ -257,7 +237,7 @@ class SlopeCalc {
         if (debugMode) {
             System.println("Raw Altitude History: ");
             System.println(rawAltitudeHistory);
-         }
+        }
         return $.getMedianValue(rawAltitudeHistory);
     }
 }

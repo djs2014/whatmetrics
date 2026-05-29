@@ -109,6 +109,9 @@ Sweet spots seem to be around 3-5m interval and 6-10 window size, depending on t
 - Balanced: distanceInterval = 3.0f, maxWindowSize = 8.
 - Steady: distanceInterval = 4.0f, maxWindowSize = 6.
   
+- Minimal distance regression: What distance needs to be traveled in the rolling window to get a new datapoint (altitude). To prevent spikes 
+when starting or stopping the activity.
+
 Tip: if grade stable, but takes too long to react to changes, try reducing the window size first by 2 before reducing the distance interval. This shrinks the lag.
 
 Dynamically change the sampling frequency based on speed.

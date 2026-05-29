@@ -70,6 +70,7 @@ class whatmetricsView extends WatchUi.DataField {
   hidden var mDrawBackgroundHiittIcon as Boolean = false;
   hidden var mMetrics as WhatMetrics;
   hidden var mSlopeCalc as SlopeCalc;
+  hidden var mClimbTracker as ClimbTracker;
 
   hidden var mFields as Array<Number> = [] as Array<Number>;
   hidden var mFieldLayout as FieldLayout = FL8Fields;
@@ -103,6 +104,8 @@ class whatmetricsView extends WatchUi.DataField {
     mHiitt = $.getHiitt() as WhatHiitt;
     mMetrics = $.getWhatMetrics() as WhatMetrics;
     mSlopeCalc = $.getSlopeCalc() as SlopeCalc;
+    mClimbTracker = $.getClimbTracker() as ClimbTracker;
+
     $.checkFeatures();
     if ($.gCreateColors) {
       mDecimalsColorDay = Graphics.createColor(180, 50, 50, 50);
@@ -360,6 +363,10 @@ class whatmetricsView extends WatchUi.DataField {
     var distance = $.getActivityValue(info, :elapsedDistance, 0.0f) as Float;
     var speed = $.getActivityValue(info, :currentSpeed, 0.0f) as Float;
     mSlopeCalc.calculateGrade(altitude, distance, speed);
+
+    if ($.gGradeShowMaxAvg) {
+      mClimbTracker.processAutoReset(mSlopeCalc.getGrade(), distance);
+    }
   }
 
   function onUpdate(dc as Dc) as Void {
@@ -828,17 +835,23 @@ class whatmetricsView extends WatchUi.DataField {
           fi.units = "%";
         }
         var g = grade;
-        if (!mSlopeCalc.getUserIsMoving() && grade == 0) {
+        // Only show max and avg grade if there is some.
+        if (
+          $.gGradeShowMaxAvg &&
+          !mSlopeCalc.getUserIsMoving() &&
+          grade == 0 &&
+          mClimbTracker.currentClimbMaxGrade > 0
+        ) {
           // TODO: no movement -> grade font smaller / show max and avg grade
           fi.text =
-            mSlopeCalc.getMaxClimbingGrade().format("%0.1f") +
+            mClimbTracker.currentClimbMaxGrade.format("%0.1f") +
             "/" +
-            mSlopeCalc.getAverageClimbingGrade().format("%0.1f");
+            mClimbTracker.getAverageClimbGrade().format("%0.1f");
           fi.title = "max/avg grade";
           fi.units = "%";
           fi.number = "";
           fi.decimals = "";
-          grade = mSlopeCalc.getMaxClimbingGrade();
+          grade = mClimbTracker.currentClimbMaxGrade;
         }
 
         if (grade < 0) {

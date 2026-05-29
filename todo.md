@@ -1,3 +1,13 @@
+presets grade based on dynamically changeing distance interval based on speed
+update readme
+check the right presets...
+- Snappy: distanceInterval = 2.0f, maxWindowSize = 12.
+- Balanced: distanceInterval = 3.0f, maxWindowSize = 8.
+- Steady: distanceInterval = 4.0f, maxWindowSize = 6.
+ option show max / avg grade
+ option reset max grade 
+ -> on big screen as button? 
+
 Test globalNP vs Garmin NP
 Test grade
 Check how to decrease memory -> string manipulation , arrays

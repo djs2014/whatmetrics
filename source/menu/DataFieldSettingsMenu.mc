@@ -240,16 +240,16 @@ class DataFieldSettingsMenuDelegate extends WatchUi.Menu2InputDelegate {
       var mi = new WatchUi.MenuItem(
         "Max window size|1-20",
         null,
-        "metric_grade_maxwindow",
+        "grade_maxwindow",
         null
       );
       mi.setSubLabel($.getStorageNumberAsString(mi.getId() as String));
       gradientMenu.addItem(mi);
 
       mi = new WatchUi.MenuItem(
-        "Distance interval|1.0~10(m)",
+        "Base distance interval|1.0~10(m)",
         null,
-        "metric_grade_distance",
+        "grade_distance",
         null
       );
       mi.setSubLabel($.getStorageNumberAsString(mi.getId() as String));
@@ -258,16 +258,65 @@ class DataFieldSettingsMenuDelegate extends WatchUi.Menu2InputDelegate {
       mi = new WatchUi.MenuItem(
         "Rolling window (tap)",
         null,
-        "metric_grade_rollingwindow",
+        "grade_rollingwindow",
         null
       );
       mi.setSubLabel($.getGradeRollingWindowAsString());
       gradientMenu.addItem(mi);
 
       mi = new WatchUi.MenuItem(
-        "Min dist regression|1.0~10(m)",
+        "Min distance regression|1.0~10(m)",
         null,
-        "metric_grade_minimal_distance",
+        "grade_minimal_distance",
+        null
+      );
+      mi.setSubLabel($.getStorageNumberAsString(mi.getId() as String));
+      gradientMenu.addItem(mi);
+
+      var boolean;
+
+      boolean = Storage.getValue("grade_show_maxavg") ? true : false;
+      gradientMenu.addItem(
+        new WatchUi.ToggleMenuItem(
+          "Climb max,avg on paused",
+          null,
+          "grade_show_maxavg",
+          boolean,
+          null
+        )
+      );
+
+      mi = new WatchUi.MenuItem(
+        "Climb start when >|1.0~20(%)",
+        null,
+        "grade_climb_start_slope",
+        null
+      );
+      mi.setSubLabel($.getStorageNumberAsString(mi.getId() as String));
+      gradientMenu.addItem(mi);
+
+      mi = new WatchUi.MenuItem(
+        "for minimal|1.0~500(m)",
+        null,
+        "grade_climb_start_distance",
+        null
+      );
+      mi.setSubLabel($.getStorageNumberAsString(mi.getId() as String));
+      gradientMenu.addItem(mi);
+
+      mi = new WatchUi.MenuItem(
+        "Climb stops when <|-10.0~3.0(%)",
+        null,
+        "grade_climb_stop_slope",
+        null
+      );
+      mi.setSubLabel($.getStorageNumberAsString(mi.getId() as String));
+      gradientMenu.addItem(mi);
+
+      mi = new WatchUi.MenuItem(
+        "for minimal|1.0~500(m)",
+        null,
+        "grade_climb_stop_distance",
         null
       );
       mi.setSubLabel($.getStorageNumberAsString(mi.getId() as String));
@@ -953,7 +1002,7 @@ class GeneralMenuDelegate extends WatchUi.Menu2InputDelegate {
       return;
     }
 
-    if (id instanceof String && id.equals("metric_grade_rollingwindow")) {
+    if (id instanceof String && id.equals("grade_rollingwindow")) {
       // Update subLabel
       item.setSubLabel($.getGradeRollingWindowAsString());
       return;
@@ -1435,8 +1484,8 @@ function fieldHasAvgTrend(fieldId as Number) as Boolean {
 }
 
 function getGradeRollingWindowAsString() as String {
-  var windowSize = getStorageValue("metric_grade_maxwindow", 0) as Number;
-  var distance = getStorageValue("metric_grade_distance", 0.0f) as Float;
+  var windowSize = getStorageValue("grade_maxwindow", 0) as Number;
+  var distance = getStorageValue("grade_distance", 0.0f) as Float;
 
   return (windowSize * distance).format("%0.1f") + " m";
 }
