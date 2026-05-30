@@ -1665,6 +1665,8 @@ class whatmetricsView extends WatchUi.DataField {
     );
   }
 
+  private var visualGrade = 0.0d;
+  
   function drawFieldBackground(
     dc as Dc,
     fieldInfo as FieldInfo,
@@ -1693,6 +1695,10 @@ class whatmetricsView extends WatchUi.DataField {
       return;
     }
     if (fi.type == FTGrade) {
+      var k = 0.25d; // Smoothing factor (0.1 = slow/fluid, 0.5 = rapid)
+      // Smoothly interpolate toward the new grade
+      visualGrade = visualGrade + (fi.iconParam.toDouble() - visualGrade) * k;
+
       drawGradeIcon(
         dc,
         x,
@@ -1700,7 +1706,7 @@ class whatmetricsView extends WatchUi.DataField {
         width,
         height,
         fi.iconColor,
-        fi.iconParam.toDouble()
+        visualGrade
       );
       return;
     }
@@ -2388,6 +2394,9 @@ class whatmetricsView extends WatchUi.DataField {
     );
     drawTrendArrow(dc, x, y, width, height, avgRatio, 0.2, true);
   }
+
+  
+
   hidden function drawGradeIcon(
     dc as Dc,
     x as Number,
@@ -2412,6 +2421,8 @@ class whatmetricsView extends WatchUi.DataField {
     if (f < 0) {
       f = f * -1.0;
     }
+    // Absolute maximum ceiling (e.g., 25% gradient) to protect the math boundaries
+    if (f > 2.5) { f = 2.5; }
 
     var h = height / 2;
     var w = width / 2;

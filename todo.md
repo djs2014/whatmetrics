@@ -8,8 +8,6 @@ check the right presets...
  option reset max grade 
  -> on big screen as button? 
 
-Test globalNP vs Garmin NP
-Test grade
 Check how to decrease memory -> string manipulation , arrays
 
 
