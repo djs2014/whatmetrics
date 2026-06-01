@@ -252,7 +252,7 @@ class DataFieldSettingsMenuDelegate extends WatchUi.Menu2InputDelegate {
         "grade_distance",
         null
       );
-      mi.setSubLabel($.getStorageNumberAsString(mi.getId() as String));
+      mi.setSubLabel($.getStorageFloatAsString(mi.getId() as String));
       gradientMenu.addItem(mi);
 
       mi = new WatchUi.MenuItem(
@@ -270,7 +270,7 @@ class DataFieldSettingsMenuDelegate extends WatchUi.Menu2InputDelegate {
         "grade_minimal_distance",
         null
       );
-      mi.setSubLabel($.getStorageNumberAsString(mi.getId() as String));
+      mi.setSubLabel($.getStorageFloatAsString(mi.getId() as String));
       gradientMenu.addItem(mi);
 
       var boolean;
@@ -292,7 +292,7 @@ class DataFieldSettingsMenuDelegate extends WatchUi.Menu2InputDelegate {
         "grade_climb_start_slope",
         null
       );
-      mi.setSubLabel($.getStorageNumberAsString(mi.getId() as String));
+      mi.setSubLabel($.getStorageFloatAsString(mi.getId() as String));
       gradientMenu.addItem(mi);
 
       mi = new WatchUi.MenuItem(
@@ -301,7 +301,7 @@ class DataFieldSettingsMenuDelegate extends WatchUi.Menu2InputDelegate {
         "grade_climb_start_distance",
         null
       );
-      mi.setSubLabel($.getStorageNumberAsString(mi.getId() as String));
+      mi.setSubLabel($.getStorageFloatAsString(mi.getId() as String));
       gradientMenu.addItem(mi);
 
       mi = new WatchUi.MenuItem(
@@ -310,7 +310,7 @@ class DataFieldSettingsMenuDelegate extends WatchUi.Menu2InputDelegate {
         "grade_climb_stop_slope",
         null
       );
-      mi.setSubLabel($.getStorageNumberAsString(mi.getId() as String));
+      mi.setSubLabel($.getStorageFloatAsString(mi.getId() as String));
       gradientMenu.addItem(mi);
 
       mi = new WatchUi.MenuItem(
@@ -319,7 +319,7 @@ class DataFieldSettingsMenuDelegate extends WatchUi.Menu2InputDelegate {
         "grade_climb_stop_distance",
         null
       );
-      mi.setSubLabel($.getStorageNumberAsString(mi.getId() as String));
+      mi.setSubLabel($.getStorageFloatAsString(mi.getId() as String));
       gradientMenu.addItem(mi);
 
       WatchUi.pushView(
