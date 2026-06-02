@@ -3,7 +3,7 @@ import Toybox.System;
 import Toybox.Math;
 
 class SlopeCalc {
-    hidden var debugMode = true;
+    hidden var debugMode = false;
     function setDebugMode(enabled as Boolean) as Void {
         debugMode = enabled;
     }

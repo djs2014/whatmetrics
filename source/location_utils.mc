@@ -2,7 +2,7 @@
 // 2025-11-10 location changed fix
 // 2025-11-11 do not cache sunrise/set
 // 2026-06-01 added debug mode to slope calc and location
-// 2026-06-02 callback weak reference fix TODO
+// 2026-06-02 callback weak reference fix
 import Toybox.Activity;
 import Toybox.Graphics;
 import Toybox.Lang;
@@ -14,7 +14,7 @@ import Toybox.Time.Gregorian;
 import Toybox.Application.Storage;
 
 class CurrentLocation {
-  hidden var debugMode = false;
+  hidden var debugMode = true;
   function setDebugMode(enabled as Boolean) as Void {
     debugMode = enabled;
   }

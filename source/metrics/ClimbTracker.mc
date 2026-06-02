@@ -3,7 +3,7 @@ import Toybox.System;
 import Toybox.Math;
 
 class ClimbTracker {
-    private var debugMode = true;
+    private var debugMode = false;
     function setDebugMode(enabled as Boolean) as Void {
         debugMode = enabled;
     }

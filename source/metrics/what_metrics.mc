@@ -500,7 +500,7 @@ class ShiftListener {
   hidden var batteryVoltage as Float;
 
   function initialize() {
-    listener = new AShiftingListener(self.weak(), :onBatteryStatusUpdate);
+    listener = new AShiftingListener(self, :onBatteryStatusUpdate);
     shifting = new AntPlus.Shifting(listener);
     operatingTimeInSeconds = -1;
     batteryVoltage = -1.0f;
