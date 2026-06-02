@@ -36,6 +36,34 @@ class FieldInfo {
         type = fieldType;
         index = fieldIndex;
     }
+    function reset() as Void {
+        type = FTUnknown;
+        index = 0;
+        available = true;
+        title = "";
+        tag = "";
+        value = "";
+        number = "";
+        prefix = "";
+        text = "";
+        decimals = "";
+        units = "";
+        units_side = "";
+        text_botleft = "";
+        text_botright = "";
+        text_middleleft = "";
+        text_middleright = "";
+        // text_middletop = "";
+
+        iconColor = -1;
+        iconParam = 0;
+        iconParam2 = 0;
+
+        rawValue = 0;
+        maxValue = 0;
+        minValue = 0;
+        barReversed = false;
+    }
 }
 
 const FieldLayoutCount = 5;

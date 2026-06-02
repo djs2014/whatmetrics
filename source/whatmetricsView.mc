@@ -93,10 +93,10 @@ class whatmetricsView extends WatchUi.DataField {
   hidden var mSunriseTomorrow as Moment?;
 
   hidden var mDayLiteTime as Boolean;
-  // hidden var mSunsetTomorrow as Moment?;
   hidden var mTestTick as Number = 0;
-
-  // hidden var mGrade as Double = 0.0d;
+  
+  // hidden var mFi as FieldInfo = new FieldInfo(FTUnknown, 0);
+  
   function initialize() {
     DataField.initialize();
     mFieldSize = "?x?";
@@ -530,11 +530,7 @@ class whatmetricsView extends WatchUi.DataField {
             fi.maxValue > fi.minValue
           ) {
             // 0% if close to lowerbound and 100% if close to upperbound
-            focusPerc = percentageOf(fi.rawValue, fi.minValue, fi.maxValue);
-            // focusPerc = percentageOf(
-            //   fi.rawValue - fi.minValue,
-            //   fi.maxValue - fi.minValue
-            // );
+            focusPerc = percentageOf(fi.rawValue, fi.minValue, fi.maxValue);            
             hasUpper = true;
             hasLower = true;
           } else if (fi.maxValue <= 0 && fi.minValue > 0) {
@@ -542,39 +538,39 @@ class whatmetricsView extends WatchUi.DataField {
             hasLower = true;
           }
 
-          System.println([
-            "focusfield ",
-            focusPerc,
-            fi.rawValue,
-            fi.minValue,
-            fi.maxValue,
-            fi.title,
-          ]);
+          // System.println([
+          //   "focusfield ",
+          //   focusPerc,
+          //   fi.rawValue,
+          //   fi.minValue,
+          //   fi.maxValue,
+          //   fi.title,
+          // ]);
 
           if (hasUpper && focusPerc > $.gFocusPerc) {
             dc.setPenWidth($.gFocusBorder);
             if ($.gFocusField == FocusColor) {
-              System.println([
-                "focusfield high",
-                focusPerc,
-                fi.rawValue,
-                fi.minValue,
-                fi.maxValue,
-                fi.title,
-              ]);
+              // System.println([
+              //   "focusfield high",
+              //   focusPerc,
+              //   fi.rawValue,
+              //   fi.minValue,
+              //   fi.maxValue,
+              //   fi.title,
+              // ]);
               colorPerc = getIconColorGreenToRed2(focusPerc, true);
             }
           } else if (hasLower && focusPerc < 100 - $.gFocusPerc) {
             dc.setPenWidth($.gFocusBorder);
             if ($.gFocusField == FocusColor) {
-              System.println([
-                "focusfield low",
-                100 - focusPerc,
-                fi.rawValue,
-                fi.minValue,
-                fi.maxValue,
-                fi.title,
-              ]);
+              // System.println([
+              //   "focusfield low",
+              //   100 - focusPerc,
+              //   fi.rawValue,
+              //   fi.minValue,
+              //   fi.maxValue,
+              //   fi.title,
+              // ]);
               colorPerc = getIconColorGreenToRed2(100 - focusPerc, true);
             }
           }
@@ -743,13 +739,15 @@ class whatmetricsView extends WatchUi.DataField {
     fieldIdx as Number
   ) as FieldInfo {
     var fi = new FieldInfo(fieldType, fieldIdx);
+    // mFi.reset();
+    // mFi.type = fieldType;
+    // mFi.index = fieldIdx;
+    // var fi = mFi;
+    
     var useColor =
       $.gShowColors || $.gUseColorFields.indexOf(fi.type as Number) > -1;
-    // System.println($.gUseColorFields);
-    // System.println([fi.type, useColor]);
-    var useAvgTrend = $.gUseAvgTrendFields.indexOf(fi.type as Number) > -1;
 
-    // System.println(["Field type", fi.type, "color", useColor, "avgTrend", useAvgTrend]);
+    var useAvgTrend = $.gUseAvgTrendFields.indexOf(fi.type as Number) > -1;
 
     switch (fieldType) {
       case FTDistance:
@@ -1666,7 +1664,7 @@ class whatmetricsView extends WatchUi.DataField {
   }
 
   private var visualGrade = 0.0d;
-  
+
   function drawFieldBackground(
     dc as Dc,
     fieldInfo as FieldInfo,
@@ -1699,15 +1697,7 @@ class whatmetricsView extends WatchUi.DataField {
       // Smoothly interpolate toward the new grade
       visualGrade = visualGrade + (fi.iconParam.toDouble() - visualGrade) * k;
 
-      drawGradeIcon(
-        dc,
-        x,
-        y,
-        width,
-        height,
-        fi.iconColor,
-        visualGrade
-      );
+      drawGradeIcon(dc, x, y, width, height, fi.iconColor, visualGrade);
       return;
     }
     if (fi.type == FTClock || fi.type == FTTimeElapsed || fi.type == FTTimer) {
@@ -2395,8 +2385,6 @@ class whatmetricsView extends WatchUi.DataField {
     drawTrendArrow(dc, x, y, width, height, avgRatio, 0.2, true);
   }
 
-  
-
   hidden function drawGradeIcon(
     dc as Dc,
     x as Number,
@@ -2422,7 +2410,9 @@ class whatmetricsView extends WatchUi.DataField {
       f = f * -1.0;
     }
     // Absolute maximum ceiling (e.g., 25% gradient) to protect the math boundaries
-    if (f > 2.5) { f = 2.5; }
+    if (f > 2.5) {
+      f = 2.5;
+    }
 
     var h = height / 2;
     var w = width / 2;
@@ -3376,7 +3366,7 @@ class whatmetricsView extends WatchUi.DataField {
       return 0;
     }
 
-    return current / average.toDouble();
+    return current / average.toFloat();
     //System.println(["current", current, "average", average, "ratio", ratio]);
   }
 
@@ -3423,17 +3413,12 @@ class whatmetricsView extends WatchUi.DataField {
       dc.setPenWidth(1);
       // Pijlpunt naar rechts
       if (arrowLen > 4) {
-        dc.drawLine(
-          centerX + arrowLen,
-          centerY,
-          centerX + arrowLen - 5,
-          centerY - 3
-        );
-        dc.drawLine(
-          centerX + arrowLen,
-          centerY,
-          centerX + arrowLen - 5,
-          centerY + 3
+        dc.fillPolygon(
+          [
+            [centerX + arrowLen, centerY],
+            [centerX + arrowLen - 5, centerY - 4],
+            [centerX + arrowLen - 5, centerY + 4],
+          ] as Array<Point2D>
         );
       }
     }
@@ -3460,17 +3445,12 @@ class whatmetricsView extends WatchUi.DataField {
       dc.setPenWidth(1);
       // Pijlpunt naar links
       if (arrowLen > 4) {
-        dc.drawLine(
-          centerX - arrowLen,
-          centerY,
-          centerX - arrowLen + 5,
-          centerY - 3
-        );
-        dc.drawLine(
-          centerX - arrowLen,
-          centerY,
-          centerX - arrowLen + 5,
-          centerY + 3
+        dc.fillPolygon(
+          [
+            [centerX - arrowLen, centerY],
+            [centerX - arrowLen + 5, centerY - 4],
+            [centerX - arrowLen + 5, centerY + 4],
+          ] as Array<Point2D>
         );
       }
     }

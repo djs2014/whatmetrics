@@ -35,7 +35,7 @@ class WhatMetrics {
 
   // pressure - history
   hidden var mPressureTicks as Number = 0;
-  hidden var mAveragePressure as Double = 0d;
+  hidden var mAveragePressure as Float = 0.0f;
 
   function initialize() {}
 
@@ -142,7 +142,7 @@ class WhatMetrics {
     mPressureTicks = mPressureTicks + 1;
     mAveragePressure =
       (mAveragePressure * (mPressureTicks - 1) + pressure) /
-      mPressureTicks.toDouble();
+      mPressureTicks.toFloat();
     // System.println(Lang.format("p $1$ ticks $2$ avg $3$", [pressure, mPressureTicks, mAveragePressure]));
 
     return trend;
@@ -301,11 +301,11 @@ class WhatMetrics {
     }
     return 0;
   }
-  function getAveragePowerBalanceLeft() as Double {
+  function getAveragePowerBalanceLeft() as Float {
     if (mPowerBalance != null) {
       return (mPowerBalance as PowerBalance).getAverageLeft();
     }
-    return 0.0d;
+    return 0.0f;
   }
 
   // one of the power pedals is not working .. @@ experimental
@@ -556,7 +556,7 @@ class PowerBalance {
   hidden var listener as ABikePowerListener;
   hidden var mPowerBalanceLeft as Number = 0;
   hidden var ticks as Number = 0;
-  hidden var avgPowerBalanceLeft as Double = 0.0d;
+  hidden var avgPowerBalanceLeft as Float = 0.0f;
   hidden var batteryLevel as Number = -1;
 
   hidden var operatingTimeInSeconds as Number;
@@ -564,7 +564,7 @@ class PowerBalance {
 
   function initialize() {
     listener = new ABikePowerListener(
-      self.weak(),
+      self,
       :onPedalPowerBalanceUpdate,
       :onBatteryStatusUpdate
     );
@@ -576,7 +576,7 @@ class PowerBalance {
   function getLeft() as Number {
     return mPowerBalanceLeft;
   }
-  function getAverageLeft() as Double {
+  function getAverageLeft() as Float {
     return avgPowerBalanceLeft;
   }
 
@@ -613,7 +613,7 @@ class PowerBalance {
   function compute(power as Number) as Void {
     if (power > 0 && mPowerBalanceLeft != null && mPowerBalanceLeft > 0) {
       ticks = ticks + 1;
-      var a = 1 / ticks.toDouble();
+      var a = 1 / ticks.toFloat();
       var b = 1 - a;
       avgPowerBalanceLeft = a * mPowerBalanceLeft + b * avgPowerBalanceLeft;
     }

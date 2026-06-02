@@ -2,6 +2,7 @@
 // 2025-11-10 location changed fix
 // 2025-11-11 do not cache sunrise/set
 // 2026-06-01 added debug mode to slope calc and location
+// 2026-06-02 callback weak reference fix TODO
 import Toybox.Activity;
 import Toybox.Graphics;
 import Toybox.Lang;
@@ -52,21 +53,22 @@ class CurrentLocation {
 
   hidden var mAccuracy as Quality? = Position.QUALITY_NOT_AVAILABLE;
 
-  hidden var methodLocationChanged as Method?;
-  function setOnLocationChanged(
-    objInstance as Object?,
-    callback as Symbol
-  ) as Void {
-    methodLocationChanged = new Lang.Method(objInstance, callback) as Method;
+  hidden var mCbLocationChangedTargetRef as WeakReference?;
+  hidden var mCbLocationChangedMethodName as Symbol?;
+  function setOnLocationChanged(target as Object, callback as Symbol) as Void {
+    mCbLocationChangedTargetRef = target.weak();
+    mCbLocationChangedMethodName = callback;
   }
 
   // Sunrise sunset changed: triggers when latitude changes 1 degree
-  var methodSunEventChanged as Method?;
+  hidden var mCbSunEventChangedTargetRef as WeakReference?;
+  hidden var mCbSunEventChangedMethodName as Symbol?;
   function setOnSunEventChanged(
-    objInstance as Object?,
+    objInstance as Object,
     callback as Symbol
   ) as Void {
-    methodSunEventChanged = new Lang.Method(objInstance, callback) as Method;
+    mCbSunEventChangedTargetRef = objInstance.weak();
+    mCbSunEventChangedMethodName = callback;
   }
   // Minimal difference in lat or lon that will trigger new calculation of sunrise/sunset
   function setMinDegreesDifferenceSunevent(
@@ -215,15 +217,26 @@ class CurrentLocation {
   }
 
   hidden function onLocationChanged() as Void {
-    if (methodLocationChanged == null) {
+    if (mCbLocationChangedMethodName == null) {
       return;
     }
-    (methodLocationChanged as Method).invoke(
-      getCurrentDegrees() as Array<Double>
-    );
+
+    if (
+      mCbLocationChangedTargetRef != null &&
+      mCbLocationChangedTargetRef.stillAlive()
+    ) {
+      var target = mCbLocationChangedTargetRef.get();
+
+      if (target != null) {
+        var callback = target.method(mCbLocationChangedMethodName);
+
+        callback.invoke(getCurrentDegrees() as Array<Double>);
+      }
+    }
   }
+
   hidden function onSunEventChanged() as Void {
-    if (methodSunEventChanged == null || !validLocation(mLocation)) {
+    if (mCbSunEventChangedMethodName == null || !validLocation(mLocation)) {
       return;
     }
 
@@ -254,7 +267,18 @@ class CurrentLocation {
       }
     }
 
-    (methodSunEventChanged as Method).invoke(sunrise, sunset);
+    if (
+      mCbSunEventChangedTargetRef != null &&
+      mCbSunEventChangedTargetRef.stillAlive()
+    ) {
+      var target = mCbSunEventChangedTargetRef.get();
+
+      if (target != null) {
+        var callback = target.method(mCbSunEventChangedMethodName);
+
+        callback.invoke(sunrise, sunset);
+      }
+    }
   }
 
   hidden function locationChanged(location as Location?) as Boolean {
