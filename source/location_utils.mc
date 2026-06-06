@@ -156,7 +156,7 @@ class CurrentLocation {
   function onCompute(info as Activity.Info) as Void {
     try {
       var changed = false;
-
+      
       var location = null;
       mAccuracy = Position.QUALITY_NOT_AVAILABLE;
 

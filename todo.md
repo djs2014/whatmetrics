@@ -1,33 +1,12 @@
-presets grade based on dynamically changeing distance interval based on speed
-update readme
-check the right presets...
-- Snappy: distanceInterval = 2.0f, maxWindowSize = 12.
-- Balanced: distanceInterval = 3.0f, maxWindowSize = 8.
-- Steady: distanceInterval = 4.0f, maxWindowSize = 6.
- option show max / avg grade
- option reset max grade 
- -> on big screen as button? 
-
+-------------
 Check how to decrease memory -> string manipulation , arrays
-
-
-
-In your main DataField.onUpdate(dc) method, you can check slopeCalc.isPausedShowingSummary.
-
-    If it is false, just draw the single currentDisplayedGrade in massive numbers.
-
-    If it is true, draw a split layout showing slopeCalc.maxGrade and slopeCalc.getAverageClimbingGrade().
-
-It acts as a mini "achievements" screen every time they take a breather!
 
 ----------
 perc daylight
  -> border or color darker to event
 
-
 perc daylight
 -> paused or sec to event < defined -> show time to event
-
 
 x out of memory 1030? -> disable for x30? - done
 x -> menu levels is too deep for these devices. --> only 12 fields possible 830

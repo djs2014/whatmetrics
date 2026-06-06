@@ -7,14 +7,16 @@ class ABikePowerListener extends AntPlus.BikePowerListener {
   private var _onPedalPowerBalanceUpdate as Symbol?;
   private var _onBatteryStatusUpdate as Symbol?;
 
-  function initialize(
-    powerBalance as PowerBalance,
+  function initialize() {
+    BikePowerListener.initialize();
+  }
+
+  function setEventCallbacks(
+    target as Object,
     cbOnPedalPowerBalanceUpdate as Symbol,
     cbOnBatteryStatusUpdate as Symbol
-  ) {
-    BikePowerListener.initialize();
-
-    _callbackTargetRef = powerBalance.weak();
+  ) as Void {
+    _callbackTargetRef = target.weak();
     _onPedalPowerBalanceUpdate = cbOnPedalPowerBalanceUpdate;
     _onBatteryStatusUpdate = cbOnBatteryStatusUpdate;
   }

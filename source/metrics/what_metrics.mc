@@ -8,7 +8,7 @@ import Toybox.AntPlus;
 class WhatMetrics {
   hidden var a_info as Activity.Info?;
   hidden var mPaused as Boolean = true;
- 
+
   // bearing
   hidden var previousTrack as Float = 0.0f;
   // power
@@ -48,6 +48,7 @@ class WhatMetrics {
   ) as Void {
     if (mPowerBalance == null) {
       mPowerBalance = new PowerBalance();
+      mPowerBalance.registerEvents();
     }
     mPowerDualSecFallback = powerDualSecFallback;
     mHasFailingDualpower = false;
@@ -486,9 +487,6 @@ class WhatMetrics {
   hidden function resetAverageNP() as Void {
     mCurrentNP = 0;
   }
-
-
-
 }
 
 class ShiftListener {
@@ -518,10 +516,17 @@ class ShiftListener {
   }
 
   function onBatteryStatusUpdate(
-    batteryStatus as AntPlus.BatteryStatusValue,
-    operatingTime as Number,
-    abatteryVoltage as Float
+    batteryStatus as AntPlus.BatteryStatusValue?,
+    operatingTime as Number?,
+    abatteryVoltage as Float?
   ) as Void {
+    if (
+      batteryStatus == null ||
+      operatingTime == null ||
+      abatteryVoltage == null
+    ) {
+      return;
+    }
     batteryLevel = -1;
     if (batteryStatus == AntPlus.BATT_STATUS_NEW) {
       batteryLevel = 5;
@@ -563,14 +568,18 @@ class PowerBalance {
   hidden var batteryVoltage as Float;
 
   function initialize() {
-    listener = new ABikePowerListener(
+    listener = new ABikePowerListener();
+    bikePower = new AntPlus.BikePower(listener);
+    operatingTimeInSeconds = -1;
+    batteryVoltage = -1.0f;
+  }
+
+  function registerEvents() as Void {
+    listener.setEventCallbacks(
       self,
       :onPedalPowerBalanceUpdate,
       :onBatteryStatusUpdate
     );
-    bikePower = new AntPlus.BikePower(listener);
-    operatingTimeInSeconds = -1;
-    batteryVoltage = -1.0f;
   }
 
   function getLeft() as Number {
@@ -619,9 +628,13 @@ class PowerBalance {
     }
   }
   function onPedalPowerBalanceUpdate(
-    pedalPowerPercent as Lang.Number,
-    rightPedalIndicator as Lang.Boolean
+    pedalPowerPercent as Lang.Number?,
+    rightPedalIndicator as Lang.Boolean?
   ) as Void {
+    if (pedalPowerPercent == null || rightPedalIndicator == null) {
+      return;
+    }
+
     if (rightPedalIndicator) {
       mPowerBalanceLeft = 100 - pedalPowerPercent;
     } else {
@@ -630,17 +643,24 @@ class PowerBalance {
   }
 
   function onBatteryStatusUpdate(
-    batteryStatus as AntPlus.BatteryStatusValue,
-    operatingTime as Number,
-    abatteryVoltage as Float
+    batteryStatus as AntPlus.BatteryStatusValue?,
+    operatingTime as Number?,
+    abatteryVoltage as Float?
   ) as Void {
+    if (
+      batteryStatus == null ||
+      operatingTime == null ||
+      abatteryVoltage == null
+    ) {
+      return;
+    }
     batteryLevel = -1;
     if (batteryStatus == AntPlus.BATT_STATUS_NEW) {
       batteryLevel = 5;
     } else if (batteryStatus == AntPlus.BATT_STATUS_GOOD) {
       batteryLevel = 4;
     } else if (batteryStatus == AntPlus.BATT_STATUS_OK) {
-      batteryLevel = 3;
+      batteryLevel = 3; 
     } else if (batteryStatus == AntPlus.BATT_STATUS_LOW) {
       batteryLevel = 2;
     } else if (batteryStatus == AntPlus.BATT_STATUS_CRITICAL) {

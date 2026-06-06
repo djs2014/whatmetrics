@@ -107,7 +107,7 @@ class whatmetricsApp extends Application.AppBase {
       Storage.setValue("power_countdowntofb", 10);
       Storage.setValue("cadence_countdowntofb", 30);
 
-      $.gLargeField =
+      var fields =
         [
           FL8Fields,
           FTGrade,
@@ -119,7 +119,11 @@ class whatmetricsApp extends Application.AppBase {
           FTCadence,
           FTHiit,
         ] as Array<Number>;
-      $.gWideField =
+      Storage.setValue(
+        "large_field",
+        fields as Lang.Array<Application.PropertyValueType>
+      );
+      fields =
         [
           FL6Fields,
           FTGrade,
@@ -131,7 +135,11 @@ class whatmetricsApp extends Application.AppBase {
           FTCadence,
           FTHiit,
         ] as Array<Number>;
-      $.gSmallField =
+      Storage.setValue(
+        "wide_field",
+        fields as Lang.Array<Application.PropertyValueType>
+      );
+      fields =
         [
           FL4Fields,
           FTSpeed,
@@ -144,16 +152,8 @@ class whatmetricsApp extends Application.AppBase {
           FTHiit,
         ] as Array<Number>;
       Storage.setValue(
-        "large_field",
-        $.gLargeField as Lang.Array<Application.PropertyValueType>
-      );
-      Storage.setValue(
-        "wide_field",
-        $.gWideField as Lang.Array<Application.PropertyValueType>
-      );
-      Storage.setValue(
         "small_field",
-        $.gSmallField as Lang.Array<Application.PropertyValueType>
+        fields as Lang.Array<Application.PropertyValueType>
       );
 
       Storage.setValue("large_field_zen", ZMWhenMoving);
@@ -358,28 +358,28 @@ class whatmetricsApp extends Application.AppBase {
     }
 
     // @@ TODO init array fields size of 9
-    $.gLargeField =
-      getStorageValue(
-        "large_field",
-        $.gLargeField as Lang.Array<Application.PropertyValueType>
-      ) as Array<Number>;
-    $.gWideField =
-      getStorageValue(
-        "wide_field",
-        $.gWideField as Lang.Array<Application.PropertyValueType>
-      ) as Array<Number>;
-    $.gSmallField =
-      getStorageValue(
-        "small_field",
-        $.gSmallField as Lang.Array<Application.PropertyValueType>
-      ) as Array<Number>;
+    // $.gLargeField =
+    //   getStorageValue(
+    //     "large_field",
+    //     $.gLargeField as Lang.Array<Application.PropertyValueType>
+    //   ) as Array<Number>;
+    // $.gWideField =
+    //   getStorageValue(
+    //     "wide_field",
+    //     $.gWideField as Lang.Array<Application.PropertyValueType>
+    //   ) as Array<Number>;
+    // $.gSmallField =
+    //   getStorageValue(
+    //     "small_field",
+    //     $.gSmallField as Lang.Array<Application.PropertyValueType>
+    //   ) as Array<Number>;
 
-    $.gLargeFieldZen =
-      getStorageValue("large_field_zen", $.gLargeFieldZen) as ZenMode;
-    $.gWideFieldZen =
-      getStorageValue("wide_field_zen", $.gWideFieldZen) as ZenMode;
-    $.gSmallFieldZen =
-      getStorageValue("small_field_zen", $.gSmallFieldZen) as ZenMode;
+    // $.gLargeFieldZen =
+    //   getStorageValue("large_field_zen", $.gLargeFieldZen) as ZenMode;
+    // $.gWideFieldZen =
+    //   getStorageValue("wide_field_zen", $.gWideFieldZen) as ZenMode;
+    // $.gSmallFieldZen =
+    //   getStorageValue("small_field_zen", $.gSmallFieldZen) as ZenMode;
     $.gZenCountdown =
       getStorageValue("zen_countdown", $.gZenCountdown) as Number;
 
@@ -585,18 +585,18 @@ var gAltitudeFallbackEnd as Number = 10;
 var gGradeFallbackStart as Number = -2;
 var gGradeFallbackEnd as Number = 2;
 
-var gLargeField as Array<Number> = [0, 0, 0, 0, 0, 0, 0, 0, 0] as Array<Number>;
-var gWideField as Array<Number> = [0, 0, 0, 0, 0, 0, 0, 0, 0] as Array<Number>;
-var gSmallField as Array<Number> = [0, 0, 0, 0, 0, 0, 0, 0, 0] as Array<Number>;
+// var gLargeField as Array<Number> = [0, 0, 0, 0, 0, 0, 0, 0, 0] as Array<Number>;
+// var gWideField as Array<Number> = [0, 0, 0, 0, 0, 0, 0, 0, 0] as Array<Number>;
+// var gSmallField as Array<Number> = [0, 0, 0, 0, 0, 0, 0, 0, 0] as Array<Number>;
 
 // var gLargeFieldGraphic as Array<Number> = [0, 0, 0, 0, 0, 0, 0, 0] as Array<Number>;
 // var gWideFieldGraphic as Array<Number> = [0, 0, 0, 0, 0, 0, 0, 0] as Array<Number>;
 // var gSmallFieldGraphic as Array<Number> = [0, 0, 0, 0, 0, 0, 0, 0] as Array<Number>;
 var gGraphic_fields as Array<Number> = [] as Array<Number>;
 
-var gLargeFieldZen as ZenMode = ZMOff;
-var gWideFieldZen as ZenMode = ZMOff;
-var gSmallFieldZen as ZenMode = ZMOff;
+// var gLargeFieldZen as ZenMode = ZMOff;
+// var gWideFieldZen as ZenMode = ZMOff;
+// var gSmallFieldZen as ZenMode = ZMOff;
 var gZenCountdown as Number = 10;
 
 var gLargeFieldBp as BarPosition = BPBottom;

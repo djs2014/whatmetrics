@@ -810,3 +810,17 @@ function abs(value as Numeric) as Numeric {
   }
   return value;
 }
+
+// Objects are passed by reference
+function ensureArraySize(
+  array as Array<Application.PropertyValueType>,
+  size as Number,
+  value as Application.PropertyValueType
+) as Boolean {
+  var changed = false;
+  while (array.size() < size) {
+    array.add(value);
+    changed = true;
+  }
+  return changed;
+}

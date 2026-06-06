@@ -94,9 +94,9 @@ class whatmetricsView extends WatchUi.DataField {
 
   hidden var mDayLiteTime as Boolean;
   hidden var mTestTick as Number = 0;
-  
+
   // hidden var mFi as FieldInfo = new FieldInfo(FTUnknown, 0);
-  
+
   function initialize() {
     DataField.initialize();
     mFieldSize = "?x?";
@@ -187,24 +187,27 @@ class whatmetricsView extends WatchUi.DataField {
 
     // mDisplaySize = $.getDisplaySize(w, h);
     if (mSmallField) {
-      mFields = $.gSmallField as Array<Number>;
-      mZenMode = $.gSmallFieldZen;
+      mFields = $.getStorageValue("small_field", []) as Array<Numeric>;
+      mZenMode = $.getStorageValue("small_field_zen", ZMOff) as ZenMode;
       mBarPosition = $.gSmallFieldBp;
       // @@QND
       if (mGraphicLineHeight > 2) {
         mGraphicLineHeight = 2;
       }
     } else if (mWideField) {
-      mFields = $.gWideField as Array<Number>;
-      mZenMode = $.gWideFieldZen;
+      mFields = $.getStorageValue("wide_field", []) as Array<Numeric>;
+      mZenMode = $.getStorageValue("wide_field_zen", ZMOff) as ZenMode;
       mBarPosition = $.gWideFieldBp;
       if (mGraphicLineHeight > 4) {
         mGraphicLineHeight = 4;
       }
     } else {
-      mFields = $.gLargeField as Array<Number>;
-      mZenMode = $.gLargeFieldZen;
+      mFields = $.getStorageValue("large_field", []) as Array<Numeric>;
+      mZenMode = $.getStorageValue("large_field_zen", ZMOff) as ZenMode;
       mBarPosition = $.gLargeFieldBp;
+    }
+    if (mFields.size() == 0) {
+      mFields = [FL8Fields] as Array<Numeric>;
     }
     mFieldLayout = mFields[0] as FieldLayout;
 
@@ -309,6 +312,8 @@ class whatmetricsView extends WatchUi.DataField {
   }
 
   function compute(info as Activity.Info) as Void {
+    if (info == null) { return; }
+    
     mMetrics.compute(info);
     mCurrentLocation.onCompute(info);
     mDayLiteTime = isAtDaylightTime(Time.now(), true);
@@ -530,7 +535,7 @@ class whatmetricsView extends WatchUi.DataField {
             fi.maxValue > fi.minValue
           ) {
             // 0% if close to lowerbound and 100% if close to upperbound
-            focusPerc = percentageOf(fi.rawValue, fi.minValue, fi.maxValue);            
+            focusPerc = percentageOf(fi.rawValue, fi.minValue, fi.maxValue);
             hasUpper = true;
             hasLower = true;
           } else if (fi.maxValue <= 0 && fi.minValue > 0) {
@@ -743,7 +748,7 @@ class whatmetricsView extends WatchUi.DataField {
     // mFi.type = fieldType;
     // mFi.index = fieldIdx;
     // var fi = mFi;
-    
+
     var useColor =
       $.gShowColors || $.gUseColorFields.indexOf(fi.type as Number) > -1;
 
@@ -3388,7 +3393,11 @@ class whatmetricsView extends WatchUi.DataField {
     }
     var maxArrowWidth = width * 0.35; // Iets kleiner om ruimte te laten aan beide kanten
     var centerX = x + width / 2; // Startpunt in het midden van het veld
-    var centerY = y + height - 6; // 6 pixels boven de onderrand
+    var centerY = y + height - 6 ; // 6 + focusborder pixels boven de onderrand
+    if ($.gFocusField) {
+      centerY = centerY - $.gFocusBorder; // Iets hoger als veld in focus is
+    }
+    
     if (clamp == 0) {
       clamp = 0.2; // Default clamp
     }
