@@ -20,12 +20,6 @@ class WhatMetrics {
   hidden var mUserWeightKg as Float = 0.0f;
   hidden var mUserFTP as Number = 0;
 
-  // detect if l/r power is not 0 for x seconds
-  hidden var mPowerDualSecFallback as Number = 0;
-  hidden var mPowerTimesTwo as Boolean = false;
-  hidden var mFailingPowerPedalsCounter as Number = 0;
-  hidden var mHasFailingDualpower as Boolean = false;
-
   // heartrate
   hidden var mHrZones as Lang.Array<Lang.Number> =
     [] as Lang.Array<Lang.Number>;
@@ -42,18 +36,14 @@ class WhatMetrics {
   // function reset() as Void {
   //   resetAverageNP();
   // }
-  function initPowerBalance(
-    powerDualSecFallback as Number,
-    powerTimesTwo as Boolean
-  ) as Void {
+
+  function initPowerBalanceListeners() as Void {
     if (mPowerBalance == null) {
       mPowerBalance = new PowerBalance();
       mPowerBalance.registerEvents();
     }
-    mPowerDualSecFallback = powerDualSecFallback;
-    mHasFailingDualpower = false;
-    mPowerTimesTwo = powerTimesTwo;
   }
+
   function initShiftListener() as Void {
     if (mShifting == null) {
       mShifting = new ShiftListener();
@@ -238,11 +228,7 @@ class WhatMetrics {
     return mPowerPerSec;
   }
   // power watts / x seconds
-  function getPower() as Number {
-    if (mHasFailingDualpower || mPowerTimesTwo) {
-      // Compensate for 1 failing pedal
-      return mCurrentPowerPerX * 2;
-    }
+  function getPower() as Number {   
     return mCurrentPowerPerX;
   }
   function getAveragePower() as Number {
@@ -307,11 +293,6 @@ class WhatMetrics {
       return (mPowerBalance as PowerBalance).getAverageLeft();
     }
     return 0.0f;
-  }
-
-  // one of the power pedals is not working .. @@ experimental
-  function getHasFailingDualpower() as Boolean {
-    return mHasFailingDualpower;
   }
 
   function getPowerBatteryLevel() as Number {
@@ -400,8 +381,7 @@ class WhatMetrics {
     a_info = info;
 
     var power = getActivityValue(a_info, :currentPower, 0) as Number;
-
-    checkForFalingDualPower();
+    
     mCurrentPowerPerX = calculatePower(power);
 
     // TODO NP calc also when paused?
@@ -461,27 +441,6 @@ class WhatMetrics {
 
     // Return the 4th root
     return Math.pow(globalAvg, 0.25).toNumber();
-  }
-
-  hidden function checkForFalingDualPower() as Void {
-    if (mPowerBalance == null) {
-      return;
-    }
-    if (mPowerDualSecFallback == 0) {
-      return;
-    }
-
-    var pedal = (mPowerBalance as PowerBalance).getActivePowerPedals();
-
-    if (pedal == "L" || pedal == "R" || pedal == "") {
-      mFailingPowerPedalsCounter = mFailingPowerPedalsCounter + 1;
-    } else {
-      mFailingPowerPedalsCounter = 0;
-    }
-    mHasFailingDualpower = mFailingPowerPedalsCounter > mPowerDualSecFallback;
-    // System.println(
-    //   "FailingPowerPedalsCounter " + mFailingPowerPedalsCounter + " mHasFailingDualpower " + mHasFailingDualpower
-    // );
   }
 
   hidden function resetAverageNP() as Void {
@@ -600,24 +559,24 @@ class PowerBalance {
     return batteryVoltage as Float;
   }
 
-  function getActivePowerPedals() as String {
-    var balance = bikePower.getPedalPowerBalance();
-    if (balance == null) {
-      // can be null!
-      return "";
-    }
-    var pedalPowerPercent = balance.pedalPowerPercent;
-    var rightPedalIndicator = balance.rightPedalIndicator;
+  // function getActivePowerPedals() as String {
+  //   var balance = bikePower.getPedalPowerBalance();
+  //   if (balance == null) {
+  //     // can be null!
+  //     return "";
+  //   }
+  //   var pedalPowerPercent = balance.pedalPowerPercent;
+  //   var rightPedalIndicator = balance.rightPedalIndicator;
 
-    if (pedalPowerPercent == null || rightPedalIndicator == null) {
-      return "";
-    } else if (pedalPowerPercent == 100 && rightPedalIndicator) {
-      return "R";
-    } else if (pedalPowerPercent == 100 && !rightPedalIndicator) {
-      return "L";
-    }
-    return "LR";
-  }
+  //   if (pedalPowerPercent == null || rightPedalIndicator == null) {
+  //     return "";
+  //   } else if (pedalPowerPercent == 100 && rightPedalIndicator) {
+  //     return "R";
+  //   } else if (pedalPowerPercent == 100 && !rightPedalIndicator) {
+  //     return "L";
+  //   }
+  //   return "LR";
+  // }
 
   function compute(power as Number) as Void {
     if (power > 0 && mPowerBalanceLeft != null && mPowerBalanceLeft > 0) {

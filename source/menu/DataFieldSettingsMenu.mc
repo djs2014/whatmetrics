@@ -367,25 +367,25 @@ class DataFieldSettingsMenuDelegate extends WatchUi.Menu2InputDelegate {
         )
       );
 
-      mi = new WatchUi.MenuItem(
-        "Dualpwr sec fallback",
-        null,
-        "power_dual_sec_fallback",
-        null
-      );
-      mi.setSubLabel($.getStorageNumberAsString(mi.getId() as String));
-      powerMenu.addItem(mi);
+      // mi = new WatchUi.MenuItem(
+      //   "Dualpwr sec fallback",
+      //   null,
+      //   "power_dual_sec_fallback",
+      //   null
+      // );
+      // mi.setSubLabel($.getStorageNumberAsString(mi.getId() as String));
+      // powerMenu.addItem(mi);
 
-      boolean = Storage.getValue("power_times_two") ? true : false;
-      powerMenu.addItem(
-        new WatchUi.ToggleMenuItem(
-          "Power*2 (pedal fail)",
-          null,
-          "power_times_two",
-          boolean,
-          null
-        )
-      );
+      // boolean = Storage.getValue("power_times_two") ? true : false;
+      // powerMenu.addItem(
+      //   new WatchUi.ToggleMenuItem(
+      //     "Power*2 (pedal fail)",
+      //     null,
+      //     "power_times_two",
+      //     boolean,
+      //     null
+      //   )
+      // );
 
       WatchUi.pushView(
         powerMenu,

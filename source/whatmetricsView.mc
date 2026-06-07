@@ -311,9 +311,20 @@ class whatmetricsView extends WatchUi.DataField {
     }
   }
 
+  hidden var _hasListenersInitialized = false;
+
   function compute(info as Activity.Info) as Void {
-    if (info == null) { return; }
-    
+    if (info == null) {
+      return;
+    }
+
+    var elapsed = $.getActivityValue(info, :elapsedTime, 0) as Number;
+    if (!_hasListenersInitialized && elapsed > 10) {
+      mMetrics.initPowerBalanceListeners();
+      mMetrics.initShiftListener();
+      _hasListenersInitialized = true;
+    }
+
     mMetrics.compute(info);
     mCurrentLocation.onCompute(info);
     mDayLiteTime = isAtDaylightTime(Time.now(), true);
@@ -917,10 +928,7 @@ class whatmetricsView extends WatchUi.DataField {
 
       case FTAveragePower:
       case FTPower:
-        var power = mMetrics.getPower();
-        if (mMetrics.getHasFailingDualpower()) {
-          fi.prefix = "2*";
-        }
+        var power = mMetrics.getPower();        
         fi.title =
           "power (" + mMetrics.getPowerPerSec().format("%0d") + " sec)";
         fi.units = "w";
@@ -1227,10 +1235,7 @@ class whatmetricsView extends WatchUi.DataField {
           mMetrics.getRearDerailleurSize().format("%0d");
         return fi;
 
-      case FTPowerPerWeight:
-        if (mMetrics.getHasFailingDualpower()) {
-          fi.prefix = "2*";
-        }
+      case FTPowerPerWeight:        
         var powerpw;
         if (gShowAverageWhenPaused && mPaused) {
           fi.title =
@@ -1308,10 +1313,7 @@ class whatmetricsView extends WatchUi.DataField {
         fi.tag = "np";
         var np = mMetrics.getNormalizedPower();
         fi.available = np > 0; // and (mPowerFallbackCountdown > 0 or $.gPowerCountdownToFallBack == 0);
-
-        if (mMetrics.getHasFailingDualpower()) {
-          fi.prefix = "2*";
-        }
+        
         fi.title = "normalized power";
         fi.units = "w";
         fi.number = np.format("%0d");
@@ -3393,11 +3395,11 @@ class whatmetricsView extends WatchUi.DataField {
     }
     var maxArrowWidth = width * 0.35; // Iets kleiner om ruimte te laten aan beide kanten
     var centerX = x + width / 2; // Startpunt in het midden van het veld
-    var centerY = y + height - 6 ; // 6 + focusborder pixels boven de onderrand
+    var centerY = y + height - 6; // 6 + focusborder pixels boven de onderrand
     if ($.gFocusField) {
       centerY = centerY - $.gFocusBorder; // Iets hoger als veld in focus is
     }
-    
+
     if (clamp == 0) {
       clamp = 0.2; // Default clamp
     }

@@ -59,6 +59,11 @@ class whatmetricsApp extends Application.AppBase {
       Storage.deleteValue("metric_grade_show_maxavg");
     } 
 
+    if (Storage.getValue("power_times_two") != null) {
+      Storage.deleteValue("power_times_two");
+      Storage.deleteValue("power_dual_sec_fallback");
+    }
+
     var reset = Storage.getValue("resetDefaults");
     if (reset == null || (reset as Boolean)) {
       Storage.setValue("resetDefaults", false);
@@ -94,11 +99,7 @@ class whatmetricsApp extends Application.AppBase {
 
       // @@
       Storage.setValue("show_shiftingbattery", $.gShowShiftingBattery);
-      // Storage.setValue("show_powerbalance", $.gShowPowerBalance);
       Storage.setValue("show_powerbattery", $.gShowPowerBattery);
-
-      Storage.setValue("power_dual_sec_fallback", 0);
-      Storage.setValue("power_times_two", false);
 
       Storage.setValue("altitude_start_fb", $.gAltitudeFallbackStart);
       Storage.setValue("altitude_end_fb", $.gAltitudeFallbackEnd);
@@ -356,30 +357,7 @@ class whatmetricsApp extends Application.AppBase {
       }
       metrics.initHrZones(heartRateZones);
     }
-
-    // @@ TODO init array fields size of 9
-    // $.gLargeField =
-    //   getStorageValue(
-    //     "large_field",
-    //     $.gLargeField as Lang.Array<Application.PropertyValueType>
-    //   ) as Array<Number>;
-    // $.gWideField =
-    //   getStorageValue(
-    //     "wide_field",
-    //     $.gWideField as Lang.Array<Application.PropertyValueType>
-    //   ) as Array<Number>;
-    // $.gSmallField =
-    //   getStorageValue(
-    //     "small_field",
-    //     $.gSmallField as Lang.Array<Application.PropertyValueType>
-    //   ) as Array<Number>;
-
-    // $.gLargeFieldZen =
-    //   getStorageValue("large_field_zen", $.gLargeFieldZen) as ZenMode;
-    // $.gWideFieldZen =
-    //   getStorageValue("wide_field_zen", $.gWideFieldZen) as ZenMode;
-    // $.gSmallFieldZen =
-    //   getStorageValue("small_field_zen", $.gSmallFieldZen) as ZenMode;
+    
     $.gZenCountdown =
       getStorageValue("zen_countdown", $.gZenCountdown) as Number;
 
@@ -403,13 +381,7 @@ class whatmetricsApp extends Application.AppBase {
         "fields_avg_trend",
         $.gUseAvgTrendFields as Lang.Array<Application.PropertyValueType>
       ) as Array<Number>;
-
-    // @@TODO refactor + barpostion
-    // $.gLargeFieldGraphic = getStorageValue("large_field_bar", $.gLargeFieldGraphic) as Array<Number>;
-    // $.gWideFieldGraphic = getStorageValue("wide_field_bar", $.gWideFieldGraphic) as Array<Number>;
-    // $.gSmallFieldGraphic = getStorageValue("small_field_bar", $.gSmallFieldGraphic) as Array<Number>;
-
-    // @@
+    
     $.gGraphic_fields =
       getStorageValue(
         "graphic_fields",
@@ -462,17 +434,12 @@ class whatmetricsApp extends Application.AppBase {
     // @@ from user profile possible?
     metrics.setFTP($.gTargetFtp);
 
-    // @@ TODO refactor
-    var powerDualSecFallback =
-      getStorageValue("power_dual_sec_fallback", 0) as Number;
-    var powerTimesTwo = getStorageValue("power_times_two", false) as Boolean;
     $.gPowerCountdownToFallBack =
       getStorageValue("power_countdowntofb", $.gPowerCountdownToFallBack) as
       Number;
     $.gCadenceCountdownToFallBack =
       getStorageValue("cadence_countdowntofb", $.gCadenceCountdownToFallBack) as
       Number;
-    metrics.initPowerBalance(powerDualSecFallback, powerTimesTwo);
 
     metrics.initWeight();
 

@@ -14,7 +14,7 @@ import Toybox.Time.Gregorian;
 import Toybox.Application.Storage;
 
 class CurrentLocation {
-  hidden var debugMode = true;
+  hidden var debugMode = false;
   function setDebugMode(enabled as Boolean) as Void {
     debugMode = enabled;
   }
