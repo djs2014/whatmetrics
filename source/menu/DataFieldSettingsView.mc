@@ -53,7 +53,7 @@ class DataFieldSettingsDelegate extends WatchUi.BehaviorDelegate {
     menu.addItem(mi);
     mi = new WatchUi.MenuItem("Power", null, "power", null);
     menu.addItem(mi);
-    mi = new WatchUi.MenuItem("Gradient", null, "gradient", null);
+    mi = new WatchUi.MenuItem("Grade", null, "gradient", null);
     menu.addItem(mi);
     
     mi = new WatchUi.MenuItem("Large field", null, "large_field", null);

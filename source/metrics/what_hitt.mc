@@ -68,7 +68,7 @@ class WhatHiitt {
   hidden var currentTimerState as Number = Activity.TIMER_STATE_OFF;
   hidden var userWeightKg as Float = 0.0f;
   hidden var powerTicks as Number = 0;
-  hidden var avgPowerPerSec as Double = 0.0d;
+  hidden var avgPowerPerSec as Float = 0.0f;
   hidden var userVo2maxCycling as Number = 0;
   hidden var userGender as Number = 0;
   hidden var userAge as Number = 0;
@@ -337,12 +337,12 @@ class WhatHiitt {
 
   hidden function resetAveragePower() as Void {
     powerTicks = 0;
-    avgPowerPerSec = 0.0d;
+    avgPowerPerSec = 0.0f;
   }
   hidden function addAveragePower(power as Number) as Void {
     // [ avg' * (n-1) + x ] / n
     powerTicks = powerTicks + 1;
-    avgPowerPerSec = (avgPowerPerSec * (powerTicks - 1) + power) / powerTicks.toDouble();
+    avgPowerPerSec = (avgPowerPerSec * (powerTicks - 1) + power) / powerTicks.toFloat();
     // System.println(Lang.format("p $1$ ticks $2$ avg $3$", [power, powerTicks, avgPowerPerSec]));
   }
 

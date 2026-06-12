@@ -5,27 +5,28 @@ import Toybox.UserProfile;
 
 class whatmetricsApp extends Application.AppBase {
   function initialize() {
-    AppBase.initialize();    
+    AppBase.initialize();
   }
 
   // onStart() is called on application start up
-  function onStart(state as Dictionary?) as Void { }
+  function onStart(state as Dictionary?) as Void {}
 
   // onStop() is called when your application is exiting
   function onStop(state as Dictionary?) as Void {}
 
   //! Return the initial view of your application here
-  function getInitialView() as [WatchUi.Views] or
-    [WatchUi.Views, WatchUi.InputDelegates] {
+  function getInitialView() as
+    [WatchUi.Views] or [WatchUi.Views, WatchUi.InputDelegates]
+  {
     onSettingsChanged();
     return [new whatmetricsView()];
   }
 
   //! Return the settings view and delegate for the app
   //! @return Array Pair [View, Delegate]
-  function getSettingsView() as [WatchUi.Views] or
-    [WatchUi.Views, WatchUi.InputDelegates] or
-    Null {
+  function getSettingsView() as
+    [WatchUi.Views] or [WatchUi.Views, WatchUi.InputDelegates] or Null
+  {
     return [new $.DataFieldSettingsView(), new $.DataFieldSettingsDelegate()];
   }
   function onSettingsChanged() {
@@ -37,6 +38,32 @@ class whatmetricsApp extends Application.AppBase {
       Storage.clearValues();
       Storage.setValue("version", "1.0.4");
       Storage.setValue("resetDefaults", true);
+    }
+    var gradeWindowSize = getStorageValue("grade_maxwindow", null) as Number?;
+    if (gradeWindowSize == null) {
+      Storage.setValue("grade_maxwindow", 8);
+      Storage.setValue("grade_distance", 2.0f);
+      Storage.setValue("grade_minimal_distance", 6.0f);
+      Storage.setValue("grade_show_maxavg", true);
+      // Climb start when minimal 3% for 30 meters, stop when less than 1.5% for 50 meters
+      Storage.setValue("grade_climb_start_slope", 3.0f);
+      Storage.setValue("grade_climb_start_distance", 30f);
+      Storage.setValue("grade_climb_stop_slope", 1.5f);
+      Storage.setValue("grade_climb_stop_distance", 50.0f);
+      Storage.deleteValue("metric_grademinrise");
+      Storage.deleteValue("metric_grademinrun");
+      Storage.deleteValue("metric_gradews");
+      Storage.deleteValue("metric_grade_maxwindow");
+      Storage.deleteValue("metric_grade_distance");
+      Storage.deleteValue("metric_grade_minimal_distance");
+      Storage.deleteValue("metric_grade_show_maxavg");
+    }
+
+    if (Storage.getValue("power_times_two") != null) {
+      Storage.deleteValue("power_times_two");
+      Storage.deleteValue("power_dual_sec_fallback");
+      Storage.deleteValue("show_shiftingbattery");
+      Storage.deleteValue("show_powerbattery");
     }
 
     var reset = Storage.getValue("resetDefaults");
@@ -54,9 +81,16 @@ class whatmetricsApp extends Application.AppBase {
       Storage.setValue("hiit_vo2maxbg", Vo2BgHiit);
 
       Storage.setValue("metric_ppersec", 3);
-      Storage.setValue("metric_gradews", 4);
-      Storage.setValue("metric_grademinrise", 0);
-      Storage.setValue("metric_grademinrun", 20);
+
+      Storage.setValue("grade_maxwindow", 8);
+      Storage.setValue("grade_distance", 2.0f);
+      Storage.setValue("grade_minimal_distance", 6.0f);
+      Storage.setValue("grade_show_maxavg", true);
+      // Climb start when minimal 3% for 30 meters, stop when less than 1.5% for 50 meters
+      Storage.setValue("grade_climb_start_slope", 3.0f);
+      Storage.setValue("grade_climb_start_distance", 30f);
+      Storage.setValue("grade_climb_stop_slope", 1.5f);
+      Storage.setValue("grade_climb_stop_distance", 50.0f);
 
       Storage.setValue("debug", $.gDebug);
       Storage.setValue("show_colors", $.gShowColors);
@@ -64,15 +98,8 @@ class whatmetricsApp extends Application.AppBase {
       Storage.setValue("show_average", true);
       Storage.setValue("show_average_progress", true);
       Storage.setValue("show_np_as_avg", $.gShowNPasAverage);
-      Storage.setValue("np_skip_zero", false);
 
       // @@
-      Storage.setValue("show_shiftingbattery", $.gShowShiftingBattery);
-      // Storage.setValue("show_powerbalance", $.gShowPowerBalance);
-      Storage.setValue("show_powerbattery", $.gShowPowerBattery);
-
-      Storage.setValue("power_dual_sec_fallback", 0);
-      Storage.setValue("power_times_two", false);
 
       Storage.setValue("altitude_start_fb", $.gAltitudeFallbackStart);
       Storage.setValue("altitude_end_fb", $.gAltitudeFallbackEnd);
@@ -81,7 +108,7 @@ class whatmetricsApp extends Application.AppBase {
       Storage.setValue("power_countdowntofb", 10);
       Storage.setValue("cadence_countdowntofb", 30);
 
-      $.gLargeField =
+      var fields =
         [
           FL8Fields,
           FTGrade,
@@ -93,7 +120,11 @@ class whatmetricsApp extends Application.AppBase {
           FTCadence,
           FTHiit,
         ] as Array<Number>;
-      $.gWideField =
+      Storage.setValue(
+        "large_field",
+        fields as Lang.Array<Application.PropertyValueType>
+      );
+      fields =
         [
           FL6Fields,
           FTGrade,
@@ -105,7 +136,11 @@ class whatmetricsApp extends Application.AppBase {
           FTCadence,
           FTHiit,
         ] as Array<Number>;
-      $.gSmallField =
+      Storage.setValue(
+        "wide_field",
+        fields as Lang.Array<Application.PropertyValueType>
+      );
+      fields =
         [
           FL4Fields,
           FTSpeed,
@@ -118,16 +153,8 @@ class whatmetricsApp extends Application.AppBase {
           FTHiit,
         ] as Array<Number>;
       Storage.setValue(
-        "large_field",
-        $.gLargeField as Lang.Array<Application.PropertyValueType>
-      );
-      Storage.setValue(
-        "wide_field",
-        $.gWideField as Lang.Array<Application.PropertyValueType>
-      );
-      Storage.setValue(
         "small_field",
-        $.gSmallField as Lang.Array<Application.PropertyValueType>
+        fields as Lang.Array<Application.PropertyValueType>
       );
 
       Storage.setValue("large_field_zen", ZMWhenMoving);
@@ -175,11 +202,7 @@ class whatmetricsApp extends Application.AppBase {
         $.gUseColorFields as Lang.Array<Application.PropertyValueType>
       );
 
-      $.gUseAvgTrendFields = [
-        FTHeartRate,
-        FTPower,
-        FTSpeed,
-        FTCadence,];
+      $.gUseAvgTrendFields = [FTHeartRate, FTPower, FTSpeed, FTCadence];
       Storage.setValue(
         "fields_avg_trend",
         $.gUseAvgTrendFields as Lang.Array<Application.PropertyValueType>
@@ -241,17 +264,37 @@ class whatmetricsApp extends Application.AppBase {
     $.gVo2MaxBackGround =
       getStorageValue("hiit_vo2maxbg", Vo2BgHiit) as Vo2MaxBackGround;
 
-    $.gVo2MaxBackGround = getStorageValue("hiit_vo2maxbg", Vo2BgHiit) as Vo2MaxBackGround;
-    
+    $.gVo2MaxBackGround =
+      getStorageValue("hiit_vo2maxbg", Vo2BgHiit) as Vo2MaxBackGround;
+
     var metrics = $.getWhatMetrics();
     metrics.setPowerPerSec(getStorageValue("metric_ppersec", 0) as Number);
-    metrics.setGradeWindowSize(getStorageValue("metric_gradews", 0) as Number);
-    metrics.setGradeMinimalRise(
-      getStorageValue("metric_grademinrise", 0) as Number
+
+    var slopeCalc = $.getSlopeCalc();
+    slopeCalc.setGradeWindowSize(
+      $.getStorageValue("grade_maxwindow", 8) as Number
     );
-    metrics.setGradeMinimalRun(
-      getStorageValue("metric_grademinrun", 20) as Number
+    slopeCalc.setGradeDistanceInterval(
+      $.getStorageValue("grade_distance", 2.0f) as Float
     );
+    slopeCalc.setMinimalDistanceForRegression(
+      $.getStorageValue("grade_minimal_distance", 6.0f) as Float
+    );
+
+    $.gGradeShowMaxAvg = getStorageValue("grade_show_maxavg", true) as Boolean;
+    if ($.gGradeShowMaxAvg) {
+      var climbTracker = $.getClimbTracker();
+      climbTracker.minimalClimbStartGrade =
+        getStorageValue("grade_climb_start_slope", 3.0f) as Float;
+      climbTracker.minimalClimbStartDistance =
+        getStorageValue("grade_climb_start_distance", 30.0f) as Float;
+      climbTracker.minimalClimbStopGrade =
+        getStorageValue("grade_climb_stop_slope", 1.5f) as Float;
+      climbTracker.minimalClimbStopDistance =
+        getStorageValue("grade_climb_stop_distance", 50.0f) as Float;
+    } else {
+      $.getClimbTracker().resetClimbStats();
+    }
 
     if ((getStorageValue("target_ftp", 0) as Number) == 0) {
       Storage.setValue("target_ftp", $.gTargetFtp);
@@ -299,7 +342,7 @@ class whatmetricsApp extends Application.AppBase {
     $.gFocusField = getStorageValue("focus_field", $.gFocusField) as FocusField;
     $.gFocusPerc = getStorageValue("focus_perc", $.gFocusPerc) as Number;
     $.gFocusBorder = getStorageValue("focus_border", $.gFocusBorder) as Number;
-    
+
     var targetHrZone = getStorageValue("target_hrzone", 4) as Number;
     var heartRateZones = UserProfile.getHeartRateZones(
       UserProfile.HR_ZONE_SPORT_BIKING
@@ -314,29 +357,6 @@ class whatmetricsApp extends Application.AppBase {
       metrics.initHrZones(heartRateZones);
     }
 
-    // @@ TODO init array fields size of 9
-    $.gLargeField =
-      getStorageValue(
-        "large_field",
-        $.gLargeField as Lang.Array<Application.PropertyValueType>
-      ) as Array<Number>;
-    $.gWideField =
-      getStorageValue(
-        "wide_field",
-        $.gWideField as Lang.Array<Application.PropertyValueType>
-      ) as Array<Number>;
-    $.gSmallField =
-      getStorageValue(
-        "small_field",
-        $.gSmallField as Lang.Array<Application.PropertyValueType>
-      ) as Array<Number>;
-
-    $.gLargeFieldZen =
-      getStorageValue("large_field_zen", $.gLargeFieldZen) as ZenMode;
-    $.gWideFieldZen =
-      getStorageValue("wide_field_zen", $.gWideFieldZen) as ZenMode;
-    $.gSmallFieldZen =
-      getStorageValue("small_field_zen", $.gSmallFieldZen) as ZenMode;
     $.gZenCountdown =
       getStorageValue("zen_countdown", $.gZenCountdown) as Number;
 
@@ -360,13 +380,7 @@ class whatmetricsApp extends Application.AppBase {
         "fields_avg_trend",
         $.gUseAvgTrendFields as Lang.Array<Application.PropertyValueType>
       ) as Array<Number>;
-      
-    // @@TODO refactor + barpostion
-    // $.gLargeFieldGraphic = getStorageValue("large_field_bar", $.gLargeFieldGraphic) as Array<Number>;
-    // $.gWideFieldGraphic = getStorageValue("wide_field_bar", $.gWideFieldGraphic) as Array<Number>;
-    // $.gSmallFieldGraphic = getStorageValue("small_field_bar", $.gSmallFieldGraphic) as Array<Number>;
 
-    // @@
     $.gGraphic_fields =
       getStorageValue(
         "graphic_fields",
@@ -399,7 +413,7 @@ class whatmetricsApp extends Application.AppBase {
     $.gShowGrid = getStorageValue("show_grid", $.gShowGrid) as Boolean;
     $.gShowAverageWhenPaused =
       getStorageValue("show_average", $.gShowAverageWhenPaused) as Boolean;
-    
+
     $.gAltitudeFallbackStart =
       getStorageValue("altitude_start_fb", 0) as Number;
     $.gAltitudeFallbackEnd = getStorageValue("altitude_end_fb", 0) as Number;
@@ -408,29 +422,19 @@ class whatmetricsApp extends Application.AppBase {
 
     $.gShowIcon = getStorageValue("show_icon", $.gShowIcon) as Boolean;
 
-    $.gShowShiftingBattery =
-      getStorageValue("show_shiftingbattery", $.gShowShiftingBattery) as
-      Boolean;
-    $.gShowPowerBattery =
-      getStorageValue("show_powerbattery", $.gShowPowerBattery) as Boolean;
+    
     $.gShowNPasAverage =
       getStorageValue("show_np_as_avg", $.gShowNPasAverage) as Boolean;
-    var NPSkipZero = getStorageValue("np_skip_zero", false) as Boolean;
-    metrics.initNP(NPSkipZero);
+
     // @@ from user profile possible?
     metrics.setFTP($.gTargetFtp);
 
-    // @@ TODO refactor
-    var powerDualSecFallback =
-      getStorageValue("power_dual_sec_fallback", 0) as Number;
-    var powerTimesTwo = getStorageValue("power_times_two", false) as Boolean;
     $.gPowerCountdownToFallBack =
       getStorageValue("power_countdowntofb", $.gPowerCountdownToFallBack) as
       Number;
     $.gCadenceCountdownToFallBack =
       getStorageValue("cadence_countdowntofb", $.gCadenceCountdownToFallBack) as
       Number;
-    metrics.initPowerBalance(powerDualSecFallback, powerTimesTwo);
 
     metrics.initWeight();
 
@@ -450,7 +454,8 @@ class whatmetricsApp extends Application.AppBase {
       hiitt.setDemo(true);
     }
     $.gPause_x_offset = getStorageValue("pause_x_offset", 10) as Number;
-     $.gSunEventDegreesDifference = $.getStorageValue("sunevent_degrees_difference", 1.0d) as Double;
+    $.gSunEventDegreesDifference =
+      $.getStorageValue("sunevent_degrees_difference", 1.0d) as Double;
   }
 
   hidden function setFallbackField(
@@ -484,8 +489,24 @@ function getWhatMetrics() as WhatMetrics {
   }
   return $.gMetrics as WhatMetrics;
 }
+
+function getSlopeCalc() as SlopeCalc {
+  if (gSlopeCalc == null) {
+    $.gSlopeCalc = new SlopeCalc();
+  }
+  return $.gSlopeCalc as SlopeCalc;
+}
+
+function getClimbTracker() as ClimbTracker {
+  if (gClimbTracker == null) {
+    $.gClimbTracker = new ClimbTracker();
+  }
+  return $.gClimbTracker as ClimbTracker;
+}
 var gHiitt as WhatHiitt?;
 var gMetrics as WhatMetrics?;
+var gSlopeCalc as SlopeCalc?;
+var gClimbTracker as ClimbTracker?;
 
 var gTargetFtp as Number = 250;
 var gTargetSpeed as Number = 30;
@@ -512,10 +533,6 @@ var gShowAverageWhenPaused as Boolean = false;
 
 var gShowNPasAverage as Boolean = false;
 
-// @@ refactor
-// var gShowPowerBalance as Boolean = true;
-var gShowShiftingBattery as Boolean = true;
-var gShowPowerBattery as Boolean = true;
 var gShowIcon as Boolean = true;
 
 var gPowerCountdownToFallBack as Number = 10;
@@ -526,18 +543,18 @@ var gAltitudeFallbackEnd as Number = 10;
 var gGradeFallbackStart as Number = -2;
 var gGradeFallbackEnd as Number = 2;
 
-var gLargeField as Array<Number> = [0, 0, 0, 0, 0, 0, 0, 0, 0] as Array<Number>;
-var gWideField as Array<Number> = [0, 0, 0, 0, 0, 0, 0, 0, 0] as Array<Number>;
-var gSmallField as Array<Number> = [0, 0, 0, 0, 0, 0, 0, 0, 0] as Array<Number>;
+// var gLargeField as Array<Number> = [0, 0, 0, 0, 0, 0, 0, 0, 0] as Array<Number>;
+// var gWideField as Array<Number> = [0, 0, 0, 0, 0, 0, 0, 0, 0] as Array<Number>;
+// var gSmallField as Array<Number> = [0, 0, 0, 0, 0, 0, 0, 0, 0] as Array<Number>;
 
 // var gLargeFieldGraphic as Array<Number> = [0, 0, 0, 0, 0, 0, 0, 0] as Array<Number>;
 // var gWideFieldGraphic as Array<Number> = [0, 0, 0, 0, 0, 0, 0, 0] as Array<Number>;
 // var gSmallFieldGraphic as Array<Number> = [0, 0, 0, 0, 0, 0, 0, 0] as Array<Number>;
 var gGraphic_fields as Array<Number> = [] as Array<Number>;
 
-var gLargeFieldZen as ZenMode = ZMOff;
-var gWideFieldZen as ZenMode = ZMOff;
-var gSmallFieldZen as ZenMode = ZMOff;
+// var gLargeFieldZen as ZenMode = ZMOff;
+// var gWideFieldZen as ZenMode = ZMOff;
+// var gSmallFieldZen as ZenMode = ZMOff;
 var gZenCountdown as Number = 10;
 
 var gLargeFieldBp as BarPosition = BPBottom;
@@ -561,3 +578,5 @@ var gFocusPerc as Number = 99;
 var gFocusBorder as Number = 5;
 var gTargetSunEventSec as Number = 3600; // 60 minutes before sunrise / sunset
 var gSunEventDegreesDifference as Double = 1.0d;
+
+var gGradeShowMaxAvg as Boolean = true;

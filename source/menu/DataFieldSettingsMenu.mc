@@ -235,31 +235,91 @@ class DataFieldSettingsMenuDelegate extends WatchUi.Menu2InputDelegate {
       return;
     }
     if (id instanceof String && id.equals("gradient")) {
-      var gradientMenu = new WatchUi.Menu2({ :title => "Gradient" });
+      var gradientMenu = new WatchUi.Menu2({ :title => "Grade" });
 
       var mi = new WatchUi.MenuItem(
-        "Window size",
+        "Max window size|1-20",
         null,
-        "metric_gradews",
+        "grade_maxwindow",
         null
       );
       mi.setSubLabel($.getStorageNumberAsString(mi.getId() as String));
       gradientMenu.addItem(mi);
+
       mi = new WatchUi.MenuItem(
-        "Minimal rise in cm",
+        "Base distance interval|1.0~10(m)",
         null,
-        "metric_grademinrise",
+        "grade_distance",
         null
       );
-      mi.setSubLabel($.getStorageNumberAsString(mi.getId() as String));
+      mi.setSubLabel($.getStorageFloatAsString(mi.getId() as String));
       gradientMenu.addItem(mi);
+
       mi = new WatchUi.MenuItem(
-        "Minimal run in cm",
+        "Rolling window (tap)",
         null,
-        "metric_grademinrun",
+        "grade_rollingwindow",
         null
       );
-      mi.setSubLabel($.getStorageNumberAsString(mi.getId() as String));
+      mi.setSubLabel($.getGradeRollingWindowAsString());
+      gradientMenu.addItem(mi);
+
+      mi = new WatchUi.MenuItem(
+        "Min distance regression|1.0~10(m)",
+        null,
+        "grade_minimal_distance",
+        null
+      );
+      mi.setSubLabel($.getStorageFloatAsString(mi.getId() as String));
+      gradientMenu.addItem(mi);
+
+      var boolean;
+
+      boolean = Storage.getValue("grade_show_maxavg") ? true : false;
+      gradientMenu.addItem(
+        new WatchUi.ToggleMenuItem(
+          "Climb max,avg on paused",
+          null,
+          "grade_show_maxavg",
+          boolean,
+          null
+        )
+      );
+
+      mi = new WatchUi.MenuItem(
+        "Climb start when >|1.0~20(%)",
+        null,
+        "grade_climb_start_slope",
+        null
+      );
+      mi.setSubLabel($.getStorageFloatAsString(mi.getId() as String));
+      gradientMenu.addItem(mi);
+
+      mi = new WatchUi.MenuItem(
+        "for minimal|1.0~500(m)",
+        null,
+        "grade_climb_start_distance",
+        null
+      );
+      mi.setSubLabel($.getStorageFloatAsString(mi.getId() as String));
+      gradientMenu.addItem(mi);
+
+      mi = new WatchUi.MenuItem(
+        "Climb stops when <|-10.0~3.0(%)",
+        null,
+        "grade_climb_stop_slope",
+        null
+      );
+      mi.setSubLabel($.getStorageFloatAsString(mi.getId() as String));
+      gradientMenu.addItem(mi);
+
+      mi = new WatchUi.MenuItem(
+        "for minimal|1.0~500(m)",
+        null,
+        "grade_climb_stop_distance",
+        null
+      );
+      mi.setSubLabel($.getStorageFloatAsString(mi.getId() as String));
       gradientMenu.addItem(mi);
 
       WatchUi.pushView(
@@ -282,20 +342,7 @@ class DataFieldSettingsMenuDelegate extends WatchUi.Menu2InputDelegate {
       powerMenu.addItem(mi);
 
       var boolean;
-      //  boolean = Storage.getValue("show_powerbalance") ? true : false;
-      // powerMenu.addItem(new WatchUi.ToggleMenuItem("Balance", null, "show_powerbalance", boolean, null));
-
-      boolean = Storage.getValue("show_powerbattery") ? true : false;
-      powerMenu.addItem(
-        new WatchUi.ToggleMenuItem(
-          "Batt. level",
-          null,
-          "show_powerbattery",
-          boolean,
-          null
-        )
-      );
-
+      
       boolean = Storage.getValue("show_np_as_avg") ? true : false;
       powerMenu.addItem(
         new WatchUi.ToggleMenuItem(
@@ -305,38 +352,7 @@ class DataFieldSettingsMenuDelegate extends WatchUi.Menu2InputDelegate {
           boolean,
           null
         )
-      );
-
-      boolean = Storage.getValue("np_skip_zero") ? true : false;
-      powerMenu.addItem(
-        new WatchUi.ToggleMenuItem(
-          "NP skip zeros",
-          null,
-          "np_skip_zero",
-          boolean,
-          null
-        )
-      );
-
-      mi = new WatchUi.MenuItem(
-        "Dualpwr sec fallback",
-        null,
-        "power_dual_sec_fallback",
-        null
-      );
-      mi.setSubLabel($.getStorageNumberAsString(mi.getId() as String));
-      powerMenu.addItem(mi);
-
-      boolean = Storage.getValue("power_times_two") ? true : false;
-      powerMenu.addItem(
-        new WatchUi.ToggleMenuItem(
-          "Power*2 (pedal fail)",
-          null,
-          "power_times_two",
-          boolean,
-          null
-        )
-      );
+      );      
 
       WatchUi.pushView(
         powerMenu,
@@ -661,21 +677,7 @@ class DataFieldSettingsMenuDelegate extends WatchUi.Menu2InputDelegate {
       );
       mi.setSubLabel($.getStorageNumberAsString(mi.getId() as String) + " deg");
       avMenu.addItem(mi);
-
-      var boolean = Storage.getValue("show_shiftingbattery") ? true : false;
-      avMenu.addItem(
-        new WatchUi.ToggleMenuItem(
-          "Batt. shifting",
-          null,
-          "show_shiftingbattery",
-          boolean,
-          null
-        )
-      );
-
-      // var boolean = Storage.getValue("vo2maxbg") ? true : false;
-      // avMenu.addItem(new WatchUi.ToggleMenuItem("Vo2Max icon", null, "vo2maxbg", boolean, null));
-
+      
       WatchUi.pushView(
         avMenu,
         new $.GeneralMenuDelegate(self, avMenu),
@@ -950,6 +952,12 @@ class GeneralMenuDelegate extends WatchUi.Menu2InputDelegate {
       }
       sp.setOnSelected(self, :onSelectedSelection, item);
       sp.show();
+      return;
+    }
+
+    if (id instanceof String && id.equals("grade_rollingwindow")) {
+      // Update subLabel
+      item.setSubLabel($.getGradeRollingWindowAsString());
       return;
     }
 
@@ -1426,4 +1434,11 @@ function fieldHasColor(fieldId as Number) as Boolean {
 }
 function fieldHasAvgTrend(fieldId as Number) as Boolean {
   return [FTHeartRate, FTPower, FTSpeed, FTCadence].indexOf(fieldId) > -1;
+}
+
+function getGradeRollingWindowAsString() as String {
+  var windowSize = getStorageValue("grade_maxwindow", 0) as Number;
+  var distance = getStorageValue("grade_distance", 0.0f) as Float;
+
+  return (windowSize * distance).format("%0.1f") + " m";
 }
