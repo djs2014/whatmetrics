@@ -15,8 +15,7 @@ class WhatMetrics {
   hidden var mCurrentPowerPerX as Number = 0;
   hidden var mPowerPerSec as Number = 3;
   hidden var mPowerDataPerSec as Array<Number> = [] as Array<Number>;
-  hidden var mPowerBalance as PowerBalance? = null;
-
+  
   hidden var mUserWeightKg as Float = 0.0f;
   hidden var mUserFTP as Number = 0;
 
@@ -24,10 +23,7 @@ class WhatMetrics {
   hidden var mHrZones as Lang.Array<Lang.Number> =
     [] as Lang.Array<Lang.Number>;
 
-  // shifting - battery status
-  hidden var mShifting as ShiftListener? = null;
-
-  // pressure - history
+   // pressure - history
   hidden var mPressureTicks as Number = 0;
   hidden var mAveragePressure as Float = 0.0f;
 
@@ -36,19 +32,7 @@ class WhatMetrics {
   // function reset() as Void {
   //   resetAverageNP();
   // }
-
-  function initPowerBalanceListeners() as Void {
-    if (mPowerBalance == null) {
-      mPowerBalance = new PowerBalance();
-      mPowerBalance.registerEvents();
-    }
-  }
-
-  function initShiftListener() as Void {
-    if (mShifting == null) {
-      mShifting = new ShiftListener();
-    }
-  }
+  
   function initWeight() as Void {
     var profile = UserProfile.getProfile();
     mUserWeightKg = 0.0f;
@@ -281,48 +265,6 @@ class WhatMetrics {
     );
   }
 
-  // % power balance left
-  function getPowerBalanceLeft() as Number {
-    if (mPowerBalance != null) {
-      return (mPowerBalance as PowerBalance).getLeft();
-    }
-    return 0;
-  }
-  function getAveragePowerBalanceLeft() as Float {
-    if (mPowerBalance != null) {
-      return (mPowerBalance as PowerBalance).getAverageLeft();
-    }
-    return 0.0f;
-  }
-
-  function getPowerBatteryLevel() as Number {
-    if (mPowerBalance != null) {
-      return (mPowerBalance as PowerBalance).getBatteryLevel();
-    }
-    return -1;
-  }
-  function getPowerOperatingTimeInSeconds() as Number {
-    if (mPowerBalance != null) {
-      return (mPowerBalance as PowerBalance).getOperatingTimeInSeconds();
-    }
-    return -1;
-  }
-  function getPowerBatteryVoltage() as Float {
-    if (mPowerBalance != null) {
-      return (mPowerBalance as PowerBalance).getBatteryVoltage();
-    }
-    return -1.0f;
-  }
-
-  // shifting @@ TEST
-  function getShiftingBatteryLevel() as Number {
-    initShiftListener();
-    if (mShifting != null) {
-      return (mShifting as ShiftListener).getBatteryLevel();
-    }
-    return -1;
-  }
-
   // time of day, timer, elapsed time, date dd-month
   // elapsed time in millisec
   function getElapsedTime() as Number {
@@ -387,11 +329,7 @@ class WhatMetrics {
     // TODO NP calc also when paused?
     if (!mPaused) {
       mCurrentNP = calculateNormalizedPower(calculatePower30(power));
-    }
-
-    if (mPowerBalance != null) {
-      (mPowerBalance as PowerBalance).compute(getPower());
-    }
+    }   
   }
 
   hidden function calculatePower(power as Number) as Number {
@@ -445,199 +383,5 @@ class WhatMetrics {
 
   hidden function resetAverageNP() as Void {
     mCurrentNP = 0;
-  }
-}
-
-class ShiftListener {
-  hidden var shifting as AntPlus.Shifting;
-  hidden var listener as AShiftingListener;
-  hidden var batteryLevel as Number = -1;
-
-  hidden var operatingTimeInSeconds as Number;
-  hidden var batteryVoltage as Float;
-
-  function initialize() {
-    listener = new AShiftingListener(self, :onBatteryStatusUpdate);
-    shifting = new AntPlus.Shifting(listener);
-    operatingTimeInSeconds = -1;
-    batteryVoltage = -1.0f;
-  }
-
-  function getBatteryLevel() as Number {
-    return batteryLevel;
-  }
-
-  function getOperatingTimeInSeconds() as Number {
-    return operatingTimeInSeconds as Number;
-  }
-  function getBatteryVoltage() as Float {
-    return batteryVoltage as Float;
-  }
-
-  function onBatteryStatusUpdate(
-    batteryStatus as AntPlus.BatteryStatusValue?,
-    operatingTime as Number?,
-    abatteryVoltage as Float?
-  ) as Void {
-    if (
-      batteryStatus == null ||
-      operatingTime == null ||
-      abatteryVoltage == null
-    ) {
-      return;
-    }
-    batteryLevel = -1;
-    if (batteryStatus == AntPlus.BATT_STATUS_NEW) {
-      batteryLevel = 5;
-    } else if (batteryStatus == AntPlus.BATT_STATUS_GOOD) {
-      batteryLevel = 4;
-    } else if (batteryStatus == AntPlus.BATT_STATUS_OK) {
-      batteryLevel = 3;
-    } else if (batteryStatus == AntPlus.BATT_STATUS_LOW) {
-      batteryLevel = 2;
-    } else if (batteryStatus == AntPlus.BATT_STATUS_CRITICAL) {
-      batteryLevel = 1;
-    } else if (batteryStatus == AntPlus.BATT_STATUS_INVALID) {
-      batteryLevel = 0;
-    }
-
-    if (operatingTime == null) {
-      operatingTimeInSeconds = -1;
-    } else {
-      operatingTimeInSeconds = operatingTime;
-    }
-
-    if (abatteryVoltage == null) {
-      batteryVoltage = -1.0f;
-    } else {
-      batteryVoltage = abatteryVoltage;
-    }
-  }
-}
-
-class PowerBalance {
-  hidden var bikePower as AntPlus.BikePower;
-  hidden var listener as ABikePowerListener;
-  hidden var mPowerBalanceLeft as Number = 0;
-  hidden var ticks as Number = 0;
-  hidden var avgPowerBalanceLeft as Float = 0.0f;
-  hidden var batteryLevel as Number = -1;
-
-  hidden var operatingTimeInSeconds as Number;
-  hidden var batteryVoltage as Float;
-
-  function initialize() {
-    listener = new ABikePowerListener();
-    bikePower = new AntPlus.BikePower(listener);
-    operatingTimeInSeconds = -1;
-    batteryVoltage = -1.0f;
-  }
-
-  function registerEvents() as Void {
-    listener.setEventCallbacks(
-      self,
-      :onPedalPowerBalanceUpdate,
-      :onBatteryStatusUpdate
-    );
-  }
-
-  function getLeft() as Number {
-    return mPowerBalanceLeft;
-  }
-  function getAverageLeft() as Float {
-    return avgPowerBalanceLeft;
-  }
-
-  function getBatteryLevel() as Number {
-    return batteryLevel;
-  }
-
-  function getOperatingTimeInSeconds() as Number {
-    return operatingTimeInSeconds as Number;
-  }
-  function getBatteryVoltage() as Float {
-    return batteryVoltage as Float;
-  }
-
-  // function getActivePowerPedals() as String {
-  //   var balance = bikePower.getPedalPowerBalance();
-  //   if (balance == null) {
-  //     // can be null!
-  //     return "";
-  //   }
-  //   var pedalPowerPercent = balance.pedalPowerPercent;
-  //   var rightPedalIndicator = balance.rightPedalIndicator;
-
-  //   if (pedalPowerPercent == null || rightPedalIndicator == null) {
-  //     return "";
-  //   } else if (pedalPowerPercent == 100 && rightPedalIndicator) {
-  //     return "R";
-  //   } else if (pedalPowerPercent == 100 && !rightPedalIndicator) {
-  //     return "L";
-  //   }
-  //   return "LR";
-  // }
-
-  function compute(power as Number) as Void {
-    if (power > 0 && mPowerBalanceLeft != null && mPowerBalanceLeft > 0) {
-      ticks = ticks + 1;
-      var a = 1 / ticks.toFloat();
-      var b = 1 - a;
-      avgPowerBalanceLeft = a * mPowerBalanceLeft + b * avgPowerBalanceLeft;
-    }
-  }
-  function onPedalPowerBalanceUpdate(
-    pedalPowerPercent as Lang.Number?,
-    rightPedalIndicator as Lang.Boolean?
-  ) as Void {
-    if (pedalPowerPercent == null || rightPedalIndicator == null) {
-      return;
-    }
-
-    if (rightPedalIndicator) {
-      mPowerBalanceLeft = 100 - pedalPowerPercent;
-    } else {
-      mPowerBalanceLeft = pedalPowerPercent;
-    }
-  }
-
-  function onBatteryStatusUpdate(
-    batteryStatus as AntPlus.BatteryStatusValue?,
-    operatingTime as Number?,
-    abatteryVoltage as Float?
-  ) as Void {
-    if (
-      batteryStatus == null ||
-      operatingTime == null ||
-      abatteryVoltage == null
-    ) {
-      return;
-    }
-    batteryLevel = -1;
-    if (batteryStatus == AntPlus.BATT_STATUS_NEW) {
-      batteryLevel = 5;
-    } else if (batteryStatus == AntPlus.BATT_STATUS_GOOD) {
-      batteryLevel = 4;
-    } else if (batteryStatus == AntPlus.BATT_STATUS_OK) {
-      batteryLevel = 3; 
-    } else if (batteryStatus == AntPlus.BATT_STATUS_LOW) {
-      batteryLevel = 2;
-    } else if (batteryStatus == AntPlus.BATT_STATUS_CRITICAL) {
-      batteryLevel = 1;
-    } else if (batteryStatus == AntPlus.BATT_STATUS_INVALID) {
-      batteryLevel = 0;
-    }
-
-    if (operatingTime == null) {
-      operatingTimeInSeconds = -1;
-    } else {
-      operatingTimeInSeconds = operatingTime;
-    }
-
-    if (abatteryVoltage == null) {
-      batteryVoltage = -1.0f;
-    } else {
-      batteryVoltage = abatteryVoltage;
-    }
   }
 }

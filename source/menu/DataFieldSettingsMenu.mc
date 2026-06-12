@@ -342,20 +342,7 @@ class DataFieldSettingsMenuDelegate extends WatchUi.Menu2InputDelegate {
       powerMenu.addItem(mi);
 
       var boolean;
-      //  boolean = Storage.getValue("show_powerbalance") ? true : false;
-      // powerMenu.addItem(new WatchUi.ToggleMenuItem("Balance", null, "show_powerbalance", boolean, null));
-
-      boolean = Storage.getValue("show_powerbattery") ? true : false;
-      powerMenu.addItem(
-        new WatchUi.ToggleMenuItem(
-          "Batt. level",
-          null,
-          "show_powerbattery",
-          boolean,
-          null
-        )
-      );
-
+      
       boolean = Storage.getValue("show_np_as_avg") ? true : false;
       powerMenu.addItem(
         new WatchUi.ToggleMenuItem(
@@ -365,27 +352,7 @@ class DataFieldSettingsMenuDelegate extends WatchUi.Menu2InputDelegate {
           boolean,
           null
         )
-      );
-
-      // mi = new WatchUi.MenuItem(
-      //   "Dualpwr sec fallback",
-      //   null,
-      //   "power_dual_sec_fallback",
-      //   null
-      // );
-      // mi.setSubLabel($.getStorageNumberAsString(mi.getId() as String));
-      // powerMenu.addItem(mi);
-
-      // boolean = Storage.getValue("power_times_two") ? true : false;
-      // powerMenu.addItem(
-      //   new WatchUi.ToggleMenuItem(
-      //     "Power*2 (pedal fail)",
-      //     null,
-      //     "power_times_two",
-      //     boolean,
-      //     null
-      //   )
-      // );
+      );      
 
       WatchUi.pushView(
         powerMenu,
@@ -710,21 +677,7 @@ class DataFieldSettingsMenuDelegate extends WatchUi.Menu2InputDelegate {
       );
       mi.setSubLabel($.getStorageNumberAsString(mi.getId() as String) + " deg");
       avMenu.addItem(mi);
-
-      var boolean = Storage.getValue("show_shiftingbattery") ? true : false;
-      avMenu.addItem(
-        new WatchUi.ToggleMenuItem(
-          "Batt. shifting",
-          null,
-          "show_shiftingbattery",
-          boolean,
-          null
-        )
-      );
-
-      // var boolean = Storage.getValue("vo2maxbg") ? true : false;
-      // avMenu.addItem(new WatchUi.ToggleMenuItem("Vo2Max icon", null, "vo2maxbg", boolean, null));
-
+      
       WatchUi.pushView(
         avMenu,
         new $.GeneralMenuDelegate(self, avMenu),

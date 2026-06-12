@@ -97,7 +97,7 @@ enum FieldType {
     FTTimeElapsed = 16,
     FTGearCombo = 17,
     FTPowerPerWeight = 18,
-    FTPowerBalance = 19,    
+    FTPowerBalance = 19,    // @@ TODO
     FTHeartRateZone = 20,
     FTGearIndex = 21,
     FTAverageSpeed = 22,

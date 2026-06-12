@@ -15,17 +15,18 @@ class whatmetricsApp extends Application.AppBase {
   function onStop(state as Dictionary?) as Void {}
 
   //! Return the initial view of your application here
-  function getInitialView() as [WatchUi.Views] or
-    [WatchUi.Views, WatchUi.InputDelegates] {
+  function getInitialView() as
+    [WatchUi.Views] or [WatchUi.Views, WatchUi.InputDelegates]
+  {
     onSettingsChanged();
     return [new whatmetricsView()];
   }
 
   //! Return the settings view and delegate for the app
   //! @return Array Pair [View, Delegate]
-  function getSettingsView() as [WatchUi.Views] or
-    [WatchUi.Views, WatchUi.InputDelegates] or
-    Null {
+  function getSettingsView() as
+    [WatchUi.Views] or [WatchUi.Views, WatchUi.InputDelegates] or Null
+  {
     return [new $.DataFieldSettingsView(), new $.DataFieldSettingsDelegate()];
   }
   function onSettingsChanged() {
@@ -38,8 +39,7 @@ class whatmetricsApp extends Application.AppBase {
       Storage.setValue("version", "1.0.4");
       Storage.setValue("resetDefaults", true);
     }
-    var gradeWindowSize =
-      getStorageValue("grade_maxwindow", null) as Number?;
+    var gradeWindowSize = getStorageValue("grade_maxwindow", null) as Number?;
     if (gradeWindowSize == null) {
       Storage.setValue("grade_maxwindow", 8);
       Storage.setValue("grade_distance", 2.0f);
@@ -57,11 +57,13 @@ class whatmetricsApp extends Application.AppBase {
       Storage.deleteValue("metric_grade_distance");
       Storage.deleteValue("metric_grade_minimal_distance");
       Storage.deleteValue("metric_grade_show_maxavg");
-    } 
+    }
 
     if (Storage.getValue("power_times_two") != null) {
       Storage.deleteValue("power_times_two");
       Storage.deleteValue("power_dual_sec_fallback");
+      Storage.deleteValue("show_shiftingbattery");
+      Storage.deleteValue("show_powerbattery");
     }
 
     var reset = Storage.getValue("resetDefaults");
@@ -79,7 +81,7 @@ class whatmetricsApp extends Application.AppBase {
       Storage.setValue("hiit_vo2maxbg", Vo2BgHiit);
 
       Storage.setValue("metric_ppersec", 3);
-      
+
       Storage.setValue("grade_maxwindow", 8);
       Storage.setValue("grade_distance", 2.0f);
       Storage.setValue("grade_minimal_distance", 6.0f);
@@ -98,8 +100,6 @@ class whatmetricsApp extends Application.AppBase {
       Storage.setValue("show_np_as_avg", $.gShowNPasAverage);
 
       // @@
-      Storage.setValue("show_shiftingbattery", $.gShowShiftingBattery);
-      Storage.setValue("show_powerbattery", $.gShowPowerBattery);
 
       Storage.setValue("altitude_start_fb", $.gAltitudeFallbackStart);
       Storage.setValue("altitude_end_fb", $.gAltitudeFallbackEnd);
@@ -281,8 +281,7 @@ class whatmetricsApp extends Application.AppBase {
       $.getStorageValue("grade_minimal_distance", 6.0f) as Float
     );
 
-    $.gGradeShowMaxAvg =
-      getStorageValue("grade_show_maxavg", true) as Boolean;
+    $.gGradeShowMaxAvg = getStorageValue("grade_show_maxavg", true) as Boolean;
     if ($.gGradeShowMaxAvg) {
       var climbTracker = $.getClimbTracker();
       climbTracker.minimalClimbStartGrade =
@@ -293,10 +292,10 @@ class whatmetricsApp extends Application.AppBase {
         getStorageValue("grade_climb_stop_slope", 1.5f) as Float;
       climbTracker.minimalClimbStopDistance =
         getStorageValue("grade_climb_stop_distance", 50.0f) as Float;
-    }  else {      
+    } else {
       $.getClimbTracker().resetClimbStats();
-    }    
-    
+    }
+
     if ((getStorageValue("target_ftp", 0) as Number) == 0) {
       Storage.setValue("target_ftp", $.gTargetFtp);
       Storage.setValue("target_speed", $.gTargetSpeed);
@@ -357,7 +356,7 @@ class whatmetricsApp extends Application.AppBase {
       }
       metrics.initHrZones(heartRateZones);
     }
-    
+
     $.gZenCountdown =
       getStorageValue("zen_countdown", $.gZenCountdown) as Number;
 
@@ -381,7 +380,7 @@ class whatmetricsApp extends Application.AppBase {
         "fields_avg_trend",
         $.gUseAvgTrendFields as Lang.Array<Application.PropertyValueType>
       ) as Array<Number>;
-    
+
     $.gGraphic_fields =
       getStorageValue(
         "graphic_fields",
@@ -423,11 +422,7 @@ class whatmetricsApp extends Application.AppBase {
 
     $.gShowIcon = getStorageValue("show_icon", $.gShowIcon) as Boolean;
 
-    $.gShowShiftingBattery =
-      getStorageValue("show_shiftingbattery", $.gShowShiftingBattery) as
-      Boolean;
-    $.gShowPowerBattery =
-      getStorageValue("show_powerbattery", $.gShowPowerBattery) as Boolean;
+    
     $.gShowNPasAverage =
       getStorageValue("show_np_as_avg", $.gShowNPasAverage) as Boolean;
 
@@ -538,10 +533,6 @@ var gShowAverageWhenPaused as Boolean = false;
 
 var gShowNPasAverage as Boolean = false;
 
-// @@ refactor
-// var gShowPowerBalance as Boolean = true;
-var gShowShiftingBattery as Boolean = true;
-var gShowPowerBattery as Boolean = true;
 var gShowIcon as Boolean = true;
 
 var gPowerCountdownToFallBack as Number = 10;

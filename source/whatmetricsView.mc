@@ -311,18 +311,9 @@ class whatmetricsView extends WatchUi.DataField {
     }
   }
 
-  hidden var _hasListenersInitialized = false;
-
   function compute(info as Activity.Info) as Void {
     if (info == null) {
       return;
-    }
-
-    var elapsed = $.getActivityValue(info, :elapsedTime, 0) as Number;
-    if (!_hasListenersInitialized && elapsed > 10) {
-      mMetrics.initPowerBalanceListeners();
-      mMetrics.initShiftListener();
-      _hasListenersInitialized = true;
     }
 
     mMetrics.compute(info);
@@ -928,7 +919,7 @@ class whatmetricsView extends WatchUi.DataField {
 
       case FTAveragePower:
       case FTPower:
-        var power = mMetrics.getPower();        
+        var power = mMetrics.getPower();
         fi.title =
           "power (" + mMetrics.getPowerPerSec().format("%0d") + " sec)";
         fi.units = "w";
@@ -1235,7 +1226,7 @@ class whatmetricsView extends WatchUi.DataField {
           mMetrics.getRearDerailleurSize().format("%0d");
         return fi;
 
-      case FTPowerPerWeight:        
+      case FTPowerPerWeight:
         var powerpw;
         if (gShowAverageWhenPaused && mPaused) {
           fi.title =
@@ -1260,28 +1251,28 @@ class whatmetricsView extends WatchUi.DataField {
         fi.maxValue = $.gTargetFtp;
         return fi;
 
-      case FTPowerBalance:
-        var powerCheck;
-        var pLeft = mMetrics.getPowerBalanceLeft();
-        if (gShowAverageWhenPaused && mPaused) {
-          fi.title = "avg power balance";
-          pLeft = mMetrics.getAveragePowerBalanceLeft();
-          powerCheck = mMetrics.getAveragePower();
-        } else {
-          fi.title = "power balance";
-          powerCheck = mMetrics.getPower();
-        }
-        if (pLeft > 0 and pLeft < 100) {
-          var pRight = 100 - (pLeft as Number);
-          fi.text = Lang.format("$1$:$2$", [
-            (pLeft as Number).format("%02d"),
-            pRight.format("%02d"),
-          ]);
-        }
-        fi.available =
-          powerCheck > 0 and
-          (mPowerFallbackCountdown > 0 or $.gPowerCountdownToFallBack == 0);
-        return fi;
+      // case FTPowerBalance:
+      //   var powerCheck;
+      //   var pLeft = mMetrics.getPowerBalanceLeft();
+      //   if (gShowAverageWhenPaused && mPaused) {
+      //     fi.title = "avg power balance";
+      //     pLeft = mMetrics.getAveragePowerBalanceLeft();
+      //     powerCheck = mMetrics.getAveragePower();
+      //   } else {
+      //     fi.title = "power balance";
+      //     powerCheck = mMetrics.getPower();
+      //   }
+      //   if (pLeft > 0 and pLeft < 100) {
+      //     var pRight = 100 - (pLeft as Number);
+      //     fi.text = Lang.format("$1$:$2$", [
+      //       (pLeft as Number).format("%02d"),
+      //       pRight.format("%02d"),
+      //     ]);
+      //   }
+      //   fi.available =
+      //     powerCheck > 0 and
+      //     (mPowerFallbackCountdown > 0 or $.gPowerCountdownToFallBack == 0);
+      //   return fi;
 
       case FTHeartRateZone:
         fi.tag = "hrz";
@@ -1313,7 +1304,7 @@ class whatmetricsView extends WatchUi.DataField {
         fi.tag = "np";
         var np = mMetrics.getNormalizedPower();
         fi.available = np > 0; // and (mPowerFallbackCountdown > 0 or $.gPowerCountdownToFallBack == 0);
-        
+
         fi.title = "normalized power";
         fi.units = "w";
         fi.number = np.format("%0d");
@@ -1743,17 +1734,6 @@ class whatmetricsView extends WatchUi.DataField {
       fi.type == FTNormalizedPower
     ) {
       drawPowerIcon(dc, x, y, width, height, fi.iconColor, fi.iconParam2);
-
-      if ($.gShowPowerBattery) {
-        drawPowerBatteryLevel(
-          dc,
-          x,
-          y,
-          30,
-          10,
-          mMetrics.getPowerBatteryLevel()
-        );
-      }
       return;
     }
     if (fi.type == FTBearing) {
@@ -1811,17 +1791,6 @@ class whatmetricsView extends WatchUi.DataField {
     }
     if (fi.type == FTGearCombo) {
       // @@ drawGearComboIcon(dc, x, y, width, height, mIconColor);
-
-      if ($.gShowShiftingBattery) {
-        drawPowerBatteryLevel(
-          dc,
-          x,
-          y,
-          30,
-          10,
-          mMetrics.getShiftingBatteryLevel()
-        );
-      }
       return;
     }
     if (fi.type == FTPowerPerWeight) {
@@ -3261,39 +3230,6 @@ class whatmetricsView extends WatchUi.DataField {
       y,
       font,
       Lang.format("Power: $1$", [mMetrics.getPower().format("%0.0d")]),
-      Graphics.TEXT_JUSTIFY_LEFT
-    );
-
-    y = y + l;
-    dc.drawText(
-      x,
-      y,
-      font,
-      Lang.format(".. Battery level: $1$", [
-        mMetrics.getPowerBatteryLevel().format("%0d"),
-      ]),
-      Graphics.TEXT_JUSTIFY_LEFT
-    );
-    y = y + l;
-    dc.drawText(
-      x,
-      y,
-      font,
-      Lang.format(".. Battery voltage: $1$", [
-        mMetrics.getPowerBatteryVoltage().format("%0.0f"),
-      ]),
-      Graphics.TEXT_JUSTIFY_LEFT
-    );
-
-    var operatingTimeInSeconds = mMetrics.getPowerOperatingTimeInSeconds();
-    y = y + l;
-    dc.drawText(
-      x,
-      y,
-      font,
-      Lang.format(".. Oper seconds: $1$", [
-        operatingTimeInSeconds.format("%0d"),
-      ]),
       Graphics.TEXT_JUSTIFY_LEFT
     );
 

@@ -43,38 +43,8 @@ TSS
 https://www.cyclistshub.com/tools/tss-calculator/
 https://www.trainingpeaks.com/learn/articles/normalized-power-intensity-factor-training-stress/
 
-readme
-fallback hiit / indien geen -- 
-
-gShowPowerBalance
--> wanneer veld aanwezig is?
-of include in power field?
-+ check powerpedal fix 
-
-build optimized niet ok
-
-
-  // @@ TODO special field by index
-        // if (mMetrics.getFrontDerailleurSize() > 0) {
-        //   text_middleright = mMetrics.getFrontDerailleurSize().format("%0d");
-        // }
-
- // @@ extra details in field .. option antizen mode
-        // if (gShowPowerAverage) {
-        //   text_botleft = "avg " + mMetrics.getAveragePower().format("%0d");
-        // } else {
-        //   text_botleft = mMetrics.getPowerPerWeight().format("%0.1f") + "/kg";
-        // }
-
-// @@ TODO, keep bottom information / stats field
-        // available  = mHiitt.isHiitInProgress
-
-size of 9
-
 settings
  - define field in middle like gearcombo now
- - 
-- Power battery time (o = operating time when max battery time is not configured, r = remaining time), format hh:mm
   
 hiit 
 TODO disabled when no power
