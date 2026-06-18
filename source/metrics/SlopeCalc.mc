@@ -116,7 +116,7 @@ class SlopeCalc {
                     1,
                     null
                 );
-                distanceHistory = distanceHistory.slice(1, null);
+                distanceHistory = distanceHistory.slice(1, null) as Array<Float>;
             }
 
             // If the user hasn't traveled at least 6 meters total across the entire window,
@@ -157,7 +157,9 @@ class SlopeCalc {
         var baseInterval = baseDistanceInterval; // Base interval (e.g., 3.0 meters)
         if (currentSpeed != null) {
             var speedKmh = currentSpeed * 3.6f;
-
+            if (debugMode) {
+                System.println("Current Speed (km/h): " + speedKmh);
+            }
             if (speedKmh < 10.0f) {
                 // Slow speed: Scale down to 50% of the base interval (e.g., 3.0 -> 1.5m)
                 return baseInterval * 0.5f;

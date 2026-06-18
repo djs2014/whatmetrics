@@ -254,7 +254,7 @@ class WhatMetrics {
       return 0.0f;
     }
     // TSS = (sec × NP × IF) / (FTP × 3600) × 100
-    var seconds = getTimerTime() / 1000.0;
+    var seconds = getElapsedTime() / 1000.0;
     var fraction = mUserFTP.toFloat() * 3600.0f;
     if (fraction == 0) {
       return 0.0f;
