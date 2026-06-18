@@ -92,10 +92,16 @@ class whatmetricsView extends WatchUi.DataField {
   hidden var mSunset as Moment?;
   hidden var mSunriseTomorrow as Moment?;
 
-  hidden var mDayLiteTime as Boolean;
+  hidden var mIsAtDayLiteTime as Boolean = true;
   hidden var mTestTick as Number = 0;
 
   // hidden var mFi as FieldInfo = new FieldInfo(FTUnknown, 0);
+
+// --- Premium Edge 1050 Bright Grays --- TODO only for wide fields/small fields
+const COLOR_ALABASTER     = 0xF2F2F2; // 95% Brightness - Incredibly clean, barely-there gray
+const COLOR_PLATINUM      = 0xE5E5E5; // 90% Brightness - Premium tech track look (Highly Recommended)
+const COLOR_GAINSBORO     = 0xDCDCDC; // 86% Brightness - Safe, solid background track
+const COLOR_SILVER_LIGHT  = 0xD3D3D3; // 83% Brightness - Noticeably lighter than standard Garmin Lt Gray
 
   function initialize() {
     DataField.initialize();
@@ -318,7 +324,7 @@ class whatmetricsView extends WatchUi.DataField {
 
     mMetrics.compute(info);
     mCurrentLocation.onCompute(info);
-    mDayLiteTime = isAtDaylightTime(Time.now(), true);
+    mIsAtDayLiteTime = isAtDaylightTime(Time.now(), true);
 
     mPaused = false;
     if (info has :timerState) {
@@ -1610,9 +1616,9 @@ class whatmetricsView extends WatchUi.DataField {
           fi.iconColor = mIconColor; // TODO fade to yellow?
         }
         // System.println([
-        //   "FTTPerc2Sun percOfTime mDayLiteTime",
+        //   "FTTPerc2Sun percOfTime mIsAtDayLiteTime",
         //   percOfTime,
-        //   mDayLiteTime,
+        //   mIsAtDayLiteTime,
         // ]);
         return fi;
     }
@@ -1628,8 +1634,8 @@ class whatmetricsView extends WatchUi.DataField {
     var redTo;
     var greenTo;
     var blueTo;
-    mDayLiteTime = false;
-    if (mDayLiteTime) {
+    mIsAtDayLiteTime = false;
+    if (mIsAtDayLiteTime) {
       // Yellow rgb(255, 255, 55) = rgb(186, 102, 6)
       redFrom = 255;
       greenFrom = 255;
@@ -1646,7 +1652,7 @@ class whatmetricsView extends WatchUi.DataField {
       greenTo = 205;
       blueTo = 100;
     }
-    // System.println(["getSunColor", percent, mDayLiteTime]);
+    // System.println(["getSunColor", percent, mIsAtDayLiteTime]);
 
     // if (mBackgroundIsWhite) {
     return $.transitionFromTo(
@@ -3215,14 +3221,14 @@ class whatmetricsView extends WatchUi.DataField {
       Lang.format("Alt: $1$", [mMetrics.getAltitude()]),
       Graphics.TEXT_JUSTIFY_LEFT
     );
-    y = y + l;
-    dc.drawText(
-      x,
-      y,
-      font,
-      Lang.format("Grade: $1$", [mMetrics.getGrade().format("%0.1f")]),
-      Graphics.TEXT_JUSTIFY_LEFT
-    );
+    // y = y + l;
+    // dc.drawText(
+    //   x,
+    //   y,
+    //   font,
+    //   Lang.format("Grade: $1$", [mMetrics.getGrade().format("%0.1f")]),
+    //   Graphics.TEXT_JUSTIFY_LEFT
+    // );
 
     y = y + l;
     dc.drawText(
