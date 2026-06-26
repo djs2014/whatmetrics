@@ -97,11 +97,11 @@ class whatmetricsView extends WatchUi.DataField {
 
   // hidden var mFi as FieldInfo = new FieldInfo(FTUnknown, 0);
 
-// --- Premium Edge 1050 Bright Grays --- TODO only for wide fields/small fields
-const COLOR_ALABASTER     = 0xF2F2F2; // 95% Brightness - Incredibly clean, barely-there gray
-const COLOR_PLATINUM      = 0xE5E5E5; // 90% Brightness - Premium tech track look (Highly Recommended)
-const COLOR_GAINSBORO     = 0xDCDCDC; // 86% Brightness - Safe, solid background track
-const COLOR_SILVER_LIGHT  = 0xD3D3D3; // 83% Brightness - Noticeably lighter than standard Garmin Lt Gray
+  // --- Premium Edge 1050 Bright Grays --- TODO only for wide fields/small fields
+  const COLOR_ALABASTER = 0xf2f2f2; // 95% Brightness - Incredibly clean, barely-there gray
+  const COLOR_PLATINUM = 0xe5e5e5; // 90% Brightness - Premium tech track look (Highly Recommended)
+  const COLOR_GAINSBORO = 0xdcdcdc; // 86% Brightness - Safe, solid background track
+  const COLOR_SILVER_LIGHT = 0xd3d3d3; // 83% Brightness - Noticeably lighter than standard Garmin Lt Gray
 
   function initialize() {
     DataField.initialize();
@@ -903,11 +903,10 @@ const COLOR_SILVER_LIGHT  = 0xD3D3D3; // 83% Brightness - Noticeably lighter tha
         ) {
           fi.title = "avg heartrate";
           heartRate = mMetrics.getAverageHeartRate();
-          fi.iconParam = mMetrics.getHeartRateZone(true);
+
           fi.units = "~bpm";
-        } else {
-          fi.iconParam = mMetrics.getHeartRateZone(false);
         }
+        fi.iconParam = $.gHeartRate.calculateCurrentDecimalZone(heartRate);
         fi.number = heartRate.format("%0d");
         fi.available = heartRate > 0;
 
@@ -1290,11 +1289,16 @@ const COLOR_SILVER_LIGHT  = 0xD3D3D3; // 83% Brightness - Noticeably lighter tha
           fi.title = "heartrate zone";
           hrcheck = mMetrics.getHeartRate();
         }
-        var hrz = mMetrics.getHeartRateZone(gShowAverageWhenPaused && mPaused);
+        var hrz = $.gHeartRate.calculateCurrentDecimalZone(hrcheck);
         fi.available = hrcheck > 0;
-        fi.text = hrz.format("%d");
+        // fi.text = hrz.format("%d");
+        fi.value = hrz.format("%0.1f");
+        fi.number = $.stringLeft(fi.value, ".", fi.value);
+        fi.decimals = $.stringRight(fi.value, ".", "");
         fi.rawValue = hrz;
-        fi.maxValue = mMetrics.getMaxHeartRateZone();
+        fi.maxValue = $.gHeartRate.getMaxHeartRateZone();
+        // No need to show zone icon, as the zone is shown in the text.
+        fi.iconParam = -1;
         return fi;
 
       case FTGearIndex:
@@ -1634,6 +1638,7 @@ const COLOR_SILVER_LIGHT  = 0xD3D3D3; // 83% Brightness - Noticeably lighter tha
     var redTo;
     var greenTo;
     var blueTo;
+    var factor = percent / 100.0;
     mIsAtDayLiteTime = false;
     if (mIsAtDayLiteTime) {
       // Yellow rgb(255, 255, 55) = rgb(186, 102, 6)
@@ -1663,7 +1668,7 @@ const COLOR_SILVER_LIGHT  = 0xD3D3D3; // 83% Brightness - Noticeably lighter tha
       redTo,
       greenTo,
       blueTo,
-      percent
+      factor
     );
   }
 
@@ -1729,7 +1734,7 @@ const COLOR_SILVER_LIGHT  = 0xD3D3D3; // 83% Brightness - Noticeably lighter tha
         width,
         height,
         fi.iconColor,
-        fi.iconParam.toNumber(),
+        fi.iconParam,
         fi.iconParam2
       );
       return;
@@ -2316,7 +2321,7 @@ const COLOR_SILVER_LIGHT  = 0xD3D3D3; // 83% Brightness - Noticeably lighter tha
     width as Number,
     height as Number,
     color as ColorType,
-    hrZone as Number,
+    hrZone as Float,
     avgRatio as Numeric
   ) as Void {
     if (!gShowIcon) {
@@ -2351,19 +2356,27 @@ const COLOR_SILVER_LIGHT  = 0xD3D3D3; // 83% Brightness - Noticeably lighter tha
       ] as Array<Point2D>
     );
 
-    var zone = hrZone.format("%0d");
-    var font =
-      $.getMatchingFont(dc, mFontsNumbers, width, height, zone) as FontType;
-
     // hr zone
-    dc.setColor(Graphics.COLOR_LT_GRAY, Graphics.COLOR_TRANSPARENT);
-    dc.drawText(
-      x + 1,
-      y + height - dc.getFontHeight(font),
-      font,
-      zone,
-      Graphics.TEXT_JUSTIFY_LEFT // | Graphics.TEXT_JUSTIFY_VCENTER
-    );
+    if (hrZone >= 0) {
+      var zone = hrZone.format("%0.1f");
+      var numberFont =
+        $.getMatchingFont(dc, mFontsNumbers, width, height, zone) as FontType;
+      var decimalFont = Graphics.FONT_SYSTEM_TINY;
+      if (numberFont == decimalFont) {
+        decimalFont = Graphics.FONT_XTINY;
+      }
+
+      $.drawSplitDecimal(
+        dc,
+        x + 1,
+        y + height - dc.getFontHeight(numberFont),
+        zone,
+        numberFont,
+        Graphics.COLOR_LT_GRAY,
+        decimalFont,
+        Graphics.COLOR_LT_GRAY
+      );
+    }
     drawTrendArrow(dc, x, y, width, height, avgRatio, 0.2, true);
   }
 
@@ -3406,6 +3419,44 @@ const COLOR_SILVER_LIGHT  = 0xD3D3D3; // 83% Brightness - Noticeably lighter tha
           ] as Array<Point2D>
         );
       }
+    }
+  }
+
+  function getDynamicColor(progress as Float?) as Graphics.ColorType {
+    if (progress == null) {
+      progress = 0.0f;
+    }
+    // 1. Blue to Green (0% to 50%)
+    if (progress <= 0.5) {
+      // Map 0.0-0.5 progress to a 0.0-1.0 factor
+      var factor = progress / 0.5;
+      // Pure Blue [0, 0, 255] to Pure Green [0, 255, 0]
+      return $.transitionFromTo(255, 0, 0, 255, 0, 255, 0, factor);
+    }
+    // 2. Green to Bright Yellow/Gold (50% to 100%)
+    else if (progress <= 1.0) {
+      // Map 0.5-1.0 progress to a 0.0-1.0 factor
+      var factor = (progress - 0.5) / 0.5;
+      // Pure Green [0, 255, 0] to Bright Gold/Yellow [255, 215, 0]
+      return $.transitionFromTo(255, 0, 255, 0, 255, 215, 0, factor);
+    }
+    // 3. Gold to Dark Red (100% to 200%+)
+    else if (progress <= 2.0) {
+      // Map 1.0-2.0 progress to a 0.0-1.0 factor. Cap it at 1.0 so it doesn't break past 200%
+      var factor = (progress - 1.0) / 1.0;
+      if (factor > 1.0) {
+        factor = 1.0;
+      }
+
+      // Gold [255, 215, 0] to Dark Red [139, 0, 0]
+      return $.transitionFromTo(255, 255, 215, 0, 139, 0, 0, factor);
+    } else {
+      // Dark Red [139, 0, 0] to maroon black as it goes beyond 200%
+      var factor = (progress - 2.0) / 1.0;
+      if (factor > 1.0) {
+        factor = 1.0;
+      }
+      return $.transitionFromTo(255, 139, 0, 0, 40, 0, 5, factor);
     }
   }
 }

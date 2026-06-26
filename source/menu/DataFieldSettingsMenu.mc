@@ -167,14 +167,12 @@ class DataFieldSettingsMenuDelegate extends WatchUi.Menu2InputDelegate {
       mi.setSubLabel($.getStorageNumberAsString(mi.getId() as String));
       targetMenu.addItem(mi);
       mi = new WatchUi.MenuItem(
-        "Target heartrate zone",
+        "Target heartrate zone|1.0-5.0",
         null,
         "target_hrzone",
         null
       );
-      mi.setSubLabel(
-        "zone " + $.getStorageNumberAsString(mi.getId() as String)
-      );
+      mi.setSubLabel("zone " + $.getStorageFloatAsString(mi.getId() as String));
       targetMenu.addItem(mi);
 
       mi = new WatchUi.MenuItem(
@@ -823,18 +821,18 @@ class GeneralMenuDelegate extends WatchUi.Menu2InputDelegate {
       sp.show();
       return;
     }
-    if (id.equals("target_hrzone")) {
-      var sp = new selectionMenuPicker("Target heartrate zone", id as String);
-      sp.add("Zone 1", null, 1);
-      sp.add("Zone 2", null, 2);
-      sp.add("Zone 3", null, 3);
-      sp.add("Zone 4", null, 4);
-      sp.add("Zone 5", null, 5);
+    // if (id.equals("target_hrzone")) {
+    //   var sp = new selectionMenuPicker("Target heartrate zone", id as String);
+    //   sp.add("Zone 1", null, 1);
+    //   sp.add("Zone 2", null, 2);
+    //   sp.add("Zone 3", null, 3);
+    //   sp.add("Zone 4", null, 4);
+    //   sp.add("Zone 5", null, 5);
 
-      sp.setOnSelected(self, :onSelectedSelection, item);
-      sp.show();
-      return;
-    }
+    //   sp.setOnSelected(self, :onSelectedSelection, item);
+    //   sp.show();
+    //   return;
+    // }
 
     if (id.equals("focus_field")) {
       var sp = new selectionMenuPicker("Field focus", id as String);

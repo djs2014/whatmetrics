@@ -1,3 +1,11 @@
+x Grade filter sort take middle, slice unsorted array check
+hzone - make float display 1.x
+
+use getDynamicColor - instead of array of colors
+TODO crashing power/shift listeners +
+
+
+
 Dutch slope/grade settings:
 
 1. Dynamic Window Expansion (Dampening the Wind)

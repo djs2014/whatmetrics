@@ -479,9 +479,10 @@ function transitionFromTo(
   redTo as Numeric,
   greenTo as Numeric,
   blueTo as Numeric,
-  percent as Number
+  //percent as Number
+  percent as Float // 0.0-1.0
 ) as ColorType {
-  var factor = percent / 100;
+  var factor = percent; // / 100;
   var red = Math.round(redFrom + (redTo - redFrom) * factor);
   var green = Math.round(greenFrom + (greenTo - greenFrom) * factor);
   var blue = Math.round(blueFrom + (blueTo - blueFrom) * factor);
@@ -702,37 +703,39 @@ function convertToNumber(value as String, defaultValue as Number) as Number {
 // The Result: The 150.0 glitch is pushed to the absolute end of the array and completely ignored.
 // The output (100.4) perfectly tracks your actual climb.
 
-// Use a small rawArray with the latest values (e.g., 5-10) to calculate the median grade, and update it every second. This will help smooth out the grade calculation and reduce the impact of GPS glitches or sudden changes in altitude/distance readings. 
+// Use a small rawArray with the latest values (e.g., 5-10) to calculate the median grade, and update it every second. This will help smooth out the grade calculation and reduce the impact of GPS glitches or sudden changes in altitude/distance readings.
 //The median value will be more representative of the actual grade over that time window, rather than being skewed by outliers.
 function getMedianValue(rawArray) {
-    var size = rawArray.size();
-    if (size == 0) { return 0.0d; }
-    
-    // Create a copy so we don't mutate the original history array
-    var sortedArray = new [size];
-    for (var i = 0; i < size; i++) {
-        sortedArray[i] = rawArray[i];
-    }
+  var size = rawArray.size();
+  if (size == 0) {
+    return 0.0d;
+  }
 
-    // Simple Bubble Sort
-    for (var i = 0; i < size; i++) {
-        for (var j = 0; j < size - i - 1; j++) {
-            if (sortedArray[j] > sortedArray[j + 1]) {
-                var temp = sortedArray[j];
-                sortedArray[j] = sortedArray[j + 1];
-                sortedArray[j + 1] = temp;
-            }
-        }
-    }
+  // Create a copy so we don't mutate the original history array
+  var sortedArray = new [size];
+  for (var i = 0; i < size; i++) {
+    sortedArray[i] = rawArray[i];
+  }
 
-    // Return the middle element
-    if (size % 2 != 0) {
-        // Odd number of elements, return exact middle
-        return sortedArray[size / 2];
-    } else {
-        // Even number of elements, return average of the two middle elements
-        return (sortedArray[(size / 2) - 1] + sortedArray[size / 2]) / 2.0;
+  // Simple Bubble Sort
+  for (var i = 0; i < size; i++) {
+    for (var j = 0; j < size - i - 1; j++) {
+      if (sortedArray[j] > sortedArray[j + 1]) {
+        var temp = sortedArray[j];
+        sortedArray[j] = sortedArray[j + 1];
+        sortedArray[j + 1] = temp;
+      }
     }
+  }
+
+  // Return the middle element
+  if (size % 2 != 0) {
+    // Odd number of elements, return exact middle
+    return sortedArray[size / 2];
+  } else {
+    // Even number of elements, return average of the two middle elements
+    return (sortedArray[size / 2 - 1] + sortedArray[size / 2]) / 2.0;
+  }
 }
 
 function abs(value as Numeric) as Numeric {
@@ -754,4 +757,72 @@ function ensureArraySize(
     changed = true;
   }
   return changed;
+}
+
+function logInfo(info) as Void {
+  var clockTime = System.getClockTime();
+
+  var timeString = Lang.format("$1$:$2$:$3$ - $4$", [
+    clockTime.hour.format("%02d"),
+    clockTime.min.format("%02d"),
+    clockTime.sec.format("%02d"),
+    info,
+  ]);
+
+  System.println(timeString);
+}
+
+// Inside your DataField class or custom drawable
+function drawSplitDecimal(
+  dc as Dc,
+  x as Number,
+  y as Number,
+  valueStr as String,
+  numberFont as Graphics.FontType,
+  numberColor as Graphics.ColorType,
+  decimalFont as Graphics.FontType,
+  decimalColor as Graphics.ColorType
+) as Void {
+  // 2. Find the decimal point separator
+  var dotIndex = valueStr.find(".");
+
+  if (dotIndex == null) {
+    dc.drawText(x, y, numberFont, valueStr, Graphics.TEXT_JUSTIFY_CENTER);
+    return;
+  }
+
+  // "1.2" -> integerPart = "1", decimalPart = "2"
+  var integerPart = valueStr.substring(0, dotIndex); // "1"
+  //var decimalPart = valueStr.substring(dotIndex, valueStr.length()); // ".2"
+  var decimalPart = valueStr.substring(dotIndex + 1, valueStr.length()); // "2"
+
+  // Calculate widths
+  var intWidth = dc.getTextWidthInPixels(integerPart, numberFont);
+  //var decWidth = dc.getTextWidthInPixels(decimalPart, decimalFont);
+  // var totalWidth = intWidth + decWidth;
+
+  
+  var startX = x; 
+
+  // 4. Draw the Integer Part
+  dc.setColor(numberColor, Graphics.COLOR_TRANSPARENT);
+  dc.drawText(startX, y, numberFont, integerPart, Graphics.TEXT_JUSTIFY_LEFT);
+
+  // 5. Draw the Decimal Part (Offset by the integer's width)
+  // You may want to slightly adjust the Y offset so the small font aligns perfectly at the bottom
+  var decX = startX + intWidth;
+  var numberFontHeight = dc.getFontHeight(numberFont);
+  var decimalFontHeight = dc.getFontHeight(decimalFont);
+  var decimalFontDescent = dc.getFontDescent(decimalFont);
+  // Baseline alignment adjustment (optional but looks cleaner)
+  var yOffset = numberFontHeight - decimalFontHeight - decimalFontDescent; // Adjust the '5' based on font pairing
+
+  dc.setColor(decimalColor, Graphics.COLOR_TRANSPARENT);
+  dc.drawText(
+    decX,
+    y + yOffset,
+    decimalFont,
+    decimalPart,
+    Graphics.TEXT_JUSTIFY_LEFT
+  );
 }

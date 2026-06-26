@@ -304,7 +304,7 @@ class whatmetricsApp extends Application.AppBase {
       Storage.setValue("target_calories", $.gTargetCalories);
       Storage.setValue("target_grade", $.gTargetGrade);
       Storage.setValue("target_altitude", $.gTargetAltitude);
-      Storage.setValue("target_hrzone", 4);
+      Storage.setValue("target_hrzone", 3.0f);
       Storage.setValue("target_if", $.gTargetIF);
       Storage.setValue("target_tss", $.gTargetTSS);
       Storage.setValue("target_distance", $.gTargetDistance);
@@ -343,19 +343,22 @@ class whatmetricsApp extends Application.AppBase {
     $.gFocusPerc = getStorageValue("focus_perc", $.gFocusPerc) as Number;
     $.gFocusBorder = getStorageValue("focus_border", $.gFocusBorder) as Number;
 
-    var targetHrZone = getStorageValue("target_hrzone", 4) as Number;
-    var heartRateZones = UserProfile.getHeartRateZones(
-      UserProfile.HR_ZONE_SPORT_BIKING
-    );
-    if (heartRateZones.size() > 0) {
-      if (targetHrZone > 0 and targetHrZone < heartRateZones.size()) {
-        $.gTargetHeartRate =
-          (heartRateZones[targetHrZone - 1] + heartRateZones[targetHrZone]) / 2;
-      } else {
-        $.gTargetHeartRate = heartRateZones[heartRateZones.size() - 1];
-      }
-      metrics.initHrZones(heartRateZones);
-    }
+    var targetHrZone = getStorageValue("target_hrzone", 3.0f) as Float;
+    $.gHeartRate.initHrZones();
+    $.gTargetHeartRate = $.gHeartRate.getBpmFromDecimalZone(targetHrZone);
+
+    // var heartRateZones = UserProfile.getHeartRateZones(
+    //   UserProfile.HR_ZONE_SPORT_BIKING
+    // );
+    // if (heartRateZones.size() > 0) {
+    //   if (targetHrZone > 0 and targetHrZone < heartRateZones.size()) {
+    //     $.gTargetHeartRate =
+    //       (heartRateZones[targetHrZone - 1] + heartRateZones[targetHrZone]) / 2;
+    //   } else {
+    //     $.gTargetHeartRate = heartRateZones[heartRateZones.size() - 1];
+    //   }
+    //   metrics.initHrZones(heartRateZones);
+    // }
 
     $.gZenCountdown =
       getStorageValue("zen_countdown", $.gZenCountdown) as Number;
@@ -580,3 +583,5 @@ var gTargetSunEventSec as Number = 3600; // 60 minutes before sunrise / sunset
 var gSunEventDegreesDifference as Double = 1.0d;
 
 var gGradeShowMaxAvg as Boolean = true;
+
+var gHeartRate = new HeartRate();

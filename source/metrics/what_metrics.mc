@@ -20,8 +20,8 @@ class WhatMetrics {
   hidden var mUserFTP as Number = 0;
 
   // heartrate
-  hidden var mHrZones as Lang.Array<Lang.Number> =
-    [] as Lang.Array<Lang.Number>;
+  // hidden var mHrZones as Lang.Array<Lang.Number> =
+  //   [] as Lang.Array<Lang.Number>;
 
    // pressure - history
   hidden var mPressureTicks as Number = 0;
@@ -43,9 +43,9 @@ class WhatMetrics {
     mUserWeightKg = weight / 1000.0;
   }
 
-  function initHrZones(zones as Lang.Array<Lang.Number>) as Void {
-    mHrZones = zones;
-  }
+  // function initHrZones(zones as Lang.Array<Lang.Number>) as Void {
+  //   mHrZones = zones;
+  // }
 
   // @@TODO initPwrZones
 
@@ -133,29 +133,29 @@ class WhatMetrics {
   function getMaxHeartRate() as Number {
     return getActivityValue(a_info, :maxHeartRate, 0) as Number;
   }
-  function getHeartRateZone(showAverage as Boolean) as Number {
-    if (mHrZones.size() == 0) {
-      return 0;
-    }
-    var heartRate = 0;
-    if (showAverage) {
-      heartRate = getAverageHeartRate();
-    } else {
-      heartRate = getHeartRate();
-    }
-    if (heartRate < mHrZones[0]) {
-      return 0;
-    }
-    for (var idx = 1; idx < mHrZones.size(); idx++) {
-      if (heartRate <= mHrZones[idx]) {
-        return idx;
-      }
-    }
-    return mHrZones.size();
-  }
-  function getMaxHeartRateZone() as Number {
-    return mHrZones.size() - 1; // Zone 0 to 5
-  }
+  // function getHeartRateZone(showAverage as Boolean) as Number {
+  //   if (mHrZones.size() == 0) {
+  //     return 0;
+  //   }
+  //   var heartRate = 0;
+  //   if (showAverage) {
+  //     heartRate = getAverageHeartRate();
+  //   } else {
+  //     heartRate = getHeartRate();
+  //   }
+  //   if (heartRate < mHrZones[0]) {
+  //     return 0;
+  //   }
+  //   for (var idx = 1; idx < mHrZones.size(); idx++) {
+  //     if (heartRate <= mHrZones[idx]) {
+  //       return idx;
+  //     }
+  //   }
+  //   return mHrZones.size();
+  // }
+  // function getMaxHeartRateZone() as Number {
+  //   return mHrZones.size() - 1; // Zone 0 to 5
+  // }
 
   // distance, meters
   function getElapsedDistance() as Float {
