@@ -111,7 +111,7 @@ public class HeartRate {
 
         return targetBpm.toNumber(); // Round to the nearest whole heartbeat
     }
-
+    
     function calculateCurrentDecimalZone(liveHeartRate as Number) as Float {
         if (mHeartRateZones.size() < 6 || liveHeartRate <= 0) {
             return 1.0f; // Default to Zone 1 if zones are uninitialized
@@ -119,7 +119,7 @@ public class HeartRate {
         
     
         // 2. Handle the absolute basement (Below Zone 1 floor)
-        if (liveHeartRate < mHeartRateZones[0]) {
+        if (liveHeartRate < mHeartRateZones[0]) {  
             return 1.0f;
         }
 

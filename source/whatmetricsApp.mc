@@ -126,7 +126,7 @@ class whatmetricsApp extends Application.AppBase {
       );
       fields =
         [
-          FL6Fields,
+          FL8SSFields,
           FTGrade,
           FTDistanceNext,
           FTHeartRate,

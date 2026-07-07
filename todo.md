@@ -1,11 +1,23 @@
-x Grade filter sort take middle, slice unsorted array check
-hzone - make float display 1.x
+hzone allow 0 - 0.9 value
+defaults -> ETA -> ALT -> Pressure
+defaults wide field -> 8 even
 
 use getDynamicColor - instead of array of colors
 TODO crashing power/shift listeners +
 
 
+---- ideas
 
+Barometric Pressure Trend: Displaying a micro-graph of pressure changes over the last 3 hours to alert the user to incoming storm fronts (Crucial for alpine hiking).
+
+Carbohydrate / Hydration Reminders: A dynamic visual gauge that calculates how many grams of carbs or milliliters of fluid the athlete should have consumed by this point in the workout, based on duration and temperature.
+
+Battery Burn Rate: A utility metric showing the exact percentage of watch battery consumed per hour during the current GPS activity, helping ultra-runners calculate if their device will survive a 100-mile race.
+
+Stamina / Electrolyte Depletion Models: Using algorithmically modeled sweat rates to predict when an athlete needs to take a salt capsule.
+
+
+------
 Dutch slope/grade settings:
 
 1. Dynamic Window Expansion (Dampening the Wind)

@@ -984,8 +984,10 @@ class whatmetricsView extends WatchUi.DataField {
         fi.maxValue = $.gTargetSpeed;
 
         if (useAvgTrend) {
-          fi.iconParam2 = averageRatio(speed, mMetrics.getAverageSpeed());
+          var averageSpeed = mpsToKmPerHour(mMetrics.getAverageSpeed());         
+          fi.iconParam2 = averageRatio(speed, averageSpeed);
         }
+        
         return fi;
 
       case FTAltitude:
