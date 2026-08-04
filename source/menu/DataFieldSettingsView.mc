@@ -53,6 +53,8 @@ class DataFieldSettingsDelegate extends WatchUi.BehaviorDelegate {
     menu.addItem(mi);
     mi = new WatchUi.MenuItem("Power", null, "power", null);
     menu.addItem(mi);
+
+    var boolean;    
     mi = new WatchUi.MenuItem("Grade", null, "gradient", null);
     menu.addItem(mi);
     
@@ -76,8 +78,6 @@ class DataFieldSettingsDelegate extends WatchUi.BehaviorDelegate {
 
     mi = new WatchUi.MenuItem("Average trend", null, "fields_avg_trend", null);
     menu.addItem(mi);
-
-    var boolean = false;
 
     boolean = Storage.getValue("show_colors") ? true : false;
     menu.addItem(new WatchUi.ToggleMenuItem("Colors", null, "show_colors", boolean, null));

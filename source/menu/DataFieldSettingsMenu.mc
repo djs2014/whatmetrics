@@ -235,41 +235,68 @@ class DataFieldSettingsMenuDelegate extends WatchUi.Menu2InputDelegate {
     if (id instanceof String && id.equals("gradient")) {
       var gradientMenu = new WatchUi.Menu2({ :title => "Grade" });
 
-      var mi = new WatchUi.MenuItem(
-        "Max window size|1-20",
+      var mi;
+      var value;
+
+      mi = new WatchUi.MenuItem(
+        "Calculation mode",
         null,
-        "grade_maxwindow",
+        "slope_calculation_mode",
         null
       );
-      mi.setSubLabel($.getStorageNumberAsString(mi.getId() as String));
+      value =
+        getStorageValue(mi.getId() as String, MODE_REGRESSION) as
+        SlopeCalculationMode;
+      mi.setSubLabel($.getSlopeCalculationModeAsString(value));
       gradientMenu.addItem(mi);
 
       mi = new WatchUi.MenuItem(
-        "Base distance interval|1.0~10(m)",
+        "Grade sensitivity",
         null,
-        "grade_distance",
+        "grade_sensitivity",
         null
       );
-      mi.setSubLabel($.getStorageFloatAsString(mi.getId() as String));
+      value =
+        getStorageValue(mi.getId() as String, SENSITIVITY_BALANCED) as
+        SlopeCalcSensitivity;
+      mi.setSubLabel($.getSlopeCalcSensitivityAsString(value));
       gradientMenu.addItem(mi);
 
-      mi = new WatchUi.MenuItem(
-        "Rolling window (tap)",
-        null,
-        "grade_rollingwindow",
-        null
-      );
-      mi.setSubLabel($.getGradeRollingWindowAsString());
-      gradientMenu.addItem(mi);
+      // mi = new WatchUi.MenuItem(
+      //   "Max window size|1-20",
+      //   null,
+      //   "grade_maxwindow",
+      //   null
+      // );
+      // mi.setSubLabel($.getStorageNumberAsString(mi.getId() as String));
+      // gradientMenu.addItem(mi);
 
-      mi = new WatchUi.MenuItem(
-        "Min distance regression|1.0~10(m)",
-        null,
-        "grade_minimal_distance",
-        null
-      );
-      mi.setSubLabel($.getStorageFloatAsString(mi.getId() as String));
-      gradientMenu.addItem(mi);
+      // mi = new WatchUi.MenuItem(
+      //   "Base distance interval|1.0~10(m)",
+      //   null,
+      //   "grade_distance",
+      //   null
+      // );
+      // mi.setSubLabel($.getStorageFloatAsString(mi.getId() as String));
+      // gradientMenu.addItem(mi);
+
+      // mi = new WatchUi.MenuItem(
+      //   "Rolling window (tap)",
+      //   null,
+      //   "grade_rollingwindow",
+      //   null
+      // );
+      // mi.setSubLabel($.getGradeRollingWindowAsString());
+      // gradientMenu.addItem(mi);
+
+      // mi = new WatchUi.MenuItem(
+      //   "Min distance regression|1.0~10(m)",
+      //   null,
+      //   "grade_minimal_distance",
+      //   null
+      // );
+      // mi.setSubLabel($.getStorageFloatAsString(mi.getId() as String));
+      // gradientMenu.addItem(mi);
 
       var boolean;
 
@@ -340,7 +367,7 @@ class DataFieldSettingsMenuDelegate extends WatchUi.Menu2InputDelegate {
       powerMenu.addItem(mi);
 
       var boolean;
-      
+
       boolean = Storage.getValue("show_np_as_avg") ? true : false;
       powerMenu.addItem(
         new WatchUi.ToggleMenuItem(
@@ -350,7 +377,7 @@ class DataFieldSettingsMenuDelegate extends WatchUi.Menu2InputDelegate {
           boolean,
           null
         )
-      );      
+      );
 
       WatchUi.pushView(
         powerMenu,
@@ -675,7 +702,7 @@ class DataFieldSettingsMenuDelegate extends WatchUi.Menu2InputDelegate {
       );
       mi.setSubLabel($.getStorageNumberAsString(mi.getId() as String) + " deg");
       avMenu.addItem(mi);
-      
+
       WatchUi.pushView(
         avMenu,
         new $.GeneralMenuDelegate(self, avMenu),
@@ -806,6 +833,36 @@ class GeneralMenuDelegate extends WatchUi.Menu2InputDelegate {
       // sp.add("Start only", null, WhatHiitt.StartOnlySound);
       // sp.add("Low", "low noise", WhatHiitt.LowNoise);
       // sp.add("Loud", "loud noise", WhatHiitt.LoudNoise);
+
+      sp.setOnSelected(self, :onSelectedSelection, item);
+      sp.show();
+      return;
+    }
+
+    if (id instanceof String && id.equals("slope_calculation_mode")) {
+      var sp = new selectionMenuPicker("Grade calculation mode", id as String);
+      for (var i = 0; i < SlopeCalculationModeCount; i++) {
+        sp.add(
+          $.getSlopeCalculationModeAsString(i as SlopeCalculationMode),
+          null,
+          i
+        );
+      }
+
+      sp.setOnSelected(self, :onSelectedSelection, item);
+      sp.show();
+      return;
+    }
+
+    if (id instanceof String && id.equals("grade_sensitivity")) {
+      var sp = new selectionMenuPicker("Grade sensitivity", id as String);
+      for (var i = 0; i < SlopeCalcSensitivityCount; i++) {
+        sp.add(
+          $.getSlopeCalcSensitivityAsString(i as SlopeCalcSensitivity),
+          null,
+          i
+        );
+      }
 
       sp.setOnSelected(self, :onSelectedSelection, item);
       sp.show();
@@ -953,11 +1010,11 @@ class GeneralMenuDelegate extends WatchUi.Menu2InputDelegate {
       return;
     }
 
-    if (id instanceof String && id.equals("grade_rollingwindow")) {
-      // Update subLabel
-      item.setSubLabel($.getGradeRollingWindowAsString());
-      return;
-    }
+    // if (id instanceof String && id.equals("grade_rollingwindow")) {
+    //   // Update subLabel
+    //   item.setSubLabel($.getGradeRollingWindowAsString());
+    //   return;
+    // }
 
     // Numeric input
     var prompt = item.getLabel();

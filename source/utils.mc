@@ -811,9 +811,9 @@ function drawSplitDecimal(
   // 5. Draw the Decimal Part (Offset by the integer's width)
   // You may want to slightly adjust the Y offset so the small font aligns perfectly at the bottom
   var decX = startX + intWidth;
-  var numberFontHeight = dc.getFontHeight(numberFont);
-  var decimalFontHeight = dc.getFontHeight(decimalFont);
-  var decimalFontDescent = dc.getFontDescent(decimalFont);
+  var numberFontHeight = Graphics.getFontHeight(numberFont);
+  var decimalFontHeight = Graphics.getFontHeight(decimalFont);
+  var decimalFontDescent = Graphics.getFontDescent(decimalFont);
   // Baseline alignment adjustment (optional but looks cleaner)
   var yOffset = numberFontHeight - decimalFontHeight - decimalFontDescent; // Adjust the '5' based on font pairing
 

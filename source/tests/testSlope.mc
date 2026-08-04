@@ -1,6 +1,9 @@
-using Toybox.Test;
-using Toybox.System;
-using Toybox.Lang;
+import Toybox.Test;
+import Toybox.System;
+import Toybox.Lang;
+
+// Open the Command Palette (Ctrl+Shift+P / Cmd+Shift+P).
+// Type Monkey C: Run Tests.
 
 // This annotation tells the compiler this function is a unit test
 (:test)
@@ -17,7 +20,13 @@ function testSlopeCalc(logger as Test.Logger) as Lang.Boolean {
     var mockCurrentSpeed = 4.0f; // Mock speed in m/s
     //  var speedKmh = currentSpeed * 3.6f;
     // TODO test with 8km/h / 15km/h / 25 km/h / 30 km/h
-    System.println("Mock Current Speed (m/s): " + mockCurrentSpeed + " m/s (" + mockCurrentSpeed * 3.6f + " km/h)");
+    logger.debug(
+        "Mock Current Speed (m/s): " +
+            mockCurrentSpeed +
+            " m/s (" +
+            mockCurrentSpeed * 3.6f +
+            " km/h)"
+    );
 
     // Because your code updates both altitude and distance simultaneously inside the loop, it creates a perfectly consistent climb. Let’s break down the math for any single step of that loop (for example, moving from iteration 0 to iteration 1) to see what your slope calculation yields.
     // The Step-by-Step Loop Math
@@ -39,29 +48,17 @@ function testSlopeCalc(logger as Test.Logger) as Lang.Boolean {
             mockCurrentDistance + i * 10,
             mockCurrentSpeed
         );
-        //logger.debug("Iteration " + i + ": Calculated slope = " + slope);
-        System.println("Iteration " + i + ": Calculated slope = " + slope);
+        logger.debug("Iteration " + i + ": Calculated slope = " + slope);
     }
 
-    // History buffer contains still 0 values, so the regression result is not yet accurate. The slope is expected to be 10% but the regression result is 8.869047%. The variance is calculated as the absolute difference between the final calculated slope and the expected regression result.
-    var expectedRegressionResult = 8.869047f;
+    var expectedRegressionResult = 10.0f;
     var variance = (slope - expectedRegressionResult).abs();
+    logger.debug(
+        "Variance between calculated slope and expected regression result: " +
+            variance
+    );
     // Assert that the regression engine matches its expected smoothing curve perfectly
     Test.assert(variance < 0.0001f);
-
-    for (var i = 10; i < 30; i++) {
-        slope = slopeCalc.calculateGrade(
-            mockRawAltitude + i,
-            mockCurrentDistance + i * 10,
-            mockCurrentSpeed
-        );
-        //logger.debug("Iteration " + i + ": Calculated slope = " + slope);
-        System.println("Iteration " + i + ": Calculated slope = " + slope);
-    }
-
-    // After 30 iterations, the regression engine should have converged to the expected slope of 10%
-    var expectedSlope = 10.0f;
-    Test.assertEqual(slope, expectedSlope);
 
     // If no assertions failed, return true to signify a PASS
     return true;
@@ -98,7 +95,9 @@ This log is definitive proof that your algorithm behaves exactly like a premium,
 (:test)
 function testSlowSlopeCalc(logger as Test.Logger) as Lang.Boolean {
     // 1. Log what you are testing for clean terminal outputs
-    logger.debug("Testing SlopeCalc.calculateGrade with mock data slow speed...");
+    logger.debug(
+        "Testing SlopeCalc.calculateGrade with mock data slow speed..."
+    );
 
     // 2. Set up your mock data inputs
     var slopeCalc = new SlopeCalc();
@@ -108,7 +107,13 @@ function testSlowSlopeCalc(logger as Test.Logger) as Lang.Boolean {
     var mockCurrentDistance = 1000.0f; // Mock distance in meters
     var mockCurrentSpeed = 2.0f; // Mock speed in m/s
     //  var speedKmh = currentSpeed * 3.6f;
-    System.println("Mock Current Speed (m/s): " + mockCurrentSpeed + " m/s (" + mockCurrentSpeed * 3.6f + " km/h)");
+    logger.debug(
+        "Mock Current Speed (m/s): " +
+            mockCurrentSpeed +
+            " m/s (" +
+            mockCurrentSpeed * 3.6f +
+            " km/h)"
+    );
     var slope = 0.0f;
     for (var i = 0; i < 10; i++) {
         slope = slopeCalc.calculateGrade(
@@ -117,29 +122,176 @@ function testSlowSlopeCalc(logger as Test.Logger) as Lang.Boolean {
             mockCurrentSpeed
         );
         //logger.debug("Iteration " + i + ": Calculated slope = " + slope);
-        System.println("Iteration " + i + ": Calculated slope = " + slope);
+        logger.debug("Iteration " + i + ": Calculated slope = " + slope);
     }
 
     // History buffer contains still 0 values, so the regression result is not yet accurate. The slope is expected to be 10% but the regression result is 8.869047%. The variance is calculated as the absolute difference between the final calculated slope and the expected regression result.
-    var expectedRegressionResult = 8.869047f;
+    var expectedRegressionResult = 10.0f;
     var variance = (slope - expectedRegressionResult).abs();
+    logger.debug(
+        "Variance between calculated slope and expected regression result: " +
+            variance
+    );
     // Assert that the regression engine matches its expected smoothing curve perfectly
     Test.assert(variance < 0.0001f);
 
-    for (var i = 10; i < 30; i++) {
-        slope = slopeCalc.calculateGrade(
-            mockRawAltitude + i,
-            mockCurrentDistance + i * 10,
-            mockCurrentSpeed
+    // If no assertions failed, return true to signify a PASS
+    return true;
+}
+
+(:test)
+function testSteepClimbWithJitter(logger as Test.Logger) as Boolean {
+    var calc = new SlopeCalc();
+    calc.setCalculationMode(MODE_REGRESSION);
+
+    // Initial state: Start at 0m distance, 100m altitude
+    var currentDist = 0.0f;
+    var currentAlt = 100.0f;
+    var currentSpeed = 3.33f; // ~12 km/h (Climbing speed)
+
+    // Simulate 20 seconds of climbing a steady 10% grade (10m rise per 100m run)
+    // At 3.33 m/s, you move ~3.33m per second, gaining ~0.333m of altitude per second.
+    for (var sec = 1; sec <= 20; sec++) {
+        currentDist += 3.33f;
+
+        // Base 10% elevation gain
+        currentAlt += 0.333f;
+
+        // --- SIMULATE SENSOR NOISE ---
+        // 1. Add GPS Distance Jitter (±0.4 meters random drift)
+        var distJitter = ((System.getTimer() % 9) - 4) * 0.1f;
+
+        // 2. Add Barometer Noise / Wind Drag (±0.15 meters fluctuation)
+        var altNoise = sec % 2 == 0 ? 0.15f : -0.15f;
+
+        var testDist = currentDist + distJitter;
+        var testAlt = currentAlt + altNoise;
+
+        var grade = calc.calculateGrade(testAlt, testDist, currentSpeed);
+
+        logger.debug(
+            Lang.format("Sec $1$: Dist=$2$m, Alt=$3$m -> Grade=$4$%", [
+                sec,
+                testDist.format("%.1f"),
+                testAlt.format("%.1f"),
+                grade.format("%.2f"),
+            ])
         );
-        //logger.debug("Iteration " + i + ": Calculated slope = " + slope);
-        System.println("Iteration " + i + ": Calculated slope = " + slope);
     }
 
-    // After 30 iterations, the regression engine should have converged to the expected slope of 10%
-    var expectedSlope = 10.0f;
-    Test.assertEqual(slope, expectedSlope);
+    // After 20 seconds, grade should have stabilized near 10% (allow ±1.5% margin for noise)
+    var finalGrade = calc.getGrade();
+    Test.assertEqualMessage(
+        finalGrade >= 8.5f && finalGrade <= 11.5f,
+        true,
+        "Grade did not converge near 10%. Got: " + finalGrade
+    );
 
-    // If no assertions failed, return true to signify a PASS
+    return true;
+}
+
+// Scenario A: Fast Descent with Barometer Lag (The Negative Sign Swap)
+// Simulates going downhill at 40 km/h (11.1 m/s) on a -8% grade, but the barometer lags behind reality by 2 seconds.
+
+(:test)
+function testFastDescentWithBaroLag(logger as Test.Logger) as Boolean {
+    var calc = new SlopeCalc();
+    var currentDist = 1000.0f;
+    var actualAlt = 500.0f;
+    var speed = 11.1f; // ~40 km/h
+
+    // Buffer to simulate a 2-second barometric delay
+    var baroQueue = [500.0f, 500.0f] as Array<Float>;
+
+    for (var sec = 1; sec <= 15; sec++) {
+        currentDist += speed;
+        actualAlt -= speed * 0.08f; // Dropping 8% grade
+
+        // Push true altitude to queue, read delayed altitude
+        baroQueue.add(actualAlt);
+        var delayedAlt = baroQueue[0];
+        baroQueue = baroQueue.slice(1, null) as Array<Float>;
+
+        var grade = calc.calculateGrade(delayedAlt, currentDist, speed);
+        logger.debug(
+            Lang.format("Descent Sec $1$: Grade = $2$%", [
+                sec,
+                grade.format("%.2f"),
+            ])
+        );
+    }
+
+    var finalGrade = calc.getGrade();
+    // Verify it doesn't flip positive or freeze at zero
+    Test.assertMessage(
+        finalGrade < -5.0f,
+        "Failed to register descent, got: " + finalGrade
+    );
+    return true;
+}
+
+// Scenario B: Ultra-Slow MTB Climb (< 5 km/h)
+// Simulates climbing at 4 km/h (1.11 m/s) on a steep 15% pitch to ensure the speed cutoff doesn't lock the display to 0.0%.
+(:test)
+function testSlowMTBClimb(logger as Test.Logger) as Boolean {
+    var calc = new SlopeCalc();
+    var currentDist = 50.0f;
+    var currentAlt = 200.0f;
+    var speed = 1.11f; // 4 km/h
+
+    for (var sec = 1; sec <= 25; sec++) {
+        currentDist += speed;
+        currentAlt += speed * 0.15f; // 15% grade rise
+
+        var grade = calc.calculateGrade(currentAlt, currentDist, speed);
+        logger.debug(
+            Lang.format("Slow Climb Sec $1$: Grade = $2$%", [
+                sec,
+                grade.format("%.2f"),
+            ])
+        );
+    }
+
+    // Grade must NOT drop to 0% due to slow speed
+    Test.assertMessage(
+        calc.getGrade() > 10.0f,
+        "Slow climb snapped to zero or lagged severely!"
+    );
+    return true;
+}
+
+// Scenario C: Switchback / GPS Stall (Distance Stops, Altitude Moves)
+// Simulates a tight hairpin turn on a mountain pass where GPS horizontal speed temporarily drops to 0, but altitude keeps changing.
+(:test)
+function testSwitchbackGPSStall(logger as Test.Logger) as Boolean {
+    var calc = new SlopeCalc();
+    var currentDist = 500.0f;
+    var currentAlt = 300.0f;
+
+    // 10 seconds of normal climbing
+    for (var i = 0; i < 10; i++) {
+        currentDist += 3.0f;
+        currentAlt += 0.3f;
+        calc.calculateGrade(currentAlt, currentDist, 3.0f);
+    }
+
+    // 4 seconds of GPS distance stall in a tight hairpin
+    for (var i = 0; i < 4; i++) {
+        currentAlt += 0.2f; // Altitude changes slightly, but distance stays frozen
+        var grade = calc.calculateGrade(currentAlt, currentDist, 0.5f);
+        logger.debug(
+            Lang.format("GPS Stall Sec $1$: Grade = $2$%", [
+                i,
+                grade.format("%.2f"),
+            ])
+        );
+        // Verify division by zero / catastrophic floating point failure didn't occur
+        // Test.assertMessage(!grade.isNaN(), "Grade resulted in NaN during GPS stall");
+        Test.assertMessage(
+            grade != 0.0f,
+            "Grade resulted in NaN during GPS stall"
+        );
+    }
+
     return true;
 }

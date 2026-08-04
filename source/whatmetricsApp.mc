@@ -39,11 +39,11 @@ class whatmetricsApp extends Application.AppBase {
       Storage.setValue("version", "1.0.4");
       Storage.setValue("resetDefaults", true);
     }
-    var gradeWindowSize = getStorageValue("grade_maxwindow", null) as Number?;
-    if (gradeWindowSize == null) {
-      Storage.setValue("grade_maxwindow", 8);
-      Storage.setValue("grade_distance", 2.0f);
-      Storage.setValue("grade_minimal_distance", 6.0f);
+    var obsolete1 = getStorageValue("grade_maxwindow", null) as Number?;
+    var obsolete2 = getStorageValue("metric_grademinrise", null) as Number?;
+    if (obsolete1 != null || obsolete2 != null) {
+      Storage.deleteValue("grade_maxwindow");
+      Storage.deleteValue("grade_distance");
       Storage.setValue("grade_show_maxavg", true);
       // Climb start when minimal 3% for 30 meters, stop when less than 1.5% for 50 meters
       Storage.setValue("grade_climb_start_slope", 3.0f);
@@ -82,9 +82,6 @@ class whatmetricsApp extends Application.AppBase {
 
       Storage.setValue("metric_ppersec", 3);
 
-      Storage.setValue("grade_maxwindow", 8);
-      Storage.setValue("grade_distance", 2.0f);
-      Storage.setValue("grade_minimal_distance", 6.0f);
       Storage.setValue("grade_show_maxavg", true);
       // Climb start when minimal 3% for 30 meters, stop when less than 1.5% for 50 meters
       Storage.setValue("grade_climb_start_slope", 3.0f);
@@ -271,16 +268,15 @@ class whatmetricsApp extends Application.AppBase {
     metrics.setPowerPerSec(getStorageValue("metric_ppersec", 0) as Number);
 
     var slopeCalc = $.getSlopeCalc();
-    slopeCalc.setGradeWindowSize(
-      $.getStorageValue("grade_maxwindow", 8) as Number
+    slopeCalc.setCalculationMode(
+      getStorageValue("slope_calculation_mode", MODE_REGRESSION) as
+        SlopeCalculationMode
     );
-    slopeCalc.setGradeDistanceInterval(
-      $.getStorageValue("grade_distance", 2.0f) as Float
+    slopeCalc.setSensitivityProfile(
+      getStorageValue("slope_calculation_sensitivity", SENSITIVITY_BALANCED) as
+        SlopeCalcSensitivity
     );
-    slopeCalc.setMinimalDistanceForRegression(
-      $.getStorageValue("grade_minimal_distance", 6.0f) as Float
-    );
-
+    
     $.gGradeShowMaxAvg = getStorageValue("grade_show_maxavg", true) as Boolean;
     if ($.gGradeShowMaxAvg) {
       var climbTracker = $.getClimbTracker();
@@ -425,7 +421,6 @@ class whatmetricsApp extends Application.AppBase {
 
     $.gShowIcon = getStorageValue("show_icon", $.gShowIcon) as Boolean;
 
-    
     $.gShowNPasAverage =
       getStorageValue("show_np_as_avg", $.gShowNPasAverage) as Boolean;
 

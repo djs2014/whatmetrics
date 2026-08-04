@@ -94,6 +94,7 @@ class whatmetricsView extends WatchUi.DataField {
 
   hidden var mIsAtDayLiteTime as Boolean = true;
   hidden var mTestTick as Number = 0;
+  hidden var mWeatherTrend as WeatherTrend = new WeatherTrend();
 
   // hidden var mFi as FieldInfo = new FieldInfo(FTUnknown, 0);
 
@@ -380,6 +381,8 @@ class whatmetricsView extends WatchUi.DataField {
     if ($.gGradeShowMaxAvg) {
       mClimbTracker.processAutoReset(mSlopeCalc.getGrade(), distance);
     }
+
+    mWeatherTrend.compute(info);
   }
 
   function onUpdate(dc as Dc) as Void {
@@ -984,10 +987,10 @@ class whatmetricsView extends WatchUi.DataField {
         fi.maxValue = $.gTargetSpeed;
 
         if (useAvgTrend) {
-          var averageSpeed = mpsToKmPerHour(mMetrics.getAverageSpeed());         
+          var averageSpeed = mpsToKmPerHour(mMetrics.getAverageSpeed());
           fi.iconParam2 = averageRatio(speed, averageSpeed);
         }
-        
+
         return fi;
 
       case FTAltitude:
@@ -1045,8 +1048,8 @@ class whatmetricsView extends WatchUi.DataField {
         }
         fi.number = stringLeft(fi.value, ".", fi.value);
         fi.decimals = stringRight(fi.value, ".", "");
-        // TODO optional? --> use icon value
-        fi.iconParam = mMetrics.getPressureTrend();
+        // TODO check calculation
+        fi.iconParam = mWeatherTrend.getPredictedWeatherDelta();
         return fi;
 
       case FTAverageCadence:
@@ -1769,7 +1772,7 @@ class whatmetricsView extends WatchUi.DataField {
         width,
         height,
         mIconColor,
-        fi.iconParam.toNumber()
+        fi.iconParam.toFloat()
       );
       return;
     }
@@ -1781,7 +1784,7 @@ class whatmetricsView extends WatchUi.DataField {
         width,
         height,
         mIconColor,
-        fi.iconParam.toNumber()
+        fi.iconParam.toFloat()
       );
       return;
     }
@@ -3107,19 +3110,27 @@ class whatmetricsView extends WatchUi.DataField {
     width as Number,
     height as Number,
     color as ColorType,
-    trend as Number
+    pressureDelta as Float
   ) as Void {
     if (!gShowIcon) {
       return;
     }
 
     setColorFillStroke(dc, mIconColor);
-    if (trend > 0) {
+    if (pressureDelta > 0) {
       drawArrowUp(dc, x, y + 1, width / 5, height - 2);
-    } else if (trend < 0) {
-      drawArrowDown(dc, x, y + 1, width / 5, height - 2);
+    } else if (pressureDelta < 0) {
+      if (pressureDelta <= -1.0f) {
+        dc.setColor(Graphics.COLOR_RED, Graphics.COLOR_TRANSPARENT);
+        dc.setPenWidth(2);
+        drawArrowDown(dc, x, y + 1, width / 5, height - 2);
+        dc.setPenWidth(1);
+        setColorFillStroke(dc, mIconColor);
+      } else {
+        drawArrowDown(dc, x, y + 1, width / 5, height - 2);
+      }
     }
-
+    
     var m0 = height / 8;
 
     var m = (height / 5).toNumber();
@@ -3149,29 +3160,6 @@ class whatmetricsView extends WatchUi.DataField {
     );
 
     dc.drawLine(x1 - m0, y3, x5 + m0, y3);
-
-    // if (trend != 0) {
-    //   var font;
-    //   var trendIndicator;
-
-    //   dc.setColor(Graphics.COLOR_LT_GRAY, Graphics.COLOR_TRANSPARENT);
-    //   if (trend < 0) {
-    //     trendIndicator = "-";
-    //   } else {
-    //     trendIndicator = "+";
-    //   }
-    //   font =
-    //     $.getMatchingFont(dc, mFontsNumbers, width, height, trendIndicator) as
-    //     FontType;
-
-    //   dc.drawText(
-    //     x + 1,
-    //     y + height - dc.getFontHeight(font),
-    //     font,
-    //     trendIndicator,
-    //     Graphics.TEXT_JUSTIFY_LEFT // | Graphics.TEXT_JUSTIFY_VCENTER
-    //   );
-    // }
   }
 
   hidden function drawPressureIcon(
@@ -3181,17 +3169,25 @@ class whatmetricsView extends WatchUi.DataField {
     width as Number,
     height as Number,
     color as ColorType,
-    trend as Number
+    pressureDelta as Float
   ) as Void {
     if (!gShowIcon) {
       return;
     }
 
     setColorFillStroke(dc, mIconColor);
-    if (trend > 0) {
+    if (pressureDelta > 0) {
       drawArrowUp(dc, x, y + 1, width / 5, height - 2);
-    } else if (trend < 0) {
-      drawArrowDown(dc, x, y + 1, width / 5, height - 2);
+    } else if (pressureDelta < 0) {
+      if (pressureDelta <= -1.0f) {
+        dc.setColor(Graphics.COLOR_RED, Graphics.COLOR_TRANSPARENT);
+        dc.setPenWidth(2);
+        drawArrowDown(dc, x, y + 1, width / 5, height - 2);
+        dc.setPenWidth(1);
+        setColorFillStroke(dc, mIconColor);
+      } else {
+        drawArrowDown(dc, x, y + 1, width / 5, height - 2);
+      }
     }
 
     var m0 = height / 8;

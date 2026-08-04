@@ -15,7 +15,7 @@ class WhatMetrics {
   hidden var mCurrentPowerPerX as Number = 0;
   hidden var mPowerPerSec as Number = 3;
   hidden var mPowerDataPerSec as Array<Number> = [] as Array<Number>;
-  
+
   hidden var mUserWeightKg as Float = 0.0f;
   hidden var mUserFTP as Number = 0;
 
@@ -23,16 +23,12 @@ class WhatMetrics {
   // hidden var mHrZones as Lang.Array<Lang.Number> =
   //   [] as Lang.Array<Lang.Number>;
 
-   // pressure - history
-  hidden var mPressureTicks as Number = 0;
-  hidden var mAveragePressure as Float = 0.0f;
-
   function initialize() {}
 
   // function reset() as Void {
   //   resetAverageNP();
   // }
-  
+
   function initWeight() as Void {
     var profile = UserProfile.getProfile();
     mUserWeightKg = 0.0f;
@@ -97,31 +93,35 @@ class WhatMetrics {
     );
   }
 
-  // -1 down, 0 stable, 1 up
-  function getPressureTrend() as Number {
-    var pressure = getActivityValue(a_info, :ambientPressure, 0.0f) as Float;
-    if (pressure == 0.0f) {
-      return 0;
-    }
+  // pressure - history
+  // hidden var mPressureTicks as Number = 0;
+  // hidden var mAveragePressure as Float = 0.0f;
 
-    // Calc trend
-    var trend = 0;
-    if (pressure < mAveragePressure) {
-      trend = -1;
-    } else if (pressure > mAveragePressure) {
-      trend = 1;
-    }
+  // // -1 down, 0 stable, 1 up
+  // function getPressureTrend() as Number {
+  //   var pressure = getActivityValue(a_info, :ambientPressure, 0.0f) as Float;
+  //   if (pressure == 0.0f) {
+  //     return 0;
+  //   }
 
-    // Add current to average
-    //Rolling average ( avg' * (n-1) + x ) / n
-    mPressureTicks = mPressureTicks + 1;
-    mAveragePressure =
-      (mAveragePressure * (mPressureTicks - 1) + pressure) /
-      mPressureTicks.toFloat();
-    // System.println(Lang.format("p $1$ ticks $2$ avg $3$", [pressure, mPressureTicks, mAveragePressure]));
+  //   // Calc trend
+  //   var trend = 0;
+  //   if (pressure < mAveragePressure) {
+  //     trend = -1;
+  //   } else if (pressure > mAveragePressure) {
+  //     trend = 1;
+  //   }
 
-    return trend;
-  }
+  //   // Add current to average
+  //   //Rolling average ( avg' * (n-1) + x ) / n
+  //   mPressureTicks = mPressureTicks + 1;
+  //   mAveragePressure =
+  //     (mAveragePressure * (mPressureTicks - 1) + pressure) /
+  //     mPressureTicks.toFloat();
+  //   // System.println(Lang.format("p $1$ ticks $2$ avg $3$", [pressure, mPressureTicks, mAveragePressure]));
+
+  //   return trend;
+  // }
 
   // heartrate, bpm
   function getHeartRate() as Number {
@@ -212,7 +212,7 @@ class WhatMetrics {
     return mPowerPerSec;
   }
   // power watts / x seconds
-  function getPower() as Number {   
+  function getPower() as Number {
     return mCurrentPowerPerX;
   }
   function getAveragePower() as Number {
@@ -323,13 +323,13 @@ class WhatMetrics {
     a_info = info;
 
     var power = getActivityValue(a_info, :currentPower, 0) as Number;
-    
+
     mCurrentPowerPerX = calculatePower(power);
 
     // TODO NP calc also when paused?
     if (!mPaused) {
       mCurrentNP = calculateNormalizedPower(calculatePower30(power));
-    }   
+    }
   }
 
   hidden function calculatePower(power as Number) as Number {
