@@ -171,6 +171,8 @@ class whatmetricsApp extends Application.AppBase {
       setFallbackField(FTHiit, FTTime2SunUpDown);
       setFallbackField(FTTime2SunUpDown, FTClock);
       setFallbackField(FTVo2MaxHiit, FTHiit);
+      setFallbackField(FTGearCombo, FTAltitude);
+      setFallbackField(FTGearIndex, FTAltitude);
       setFallbackField(FTAltitude, FTPressureAtSea);
       setFallbackField(FTEta, FTAltitude);
       setFallbackField(FTVo2MaxProfile, FTEta);

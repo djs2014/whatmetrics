@@ -1413,6 +1413,7 @@ function fieldHasFallback(fieldId as Number) as Boolean {
       FTAltitude,
       FTCadence,
       FTGearCombo,
+      FTGearIndex,
       FTPowerPerWeight,
       FTPowerBalance,
       FTHeartRateZone,
