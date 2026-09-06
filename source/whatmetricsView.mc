@@ -1158,7 +1158,7 @@ class whatmetricsView extends WatchUi.DataField {
         fi.iconParam = showHiittText;
 
         if (nrHiit > 0) {
-          fi.text_botleft = "H " + nrHiit.format("%0.0d");
+          fi.text_botleft = "H" + nrHiit.format("%0.0d");
         }
 
         var scores = mHiitt.getHitScores();
