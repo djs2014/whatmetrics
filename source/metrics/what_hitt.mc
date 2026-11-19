@@ -438,7 +438,7 @@ class WhatHiitt {
   // TODO No toneprofile on edge 1050
   hidden function hiitAttentionWarmingUp(playTone as Boolean) as Void {
     if (Attention has :playTone && soundEnabled && playTone) {
-      if ($.getEdgeVersion() >= 1050) {
+      if ($.gHasHighResScreen) {
         Attention.playTone(Attention.TONE_LAP);
         return;
       }
@@ -453,7 +453,7 @@ class WhatHiitt {
 
   hidden function hiitAttentionCoolingdown(playTone as Boolean) as Void {
     if (Attention has :playTone && soundEnabled && playTone && hiitSound != StartOnlySound) {
-      if ($.getEdgeVersion() >= 1050) {
+      if ($.gHasHighResScreen) {
         Attention.playTone(Attention.TONE_LAP);
         return;
       }
@@ -468,7 +468,7 @@ class WhatHiitt {
 
   hidden function hiitAttentionWarn() as Void {
     if (Attention has :playTone && soundEnabled) {
-      if ($.getEdgeVersion() >= 1050) {
+      if ($.gHasHighResScreen) {
         Attention.playTone(Attention.TONE_RESET);
         return;
       }
@@ -483,7 +483,7 @@ class WhatHiitt {
 
   hidden function hiitAttentionStart() as Void {
     if (Attention has :playTone && soundEnabled) {
-       if ($.getEdgeVersion() >= 1050) {
+       if ($.gHasHighResScreen) {
         Attention.playTone(Attention.TONE_LAP);
         return;
       }
@@ -498,7 +498,7 @@ class WhatHiitt {
 
   hidden function hiitAttentionStop() as Void {
     if (Attention has :playTone && soundEnabled && hiitSound != StartOnlySound) {
-       if ($.getEdgeVersion() >= 1050) {
+       if ($.gHasHighResScreen) {
         Attention.playTone(Attention.TONE_RESET);
         return;
       }
