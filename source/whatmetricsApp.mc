@@ -65,6 +65,11 @@ class whatmetricsApp extends Application.AppBase {
       Storage.deleteValue("show_shiftingbattery");
       Storage.deleteValue("show_powerbattery");
     }
+    if (Storage.getValue("target_sunevent") != null) {
+      Storage.deleteValue("target_sunevent");
+      Storage.setValue("target_sunrise", 15);
+      Storage.setValue("target_sunset", 60);
+    }    
 
     var reset = Storage.getValue("resetDefaults");
     if (reset == null || (reset as Boolean)) {
@@ -310,7 +315,8 @@ class whatmetricsApp extends Application.AppBase {
       Storage.setValue("focus_field", $.gFocusField);
       Storage.setValue("focus_perc", $.gFocusPerc);
       Storage.setValue("focus_border", $.gFocusBorder);
-      Storage.setValue("target_sunevent", 60);
+      Storage.setValue("target_sunset", 60);
+      Storage.setValue("target_sunrise", 15);
     }
     $.gTargetFtp = getStorageValue("target_ftp", $.gTargetFtp) as Number;
     $.gTargetSpeed = getStorageValue("target_speed", $.gTargetSpeed) as Number;
@@ -334,8 +340,10 @@ class whatmetricsApp extends Application.AppBase {
     $.gFocusField = getStorageValue("focus_field", $.gFocusField) as FocusField;
     $.gFocusPerc = getStorageValue("focus_perc", $.gFocusPerc) as Number;
     $.gFocusBorder = getStorageValue("focus_border", $.gFocusBorder) as Number;
-    var targetSunEvent = getStorageValue("target_sunevent", 60) as Number;
-    $.gTargetSunEventSec = targetSunEvent * 60;
+    var targetSunrise = getStorageValue("target_sunrise", 15) as Number;
+    $.gTargetSunriseSec = targetSunrise * 60;
+    var targetSunset = getStorageValue("target_sunset", 60) as Number;
+    $.gTargetSunsetSec = targetSunset * 60;
 
     $.gFocusField = getStorageValue("focus_field", $.gFocusField) as FocusField;
     $.gFocusPerc = getStorageValue("focus_perc", $.gFocusPerc) as Number;
@@ -576,7 +584,8 @@ var gVo2MaxBackGround as Vo2MaxBackGround = Vo2BgHiit;
 var gFocusField as FocusField = FocusOff;
 var gFocusPerc as Number = 99;
 var gFocusBorder as Number = 5;
-var gTargetSunEventSec as Number = 3600; // 60 minutes before sunrise / sunset
+var gTargetSunsetSec as Number = 3600; // 60 minutes before sunset
+var gTargetSunriseSec as Number = 900; // 15 minutes before sunrise 
 var gSunEventDegreesDifference as Double = 1.0d;
 
 var gGradeShowMaxAvg as Boolean = true;

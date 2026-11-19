@@ -176,22 +176,33 @@ class DataFieldSettingsMenuDelegate extends WatchUi.Menu2InputDelegate {
       targetMenu.addItem(mi);
 
       mi = new WatchUi.MenuItem(
-        "Target distance km",
+        "Target distance| (km)",
         null,
         "target_distance",
         null
       );
       mi.setSubLabel($.getStorageNumberAsString(mi.getId() as String));
       targetMenu.addItem(mi);
-
+     
       mi = new WatchUi.MenuItem(
-        "Target sunrise/set min|0~",
+        "Target sunrise|0~ (min)",
         null,
-        "target_sunevent",
+        "target_sunrise",
         null
       );
       mi.setSubLabel($.getStorageNumberAsString(mi.getId() as String));
       targetMenu.addItem(mi);
+
+      mi = new WatchUi.MenuItem(
+        "Target sunset|0~ (min)",
+        null,
+        "target_sunset",
+        null
+      );
+      mi.setSubLabel($.getStorageNumberAsString(mi.getId() as String));
+      targetMenu.addItem(mi);
+
+
 
       var boolean = Storage.getValue("target_distance_route") ? true : false;
       targetMenu.addItem(

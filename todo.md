@@ -1,3 +1,7 @@
+target sunset 60
+target sunrise 15 min
+  - 2 settings
+  
 hzone allow 0 - 0.9 value
 defaults -> ETA -> ALT -> Pressure
 defaults wide field -> 8 even

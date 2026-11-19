@@ -1473,16 +1473,19 @@ class whatmetricsView extends WatchUi.DataField {
         }
         fi.iconParam2 = 0;
 
+        var targetSunEventSec = 0;        
         var t2next = 0;
         if (fieldType == FTTime2SunUp) {
           fi.title = "Sunrise in";
           fi.iconParam2 = 1;
           t2next = $.getSecondsToNext(Time.now(), mSunrise);
+          targetSunEventSec = $.gTargetSunriseSec;
           // System.println(["FTTime2SunUp", t2next ]);
         } else if (fieldType == FTTime2SunDown) {
           fi.title = "Sunset in";
           fi.iconParam2 = -1;
           t2next = $.getSecondsToNext(Time.now(), mSunset);
+          targetSunEventSec = $.gTargetSunsetSec;
         } else {
           var t2sunrise = $.getSecondsToNext(Time.now(), mSunrise);
 
@@ -1491,6 +1494,7 @@ class whatmetricsView extends WatchUi.DataField {
             fi.title = "Sunrise in";
             fi.iconParam2 = 1;
             t2next = t2sunrise;
+            targetSunEventSec = $.gTargetSunriseSec;
           } else if (t2sunrise <= 0) {
             // Sun is already rised. Sunset will be next.
             var t2sunset = $.getSecondsToNext(Time.now(), mSunset);
@@ -1498,12 +1502,14 @@ class whatmetricsView extends WatchUi.DataField {
               fi.title = "Sunset in";
               fi.iconParam2 = -1;
               t2next = t2sunset;
+              targetSunEventSec = $.gTargetSunsetSec;
             } else if (fieldType == FTTime2SunUpDownLoop) {
               // Sun already set, get sunset for tomorrow
               t2sunrise = $.getSecondsToNext(Time.now(), mSunriseTomorrow);
               fi.title = "Sunrise in";
               fi.iconParam2 = 1;
               t2next = t2sunrise;
+              targetSunEventSec = $.gTargetSunriseSec;
             }
           }
           // System.println(["FTTime2Sun next", t2next ]);
@@ -1512,14 +1518,14 @@ class whatmetricsView extends WatchUi.DataField {
         // When target specified, then field availble when in range (x min before).
         fi.available =
           t2next > 0 &&
-          ($.gTargetSunEventSec == 0 ||
-            (t2next < $.gTargetSunEventSec && $.gTargetSunEventSec > 0));
+          (targetSunEventSec == 0 ||
+            (t2next < targetSunEventSec && targetSunEventSec > 0));
 
         // System.println([
         //   "FTTime2Sun i.available",
         //   fi.available,
         //   t2next,
-        //   $.gTargetSunEventSec,
+        //   targetSunEventSec,
         //   colorFactor,
         // ]);
 
@@ -1555,6 +1561,7 @@ class whatmetricsView extends WatchUi.DataField {
         var ss_sec = mSunset.value();
         var srt_sec = mSunriseTomorrow.value();
 
+        var targetSunEventSec = 0;
         var t2nextEvent = 0;
         var percOfTime = 0;
         if (now_sec < sr_sec) {
@@ -1562,6 +1569,7 @@ class whatmetricsView extends WatchUi.DataField {
           fi.title = "%->Sunrise";
           fi.tag = "night";
           fi.iconParam = -1;
+          targetSunEventSec = $.gTargetSunriseSec;
           // approx hack
           var ssy_sec = ss_sec - 86400; // yesterday sunset ~ sunset min 1 day in seconds.
           // percent of nighttime
@@ -1573,6 +1581,7 @@ class whatmetricsView extends WatchUi.DataField {
           fi.title = "%->Sunset";
           fi.tag = "day";
           fi.iconParam = 1;
+          targetSunEventSec = $.gTargetSunsetSec;
           // percent of day time
           percOfTime = 100 - $.percentageOf(now_sec, sr_sec, ss_sec);
           t2nextEvent = $.getSecondsToNext(Time.now(), mSunset);
@@ -1583,6 +1592,7 @@ class whatmetricsView extends WatchUi.DataField {
           fi.tag = "night";
           fi.iconParam = -1;
           // percent of nighttime
+          targetSunEventSec = $.gTargetSunriseSec;
           percOfTime = 100 - $.percentageOf(now_sec, ss_sec, srt_sec);
           t2nextEvent = $.getSecondsToNext(Time.now(), mSunriseTomorrow);
           fi.available = true;
@@ -1604,7 +1614,7 @@ class whatmetricsView extends WatchUi.DataField {
         // When paused, show time to next event, or when within target range.
         if (
           !mZenHideDetails ||
-          (t2nextEvent < $.gTargetSunEventSec && $.gTargetSunEventSec > 0)
+          (t2nextEvent < targetSunEventSec && targetSunEventSec > 0)
         ) {
           if (t2nextEvent < 60) {
             fi.text = t2nextEvent.format("%02d");
